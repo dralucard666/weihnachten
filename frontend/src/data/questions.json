@@ -1,0 +1,48 @@
+[
+  {
+    "id": "q1",
+    "text": "What is the capital of France?",
+    "answers": [
+      {
+        "id": "a1",
+        "text": "London"
+      },
+      {
+        "id": "a2",
+        "text": "Berlin"
+      },
+      {
+        "id": "a3",
+        "text": "Paris"
+      },
+      {
+        "id": "a4",
+        "text": "Madrid"
+      }
+    ],
+    "correctAnswerId": "a3"
+  },
+  {
+    "id": "q2",
+    "text": "Which planet is known as the Red Planet?",
+    "answers": [
+      {
+        "id": "a1",
+        "text": "Venus"
+      },
+      {
+        "id": "a2",
+        "text": "Mars"
+      },
+      {
+        "id": "a3",
+        "text": "Jupiter"
+      },
+      {
+        "id": "a4",
+        "text": "Saturn"
+      }
+    ],
+    "correctAnswerId": "a2"
+  }
+]
