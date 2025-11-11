@@ -5,6 +5,10 @@ import {
   CreateLobbyResponse,
   JoinLobbyRequest,
   JoinLobbyResponse,
+  ReconnectPlayerRequest,
+  ReconnectPlayerResponse,
+  ReconnectMasterRequest,
+  ReconnectMasterResponse,
   SetNameRequest,
   SetNameResponse,
   StartGameRequest,
@@ -69,6 +73,71 @@ export class SocketHandler {
       }
       
       console.log(`Player ${result.playerId} joined lobby ${data.lobbyId}`);
+    });
+
+    // Reconnect Player
+    socket.on('reconnectPlayer', (data: ReconnectPlayerRequest, callback) => {
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
+      if (!lobby) {
+        callback({ success: false, error: 'Lobby not found' });
+        return;
+      }
+
+      const player = lobby.players.find(p => p.id === data.playerId);
+      
+      if (!player) {
+        callback({ success: false, error: 'Player not found in lobby' });
+        return;
+      }
+
+      // Update socket mapping with new socket ID
+      this.playerSockets.set(data.playerId, socket.id);
+      
+      // Join the lobby room
+      socket.join(data.lobbyId);
+      
+      // Mark player as connected
+      this.lobbyManager.setPlayerConnected(data.lobbyId, data.playerId, true);
+      
+      const response: ReconnectPlayerResponse = {
+        success: true,
+        lobby
+      };
+      
+      callback(response);
+      
+      // Notify others that player reconnected
+      socket.to(data.lobbyId).emit('lobbyUpdated', lobby);
+      
+      console.log(`Player ${data.playerId} reconnected to lobby ${data.lobbyId}`);
+    });
+
+    // Reconnect Master
+    socket.on('reconnectMaster', async (data: ReconnectMasterRequest, callback) => {
+      let lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
+      if (!lobby) {
+        // Try to load from persistence
+        lobby = await this.lobbyManager.loadLobbyFromPersistence(data.lobbyId);
+        
+        if (!lobby) {
+          callback({ success: false, error: 'Lobby not found' });
+          return;
+        }
+      }
+
+      // Join the lobby room
+      socket.join(data.lobbyId);
+      
+      const response: ReconnectMasterResponse = {
+        success: true,
+        lobby
+      };
+      
+      callback(response);
+      
+      console.log(`Game master reconnected to lobby ${data.lobbyId}`);
     });
 
     // Set Name

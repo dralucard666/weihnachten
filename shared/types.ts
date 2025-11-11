@@ -40,6 +40,27 @@ export interface JoinLobbyResponse {
   lobby: Lobby;
 }
 
+export interface ReconnectPlayerRequest {
+  lobbyId: string;
+  playerId: string;
+}
+
+export interface ReconnectPlayerResponse {
+  success: boolean;
+  lobby?: Lobby;
+  error?: string;
+}
+
+export interface ReconnectMasterRequest {
+  lobbyId: string;
+}
+
+export interface ReconnectMasterResponse {
+  success: boolean;
+  lobby?: Lobby;
+  error?: string;
+}
+
 export interface SetNameRequest {
   lobbyId: string;
   playerId: string;
@@ -107,6 +128,8 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   createLobby: (callback: (response: CreateLobbyResponse) => void) => void;
   joinLobby: (data: JoinLobbyRequest, callback: (response: JoinLobbyResponse) => void) => void;
+  reconnectPlayer: (data: ReconnectPlayerRequest, callback: (response: ReconnectPlayerResponse) => void) => void;
+  reconnectMaster: (data: ReconnectMasterRequest, callback: (response: ReconnectMasterResponse) => void) => void;
   setName: (data: SetNameRequest, callback: (response: SetNameResponse) => void) => void;
   startGame: (data: StartGameRequest) => void;
   setAnswer: (data: SetAnswerRequest, callback: (response: SetAnswerResponse) => void) => void;

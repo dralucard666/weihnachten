@@ -28,3 +28,5 @@ logs/
 # Temporary files
 *.tmp
 .cache/
+
+backend/game-state.json

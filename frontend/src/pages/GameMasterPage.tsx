@@ -30,6 +30,7 @@ export default function GameMasterPage() {
     handleStartGame,
     handleShowAnswer,
     handleNextQuestion,
+    handleReloadQuestion,
   } = useGameMaster(lobbyId, questions);
 
   if (loading) {
@@ -72,7 +73,27 @@ export default function GameMasterPage() {
         showCorrectAnswer={showCorrectAnswer}
         onShowAnswer={handleShowAnswer}
         onNextQuestion={handleNextQuestion}
+        onReloadQuestion={handleReloadQuestion}
       />
+    );
+  }
+
+  if (lobby.gameState === 'playing' && !currentQuestion) {
+    // Fallback for when reconnecting but question index is out of bounds
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
+          <h2 className="text-2xl font-bold text-yellow-600 mb-4">Game In Progress</h2>
+          <p className="text-gray-700 mb-4">
+            Connected to lobby but question data is not available.
+          </p>
+          <p className="text-sm text-gray-600">
+            Lobby ID: {lobby.id}<br />
+            Question Index: {currentQuestionIndex}<br />
+            Total Questions: {questions.length}
+          </p>
+        </div>
+      </div>
     );
   }
 

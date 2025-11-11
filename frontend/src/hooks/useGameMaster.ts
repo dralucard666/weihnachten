@@ -37,7 +37,22 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
         }
       });
     } else {
-      setLoading(false);
+      // Try to reconnect to existing lobby
+      socket.emit('reconnectMaster', { lobbyId }, (response) => {
+        if (response.success && response.lobby) {
+          setLobby(response.lobby);
+          // Restore question index from lobby state, but clamp it to valid range
+          const restoredIndex = Math.min(response.lobby.currentQuestionIndex, questions.length - 1);
+          setCurrentQuestionIndex(Math.max(0, restoredIndex));
+          setLoading(false);
+          console.log('Reconnected to lobby:', response.lobby);
+          console.log('Current question index:', response.lobby.currentQuestionIndex, '-> clamped to:', restoredIndex);
+          console.log('Game state:', response.lobby.gameState);
+        } else {
+          setError(response.error || 'Failed to reconnect to lobby');
+          setLoading(false);
+        }
+      });
     }
 
     socket.on('lobbyUpdated', (updatedLobby) => {
@@ -80,13 +95,16 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.off('everybodyAnswered');
       socket.off('scoresUpdated');
     };
-  }, [lobbyId, navigate]);
+  }, [lobbyId, navigate, questions.length]);
 
   const handleStartGame = () => {
     if (!lobby || !currentQuestion) return;
     
     const socket = socketService.getSocket();
     if (socket) {
+      // Store lobbyId in localStorage when game starts
+      localStorage.setItem('gameMasterLobbyId', lobby.id);
+      
       socket.emit('startGame', {
         lobbyId: lobby.id,
         questionId: currentQuestion.id,
@@ -121,6 +139,8 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     if (nextIndex >= questions.length) {
       const socket = socketService.getSocket();
       if (socket) {
+        // Remove lobbyId from localStorage when game ends
+        localStorage.removeItem('gameMasterLobbyId');
         socket.emit('endGame', lobby.id);
       }
       return;
@@ -141,6 +161,22 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     }
   };
 
+  const handleReloadQuestion = () => {
+    if (!lobby || !currentQuestion) return;
+    
+    const socket = socketService.getSocket();
+    if (socket) {
+      socket.emit('nextQuestion', {
+        lobbyId: lobby.id,
+        questionId: currentQuestion.id,
+        answers: currentQuestion.answers,
+      });
+      setPlayersWhoAnswered(new Set());
+      setAllPlayersAnswered(false);
+      setShowCorrectAnswer(false);
+    }
+  };
+
   return {
     lobby,
     loading,
@@ -153,5 +189,6 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     handleStartGame,
     handleShowAnswer,
     handleNextQuestion,
+    handleReloadQuestion,
   };
 }

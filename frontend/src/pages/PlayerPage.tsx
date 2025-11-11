@@ -5,11 +5,13 @@ import PlayerJoinView from '../components/PlayerJoinView';
 import PlayerLobbyView from '../components/PlayerLobbyView';
 import PlayerGameView from '../components/PlayerGameView';
 import PlayerFinishedView from '../components/PlayerFinishedView';
+import ReconnectModal from '../components/ReconnectModal';
 
 export default function PlayerPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   const [manualLobbyId, setManualLobbyId] = useState('');
+  const [showReconnectModal, setShowReconnectModal] = useState(false);
   const {
     lobby,
     playerId,
@@ -22,6 +24,8 @@ export default function PlayerPage() {
     joined,
     handleJoinLobby,
     handleSubmitAnswer,
+    handleReconnect,
+    getStoredSession,
   } = usePlayer(lobbyId);
 
   const handleManualJoin = (e: React.FormEvent) => {
@@ -31,11 +35,46 @@ export default function PlayerPage() {
     }
   };
 
+  const handleReconnectClick = () => {
+    const session = getStoredSession();
+    if (session) {
+      // Use the handleReconnect function from the hook
+      handleReconnect(session.lobbyId, session.playerId);
+      setShowReconnectModal(false);
+    }
+  };
+
+  const storedSession = getStoredSession();
+
   // No lobby ID - show instruction to scan QR code
   if (!lobbyId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center relative">
+          {/* Help button - only show if there's a stored session */}
+          {storedSession && (
+            <button
+              onClick={() => setShowReconnectModal(true)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+              title="Reconnect to previous session"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                />
+              </svg>
+            </button>
+          )}
+
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Join a Game
           </h1>
@@ -69,6 +108,18 @@ export default function PlayerPage() {
             </form>
           </div>
         </div>
+
+        {/* Reconnect Modal */}
+        {showReconnectModal && storedSession && (
+          <ReconnectModal
+            lobbyId={storedSession.lobbyId}
+            playerId={storedSession.playerId}
+            playerName={storedSession.playerName}
+            onReconnect={handleReconnectClick}
+            onClose={() => setShowReconnectModal(false)}
+            loading={false}
+          />
+        )}
       </div>
     );
   }

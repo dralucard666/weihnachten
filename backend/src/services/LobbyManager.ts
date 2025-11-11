@@ -1,5 +1,6 @@
 import { Lobby, Player, GameState } from '../../../shared/types';
 import { v4 as uuidv4 } from 'uuid';
+import { PersistenceService } from './PersistenceService';
 
 interface PlayerAnswer {
   playerId: string;
@@ -9,6 +10,11 @@ interface PlayerAnswer {
 export class LobbyManager {
   private lobbies: Map<string, Lobby> = new Map();
   private playerAnswers: Map<string, Map<string, PlayerAnswer>> = new Map(); // lobbyId -> Map<playerId, answer>
+  private persistenceService: PersistenceService;
+
+  constructor() {
+    this.persistenceService = new PersistenceService();
+  }
 
   createLobby(): Lobby {
     const lobbyId = uuidv4();
@@ -179,6 +185,9 @@ export class LobbyManager {
       player.hasAnswered = false;
     }
     
+    // Save state after moving to next question
+    this.saveState();
+    
     return true;
   }
 
@@ -190,6 +199,9 @@ export class LobbyManager {
     }
 
     lobby.gameState = 'finished';
+    
+    // Remove lobby from persistence when game ends
+    this.removeLobbyFromPersistence(lobbyId);
     
     return lobby.players.sort((a, b) => b.score - a.score);
   }
@@ -233,5 +245,36 @@ export class LobbyManager {
     if (player) {
       player.connected = connected;
     }
+  }
+
+  // Persistence methods
+  private saveState(): void {
+    this.persistenceService.saveState(this.lobbies).catch(error => {
+      console.error('Failed to persist state:', error);
+    });
+  }
+
+  private removeLobbyFromPersistence(lobbyId: string): void {
+    this.persistenceService.removeLobby(lobbyId).catch(error => {
+      console.error('Failed to remove lobby from persistence:', error);
+    });
+  }
+
+  async loadLobbyFromPersistence(lobbyId: string): Promise<Lobby | undefined> {
+    const lobby = await this.persistenceService.getLobby(lobbyId);
+    
+    if (lobby) {
+      // Restore lobby to memory
+      this.lobbies.set(lobbyId, lobby);
+      
+      // Initialize empty answer map for this lobby
+      if (!this.playerAnswers.has(lobbyId)) {
+        this.playerAnswers.set(lobbyId, new Map());
+      }
+      
+      console.log(`Lobby ${lobbyId} restored from persistence`);
+    }
+    
+    return lobby;
   }
 }

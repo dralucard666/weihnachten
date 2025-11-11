@@ -18,6 +18,7 @@ interface GamePlayingViewProps {
   showCorrectAnswer: boolean;
   onShowAnswer: () => void;
   onNextQuestion: () => void;
+  onReloadQuestion: () => void;
 }
 
 export default function GamePlayingView({
@@ -30,6 +31,7 @@ export default function GamePlayingView({
   showCorrectAnswer,
   onShowAnswer,
   onNextQuestion,
+  onReloadQuestion,
 }: GamePlayingViewProps) {
   const playersWithNames = lobby.players.filter((p) => p.name);
 
@@ -40,12 +42,21 @@ export default function GamePlayingView({
         <div className="bg-black bg-opacity-50 rounded-2xl p-6 shadow-2xl">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-yellow-400">Quiz Master</h1>
-            <div className="text-right">
-              <div className="text-xl font-bold text-white">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
-              </div>
-              <div className="text-sm text-gray-300">
-                {playersWhoAnswered.size} / {playersWithNames.length} answered
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onReloadQuestion}
+                className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200"
+                title="Reset current question state"
+              >
+                🔄 Reload
+              </button>
+              <div className="text-right">
+                <div className="text-xl font-bold text-white">
+                  Question {currentQuestionIndex + 1} of {totalQuestions}
+                </div>
+                <div className="text-sm text-gray-300">
+                  {playersWhoAnswered.size} / {playersWithNames.length} answered
+                </div>
               </div>
             </div>
           </div>
