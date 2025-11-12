@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { socketService } from '../services/socket';
-import type { Lobby, Answer } from '../../../shared/types';
+import type { Lobby, Answer, QuestionType } from '../../../shared/types';
 
 interface CurrentQuestion {
   questionId: string;
   questionIndex: number;
-  answers: Answer[];
+  questionType: QuestionType;
+  answers?: Answer[];
 }
 
 const STORAGE_KEYS = {
@@ -24,7 +25,10 @@ export function usePlayer(lobbyId: string | undefined) {
   });
   const [currentQuestion, setCurrentQuestion] = useState<CurrentQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [customAnswerText, setCustomAnswerText] = useState<string>('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [votingAnswers, setVotingAnswers] = useState<Answer[]>([]);
+  const [isVotingPhase, setIsVotingPhase] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
@@ -39,20 +43,33 @@ export function usePlayer(lobbyId: string | undefined) {
       setLobby(updatedLobby);
     });
 
-    socket.on('questionStarted', (data: { questionId: string; questionIndex: number; answers: Answer[] }) => {
+    socket.on('questionStarted', (data: { questionId: string; questionIndex: number; questionType: QuestionType; answers?: Answer[] }) => {
       setCurrentQuestion({
         questionId: data.questionId,
         questionIndex: data.questionIndex,
+        questionType: data.questionType,
         answers: data.answers,
       });
       setSelectedAnswer(null);
+      setCustomAnswerText('');
       setHasSubmitted(false);
-      console.log('Question started:', data.questionIndex + 1);
+      setIsVotingPhase(false);
+      setVotingAnswers([]);
+      console.log('Question started:', data.questionIndex + 1, 'Type:', data.questionType);
+    });
+
+    socket.on('showAnswersForVoting', (data: { questionId: string; answers: Answer[] }) => {
+      setVotingAnswers(data.answers);
+      setIsVotingPhase(true);
+      setSelectedAnswer(null);
+      setHasSubmitted(false);
+      console.log('Voting phase started with', data.answers.length, 'answers');
     });
 
     return () => {
       socket.off('lobbyUpdated');
       socket.off('questionStarted');
+      socket.off('showAnswersForVoting');
     };
   }, [lobbyId]);
 
@@ -119,6 +136,61 @@ export function usePlayer(lobbyId: string | undefined) {
       },
       (response) => {
         console.log('Answer submitted:', response);
+      }
+    );
+  };
+
+  const handleSubmitCustomAnswer = (answerText: string) => {
+    if (!playerId || !lobbyId || !currentQuestion || hasSubmitted) return;
+
+    setCustomAnswerText(answerText);
+    setHasSubmitted(true);
+
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.emit(
+      'submitCustomAnswer',
+      {
+        lobbyId,
+        playerId,
+        questionId: currentQuestion.questionId,
+        answerText: answerText.trim(),
+      },
+      (response) => {
+        console.log('Custom answer submitted:', response);
+        if (!response.success) {
+          setHasSubmitted(false);
+          setError('Failed to submit answer');
+        }
+      }
+    );
+  };
+
+  const handleVoteForAnswer = (answerId: string) => {
+    if (!playerId || !lobbyId || !currentQuestion || hasSubmitted) return;
+
+    setSelectedAnswer(answerId);
+    setHasSubmitted(true);
+
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.emit(
+      'voteForAnswer',
+      {
+        lobbyId,
+        playerId,
+        questionId: currentQuestion.questionId,
+        answerId,
+      },
+      (response) => {
+        console.log('Vote submitted:', response);
+        if (!response.success) {
+          setHasSubmitted(false);
+          setSelectedAnswer(null);
+          setError('Cannot vote for your own answer');
+        }
       }
     );
   };
@@ -196,12 +268,17 @@ export function usePlayer(lobbyId: string | undefined) {
     playerName,
     currentQuestion,
     selectedAnswer,
+    customAnswerText,
     hasSubmitted,
+    votingAnswers,
+    isVotingPhase,
     loading,
     error,
     joined,
     handleJoinLobby,
     handleSubmitAnswer,
+    handleSubmitCustomAnswer,
+    handleVoteForAnswer,
     handleReconnect,
     setPlayerName,
     clearStoredSession,

@@ -18,12 +18,17 @@ export default function PlayerPage() {
     playerName,
     currentQuestion,
     selectedAnswer,
+    customAnswerText,
     hasSubmitted,
+    votingAnswers,
+    isVotingPhase,
     loading,
     error,
     joined,
     handleJoinLobby,
     handleSubmitAnswer,
+    handleSubmitCustomAnswer,
+    handleVoteForAnswer,
     handleReconnect,
     getStoredSession,
   } = usePlayer(lobbyId);
@@ -172,8 +177,13 @@ export default function PlayerPage() {
           currentPlayer={currentPlayer}
           currentQuestion={currentQuestion}
           selectedAnswer={selectedAnswer}
+          customAnswerText={customAnswerText}
           hasSubmitted={hasSubmitted}
+          votingAnswers={votingAnswers}
+          isVotingPhase={isVotingPhase}
           onSubmitAnswer={handleSubmitAnswer}
+          onSubmitCustomAnswer={handleSubmitCustomAnswer}
+          onVoteForAnswer={handleVoteForAnswer}
         />
       );
 

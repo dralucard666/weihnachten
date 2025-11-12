@@ -15,7 +15,14 @@ import {
   SetAnswerRequest,
   SetAnswerResponse,
   QuestionResultRequest,
-  NextQuestionRequest
+  NextQuestionRequest,
+  SubmitCustomAnswerRequest,
+  SubmitCustomAnswerResponse,
+  GetCustomAnswersRequest,
+  TriggerAnswerVotingRequest,
+  VoteForAnswerRequest,
+  VoteForAnswerResponse,
+  CustomAnswerResultRequest
 } from '../../../shared/types';
 import { LobbyManager } from './LobbyManager';
 
@@ -166,6 +173,7 @@ export class SocketHandler {
           this.io.to(data.lobbyId).emit('questionStarted', {
             questionId: data.questionId,
             questionIndex: 0,
+            questionType: data.questionType,
             answers: data.answers
           });
         }
@@ -199,6 +207,15 @@ export class SocketHandler {
 
     // Question Result
     socket.on('questionResult', (data: QuestionResultRequest) => {
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
+      if (!lobby) {
+        return;
+      }
+
+      // Get player answers before processing
+      const playerAnswers = this.lobbyManager.getPlayerAnswers(data.lobbyId);
+      
       const updatedPlayers = this.lobbyManager.processQuestionResult(
         data.lobbyId,
         data.questionId,
@@ -206,6 +223,12 @@ export class SocketHandler {
       );
       
       if (updatedPlayers.length > 0) {
+        // Send question result data to master
+        this.io.to(data.lobbyId).emit('questionResultReady', {
+          correctAnswerId: data.correctAnswerId,
+          playerAnswers,
+        });
+        
         this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
         console.log(`Question ${data.questionId} results processed for lobby ${data.lobbyId}`);
       }
@@ -222,10 +245,145 @@ export class SocketHandler {
           this.io.to(data.lobbyId).emit('questionStarted', {
             questionId: data.questionId,
             questionIndex: lobby.currentQuestionIndex,
+            questionType: data.questionType,
             answers: data.answers
           });
         }
         console.log(`Next question ${data.questionId} in lobby ${data.lobbyId}`);
+      }
+    });
+
+    // Submit Custom Answer
+    socket.on('submitCustomAnswer', (data: SubmitCustomAnswerRequest, callback) => {
+      const success = this.lobbyManager.submitCustomAnswer(
+        data.lobbyId,
+        data.playerId,
+        data.questionId,
+        data.answerText
+      );
+      
+      callback({ success });
+      
+      if (success) {
+        // Notify game master that player submitted an answer
+        socket.to(data.lobbyId).emit('playerAnswered', data.playerId);
+        
+        // Check if everyone submitted their custom answer
+        if (this.lobbyManager.hasEveryoneSubmittedCustomAnswer(data.lobbyId)) {
+          this.io.to(data.lobbyId).emit('everybodyAnswered');
+          console.log(`All custom answers submitted for lobby ${data.lobbyId}`);
+        }
+        
+        console.log(`Player ${data.playerId} submitted custom answer for question ${data.questionId}`);
+      }
+    });
+
+    // Get Custom Answers (called by master with correct answer details)
+    socket.on('getCustomAnswers', (data: GetCustomAnswersRequest) => {
+      const allAnswers = this.lobbyManager.getAllCustomAnswers(
+        data.lobbyId,
+        data.correctAnswerId,
+        data.correctAnswerText
+      );
+      
+      // Send all mixed answers to the master only
+      socket.emit('customAnswersReady', {
+        questionId: data.questionId,
+        answers: allAnswers
+      });
+      
+      console.log(`Custom answers prepared for master in lobby ${data.lobbyId}`);
+    });
+
+    // Trigger Answer Voting (called by master to show answers to all players)
+    socket.on('triggerAnswerVoting', (data: TriggerAnswerVotingRequest) => {
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
+      if (!lobby) {
+        return;
+      }
+
+      // Get the cached shuffled answers (without playerId for players)
+      const allAnswers = this.lobbyManager.getShuffledAnswers(data.lobbyId);
+      
+      if (allAnswers.length === 0) {
+        console.error(`No shuffled answers found for lobby ${data.lobbyId}`);
+        return;
+      }
+      
+      // Remove playerId from answers before sending to players
+      const answersForPlayers = allAnswers.map(answer => ({
+        id: answer.id,
+        text: answer.text
+      }));
+      
+      // Reset hasAnswered flags for voting phase
+      for (const player of lobby.players) {
+        player.hasAnswered = false;
+      }
+      
+      // Send to all players
+      this.io.to(data.lobbyId).emit('showAnswersForVoting', {
+        questionId: data.questionId,
+        answers: answersForPlayers
+      });
+      
+      console.log(`Answer voting triggered for lobby ${data.lobbyId}`);
+    });
+
+    // Vote For Answer
+    socket.on('voteForAnswer', (data: VoteForAnswerRequest, callback) => {
+      const success = this.lobbyManager.voteForAnswer(
+        data.lobbyId,
+        data.playerId,
+        data.questionId,
+        data.answerId
+      );
+      
+      callback({ success });
+      
+      if (success) {
+        // Notify game master that player voted
+        socket.to(data.lobbyId).emit('playerAnswered', data.playerId);
+        
+        // Check if everyone voted
+        if (this.lobbyManager.hasEveryoneVoted(data.lobbyId)) {
+          this.io.to(data.lobbyId).emit('allVotesReceived');
+        }
+        
+        console.log(`Player ${data.playerId} voted for answer ${data.answerId}`);
+      }
+    });
+
+    // Custom Answer Result
+    socket.on('customAnswerResult', (data: CustomAnswerResultRequest) => {
+      // Get player votes before processing
+      const playerVotes = this.lobbyManager.getPlayerVotes(data.lobbyId);
+      
+      // Get the full shuffled answers WITH playerIds for results display
+      const answersWithAttribution = this.lobbyManager.getShuffledAnswersWithAttribution(data.lobbyId);
+      
+      const updatedPlayers = this.lobbyManager.processCustomAnswerResult(
+        data.lobbyId,
+        data.questionId,
+        data.correctAnswerId
+      );
+      
+      if (updatedPlayers.length > 0) {
+        // Send the full answer list with attribution to everyone
+        this.io.to(data.lobbyId).emit('customAnswersReady', {
+          questionId: data.questionId,
+          answers: answersWithAttribution
+        });
+        
+        // Send custom answer result data to master
+        this.io.to(data.lobbyId).emit('customAnswerResultReady', {
+          correctAnswerId: data.correctAnswerId,
+          playerVotes,
+        });
+        
+        this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
+        console.log(`Custom answer results processed for lobby ${data.lobbyId}`);
       }
     });
 

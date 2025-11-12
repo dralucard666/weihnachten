@@ -2,6 +2,7 @@
   {
     "id": "q1",
     "text": "What is the capital of France?",
+    "type": "multiple-choice",
     "answers": [
       {
         "id": "a1",
@@ -25,6 +26,7 @@
   {
     "id": "q2",
     "text": "Which planet is known as the Red Planet?",
+    "type": "multiple-choice",
     "answers": [
       {
         "id": "a1",
@@ -44,5 +46,12 @@
       }
     ],
     "correctAnswerId": "a2"
+  },
+  {
+    "id": "q3",
+    "text": "In what year did the Titanic sink?",
+    "type": "custom-answers",
+    "correctAnswer": "1912",
+    "correctAnswerId": "correct-q3"
   }
 ]

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socketService } from '../services/socket';
-import type { Lobby, Player, Answer } from '../../../shared/types';
+import type { Lobby, Player, Answer, QuestionType, CustomAnswer, PlayerAnswerInfo } from '../../../shared/types';
 
 interface Question {
   id: string;
   text: string;
-  answers: Answer[];
-  correctAnswerId: string;
+  type: QuestionType;
+  answers?: Answer[];
+  correctAnswerId?: string;
+  correctAnswer?: string; // For custom-answers type
 }
 
 export function useGameMaster(lobbyId: string | undefined, questions: Question[]) {
@@ -19,6 +21,10 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
   const [allPlayersAnswered, setAllPlayersAnswered] = useState(false);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [playersWhoAnswered, setPlayersWhoAnswered] = useState<Set<string>>(new Set());
+  const [customAnswers, setCustomAnswers] = useState<CustomAnswer[]>([]);
+  const [isVotingPhase, setIsVotingPhase] = useState(false);
+  const [allVotesReceived, setAllVotesReceived] = useState(false);
+  const [playerAnswers, setPlayerAnswers] = useState<PlayerAnswerInfo[]>([]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -82,6 +88,27 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       setAllPlayersAnswered(true);
     });
 
+    socket.on('customAnswersReady', (data: { questionId: string; answers: CustomAnswer[] }) => {
+      console.log('Custom answers ready:', data.answers.length);
+      setCustomAnswers(data.answers);
+      setAllPlayersAnswered(true);
+    });
+
+    socket.on('allVotesReceived', () => {
+      console.log('All votes received!');
+      setAllVotesReceived(true);
+    });
+
+    socket.on('questionResultReady', (data: { correctAnswerId: string; playerAnswers: PlayerAnswerInfo[] }) => {
+      console.log('Question result ready with player answers:', data.playerAnswers);
+      setPlayerAnswers(data.playerAnswers);
+    });
+
+    socket.on('customAnswerResultReady', (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[] }) => {
+      console.log('Custom answer result ready with player votes:', data.playerVotes);
+      setPlayerAnswers(data.playerVotes);
+    });
+
     socket.on('scoresUpdated', (players: Player[]) => {
       console.log('Scores updated:', players);
       setLobby((prev) => prev ? { ...prev, players } : null);
@@ -93,6 +120,10 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.off('playerLeft');
       socket.off('playerAnswered');
       socket.off('everybodyAnswered');
+      socket.off('customAnswersReady');
+      socket.off('allVotesReceived');
+      socket.off('questionResultReady');
+      socket.off('customAnswerResultReady');
       socket.off('scoresUpdated');
     };
   }, [lobbyId, navigate, questions.length]);
@@ -108,12 +139,17 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.emit('startGame', {
         lobbyId: lobby.id,
         questionId: currentQuestion.id,
+        questionType: currentQuestion.type,
         answers: currentQuestion.answers,
       });
       setCurrentQuestionIndex(0);
       setPlayersWhoAnswered(new Set());
       setAllPlayersAnswered(false);
       setShowCorrectAnswer(false);
+      setCustomAnswers([]);
+      setIsVotingPhase(false);
+      setAllVotesReceived(false);
+      setPlayerAnswers([]);
     }
   };
 
@@ -122,10 +158,54 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     
     const socket = socketService.getSocket();
     if (socket) {
-      socket.emit('questionResult', {
+      // For custom answers mode, first get the answers
+      if (currentQuestion.type === 'custom-answers' && !isVotingPhase) {
+        socket.emit('getCustomAnswers', {
+          lobbyId: lobby.id,
+          questionId: currentQuestion.id,
+          correctAnswerId: currentQuestion.correctAnswerId || 'correct-' + currentQuestion.id,
+          correctAnswerText: currentQuestion.correctAnswer || '',
+        });
+        return;
+      }
+
+      // For multiple-choice or after voting
+      if (currentQuestion.correctAnswerId) {
+        socket.emit('questionResult', {
+          lobbyId: lobby.id,
+          questionId: currentQuestion.id,
+          correctAnswerId: currentQuestion.correctAnswerId,
+        });
+        setShowCorrectAnswer(true);
+      }
+    }
+  };
+
+  const handleTriggerVoting = () => {
+    if (!lobby || !currentQuestion) return;
+    
+    const socket = socketService.getSocket();
+    if (socket) {
+      socket.emit('triggerAnswerVoting', {
         lobbyId: lobby.id,
         questionId: currentQuestion.id,
-        correctAnswerId: currentQuestion.correctAnswerId,
+      });
+      setIsVotingPhase(true);
+      setPlayersWhoAnswered(new Set());
+      setAllPlayersAnswered(false);
+      setAllVotesReceived(false);
+    }
+  };
+
+  const handleShowVotingResults = () => {
+    if (!lobby || !currentQuestion) return;
+    
+    const socket = socketService.getSocket();
+    if (socket) {
+      socket.emit('customAnswerResult', {
+        lobbyId: lobby.id,
+        questionId: currentQuestion.id,
+        correctAnswerId: currentQuestion.correctAnswerId || 'correct-' + currentQuestion.id,
       });
       setShowCorrectAnswer(true);
     }
@@ -152,12 +232,17 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.emit('nextQuestion', {
         lobbyId: lobby.id,
         questionId: nextQuestion.id,
+        questionType: nextQuestion.type,
         answers: nextQuestion.answers,
       });
       setCurrentQuestionIndex(nextIndex);
       setPlayersWhoAnswered(new Set());
       setAllPlayersAnswered(false);
       setShowCorrectAnswer(false);
+      setCustomAnswers([]);
+      setIsVotingPhase(false);
+      setAllVotesReceived(false);
+      setPlayerAnswers([]);
     }
   };
 
@@ -169,11 +254,16 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.emit('nextQuestion', {
         lobbyId: lobby.id,
         questionId: currentQuestion.id,
+        questionType: currentQuestion.type,
         answers: currentQuestion.answers,
       });
       setPlayersWhoAnswered(new Set());
       setAllPlayersAnswered(false);
       setShowCorrectAnswer(false);
+      setCustomAnswers([]);
+      setIsVotingPhase(false);
+      setAllVotesReceived(false);
+      setPlayerAnswers([]);
     }
   };
 
@@ -186,8 +276,14 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     allPlayersAnswered,
     showCorrectAnswer,
     playersWhoAnswered,
+    customAnswers,
+    isVotingPhase,
+    allVotesReceived,
+    playerAnswers,
     handleStartGame,
     handleShowAnswer,
+    handleTriggerVoting,
+    handleShowVotingResults,
     handleNextQuestion,
     handleReloadQuestion,
   };

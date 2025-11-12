@@ -74,7 +74,8 @@ export interface SetNameResponse {
 export interface StartGameRequest {
   lobbyId: string;
   questionId: string; // First question ID
-  answers: Answer[]; // Answer possibilities for players
+  questionType: QuestionType; // Type of first question
+  answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
 }
 
 export interface SetAnswerRequest {
@@ -94,15 +95,85 @@ export interface QuestionResultRequest {
   correctAnswerId: string;
 }
 
+export interface PlayerAnswerInfo {
+  playerId: string;
+  answerId: string;
+  answerText?: string;
+}
+
+export interface QuestionResultData {
+  correctAnswerId: string;
+  playerAnswers: PlayerAnswerInfo[];
+}
+
 export interface Answer {
   id: string;
   text: string;
 }
 
+// Question Types
+export type QuestionType = 'multiple-choice' | 'custom-answers';
+
 export interface NextQuestionRequest {
   lobbyId: string;
   questionId: string; // Next question ID
-  answers: Answer[]; // Answer possibilities for players
+  questionType: QuestionType; // Type of question
+  answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
+}
+
+// Custom Answers Game Mode
+export interface SubmitCustomAnswerRequest {
+  lobbyId: string;
+  playerId: string;
+  questionId: string;
+  answerText: string;
+}
+
+export interface SubmitCustomAnswerResponse {
+  success: boolean;
+}
+
+export interface CustomAnswer extends Answer {
+  playerId?: string; // undefined for the correct answer
+}
+
+export interface ShowAnswersToMasterData {
+  questionId: string;
+  answers: CustomAnswer[]; // All player answers + correct answer mixed
+}
+
+export interface GetCustomAnswersRequest {
+  lobbyId: string;
+  questionId: string;
+  correctAnswerId: string;
+  correctAnswerText: string;
+}
+
+export interface TriggerAnswerVotingRequest {
+  lobbyId: string;
+  questionId: string;
+}
+
+export interface VoteForAnswerRequest {
+  lobbyId: string;
+  playerId: string;
+  questionId: string;
+  answerId: string; // ID of the answer they're voting for
+}
+
+export interface VoteForAnswerResponse {
+  success: boolean;
+}
+
+export interface CustomAnswerResultRequest {
+  lobbyId: string;
+  questionId: string;
+  correctAnswerId: string;
+}
+
+export interface CustomAnswerResultData {
+  correctAnswerId: string;
+  playerVotes: PlayerAnswerInfo[];
 }
 
 // Socket.IO Event Types
@@ -113,11 +184,24 @@ export interface ServerToClientEvents {
   playerLeft: (playerId: string) => void;
   
   // Emitted when game starts or next question
-  questionStarted: (data: { questionId: string, questionIndex: number, answers: Answer[] }) => void;
+  questionStarted: (data: { questionId: string, questionIndex: number, questionType: QuestionType, answers?: Answer[] }) => void;
   
   // Emitted to game master only
   playerAnswered: (playerId: string) => void;
   everybodyAnswered: () => void;
+  
+  // Custom answers mode - emitted to game master when all custom answers submitted
+  customAnswersReady: (data: ShowAnswersToMasterData) => void;
+  
+  // Custom answers mode - emitted to players to show all answers for voting
+  showAnswersForVoting: (data: { questionId: string, answers: Answer[] }) => void;
+  
+  // Custom answers mode - emitted to game master when all votes are in
+  allVotesReceived: () => void;
+  
+  // Emitted after questionResult processed - includes what each player picked
+  questionResultReady: (data: QuestionResultData) => void;
+  customAnswerResultReady: (data: CustomAnswerResultData) => void;
   
   // Emitted after questionResult processed
   scoresUpdated: (players: Player[]) => void;
@@ -135,5 +219,13 @@ export interface ClientToServerEvents {
   setAnswer: (data: SetAnswerRequest, callback: (response: SetAnswerResponse) => void) => void;
   questionResult: (data: QuestionResultRequest) => void;
   nextQuestion: (data: NextQuestionRequest) => void;
+  
+  // Custom answers mode events
+  submitCustomAnswer: (data: SubmitCustomAnswerRequest, callback: (response: SubmitCustomAnswerResponse) => void) => void;
+  getCustomAnswers: (data: GetCustomAnswersRequest) => void;
+  triggerAnswerVoting: (data: TriggerAnswerVotingRequest) => void;
+  voteForAnswer: (data: VoteForAnswerRequest, callback: (response: VoteForAnswerResponse) => void) => void;
+  customAnswerResult: (data: CustomAnswerResultRequest) => void;
+  
   endGame: (lobbyId: string) => void;
 }

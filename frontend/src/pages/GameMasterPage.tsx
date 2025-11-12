@@ -4,19 +4,21 @@ import { useGameMaster } from '../hooks/useGameMaster';
 import GameLobbyView from '../components/GameLobbyView';
 import GamePlayingView from '../components/GamePlayingView';
 import GameFinishedView from '../components/GameFinishedView';
-import type { Answer } from '../../../shared/types';
+import type { Answer, QuestionType } from '../../../shared/types';
 import questionsData from '../data/questions.json';
 
 interface Question {
   id: string;
   text: string;
-  answers: Answer[];
-  correctAnswerId: string;
+  type: QuestionType;
+  answers?: Answer[];
+  correctAnswerId?: string;
+  correctAnswer?: string;
 }
 
 export default function GameMasterPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
-  const [questions] = useState<Question[]>(questionsData);
+  const [questions] = useState<Question[]>(questionsData as Question[]);
 
   const {
     lobby,
@@ -27,8 +29,14 @@ export default function GameMasterPage() {
     allPlayersAnswered,
     showCorrectAnswer,
     playersWhoAnswered,
+    customAnswers,
+    isVotingPhase,
+    allVotesReceived,
+    playerAnswers,
     handleStartGame,
     handleShowAnswer,
+    handleTriggerVoting,
+    handleShowVotingResults,
     handleNextQuestion,
     handleReloadQuestion,
   } = useGameMaster(lobbyId, questions);
@@ -71,7 +79,13 @@ export default function GameMasterPage() {
         playersWhoAnswered={playersWhoAnswered}
         allPlayersAnswered={allPlayersAnswered}
         showCorrectAnswer={showCorrectAnswer}
+        customAnswers={customAnswers}
+        isVotingPhase={isVotingPhase}
+        allVotesReceived={allVotesReceived}
+        playerAnswers={playerAnswers}
         onShowAnswer={handleShowAnswer}
+        onTriggerVoting={handleTriggerVoting}
+        onShowVotingResults={handleShowVotingResults}
         onNextQuestion={handleNextQuestion}
         onReloadQuestion={handleReloadQuestion}
       />
