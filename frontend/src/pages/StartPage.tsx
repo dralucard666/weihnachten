@@ -1,55 +1,101 @@
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import ReconnectMasterModal from '../components/ReconnectMasterModal';
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import ReconnectMasterModal from "../components/ReconnectMasterModal";
 
 export default function StartPage() {
+  // VARIABLES: Preserving existing state variable
   const [showReconnectModal, setShowReconnectModal] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
-        <div className="flex justify-between items-start mb-2">
-          <h1 className="text-4xl font-bold text-gray-800">
-            Quiz App
-          </h1>
-          <button
-            onClick={() => setShowReconnectModal(true)}
-            className="text-gray-500 hover:text-gray-700 transition duration-200"
-            title="Help / Reconnect"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
+    // VISUAL: Background gradient matched to the image (subtle blue-to-purple)
+    <div
+      className="min-h-screen flex flex-col items-center justify-center 
+                    bg-gradient-to-br from-blue-200 to-purple-100 p-4"
+    >
+      {/* Quiz App Header (Centered Title - Moved from absolute left) */}
+      <div className="flex flex-col items-center text-center mb-16 mt-10">
+        <div className="flex items-center mb-6">
+          <h1 className="text-4xl font-extrabold text-gray-800">Quiz App</h1>
+          <span className="ml-2 text-5xl">💡</span>
         </div>
-        <p className="text-center text-gray-600 mb-8">
-          Choose your role to get started
-        </p>
 
-        <div className="space-y-4">
-          <Link
-            to="/game-master"
-            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 text-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        {/* Reconnect Button (Preserved functionality, moved below title or to the side) */}
+        <button
+          onClick={() => setShowReconnectModal(true)}
+          title="Help / Reconnect"
+          className="absolute top-6 right-6 flex items-center justify-center w-10 h-10 rounded-full 
+             bg-white/60 backdrop-blur-md shadow-md hover:bg-white/80 hover:shadow-lg 
+             text-gray-600 hover:text-gray-800 transition-all duration-300"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <div className="text-2xl mb-1">🎮</div>
-            <div>Game Master</div>
-            <div className="text-sm opacity-90 mt-1">Host a new game</div>
-          </Link>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </button>
 
-          <Link
-            to="/player"
-            className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 text-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          >
-            <div className="text-2xl mb-1">👤</div>
-            <div>Player</div>
-            <div className="text-sm opacity-90 mt-1">Join a game</div>
-          </Link>
-        </div>
+        {/* Centered Titles */}
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          Join the Fun!
+        </h2>
+        <p className="text-lg text-gray-600">Choose Your Role:</p>
       </div>
 
-      <ReconnectMasterModal 
-        isOpen={showReconnectModal} 
-        onClose={() => setShowReconnectModal(false)} 
+      {/* Role Selection Cards Container */}
+      <div className="flex flex-col gap-8 w-[300px] max-w-sm">
+        {/* Game Master Card - VISUAL: Very rounded corners, slight shadow */}
+        <Link
+          to="/game-master"
+          className="bg-white rounded-[20px] shadow-xl p-8 flex flex-col items-center 
+                    transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+        >
+          <div className="text-6xl mb-4">🎮</div>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">Game Master</h3>
+
+          {/* BUTTON: Blue Gradient Style from the image */}
+          <div
+            className="w-full px-6 py-3 text-white font-bold text-lg 
+                       rounded-lg shadow-md transition-all duration-200
+                       bg-gradient-to-r from-blue-500 to-blue-600 
+                       hover:from-blue-600 hover:to-blue-700"
+          >
+            Host a New Game
+          </div>
+        </Link>
+
+        {/* Player Card - VISUAL: Very rounded corners, slight shadow */}
+        <Link
+          to="/player"
+          className="bg-white rounded-[20px] shadow-xl p-8 flex flex-col items-center 
+                    transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+        >
+          <div className="text-6xl mb-4">👤</div>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">Player</h3>
+
+          {/* BUTTON: Green Gradient Style from the image */}
+          <div
+            className="w-full px-6 py-3 text-white font-bold text-lg 
+                       rounded-lg shadow-md transition-all duration-200
+                       bg-gradient-to-r from-green-500 to-green-600 
+                       hover:from-green-600 hover:to-green-700"
+          >
+            Join a Game
+          </div>
+        </Link>
+      </div>
+
+      {/* MODAL: Preserving existing modal functionality */}
+      <ReconnectMasterModal
+        isOpen={showReconnectModal}
+        onClose={() => setShowReconnectModal(false)}
       />
     </div>
   );
