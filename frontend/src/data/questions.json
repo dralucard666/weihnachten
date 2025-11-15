@@ -1,57 +1,222 @@
 [
   {
     "id": "q1",
-    "text": "What is the capital of France?",
+    "text": "Team America im Film 'Team America: World Police' (2004) ist eine amerikanische Spezialeinheit zur Terrorismusbekämpfung. Wo befindet sich ihre Geheimzentrale?",
     "type": "multiple-choice",
     "answers": [
       {
         "id": "a1",
-        "text": "London"
+        "text": "Mount Rushmore"
       },
       {
         "id": "a2",
-        "text": "Berlin"
+        "text": "In einer McDonald's-Filiale in Texas"
       },
       {
         "id": "a3",
-        "text": "Paris"
+        "text": "Unter der Freiheitsstatue"
       },
       {
         "id": "a4",
-        "text": "Madrid"
+        "text": "Im Weißen Haus Keller, neben den Kartoffeln"
       }
     ],
-    "correctAnswerId": "a3"
+    "correctAnswerId": "a1",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["teamam/teamamerica.webm"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
   },
   {
     "id": "q2",
-    "text": "Which planet is known as the Red Planet?",
+    "text": "Wie heißt der polnische Widerstandskämpfer in diesem Film?",
+    "type": "custom-answers",
+    "correctAnswer": "Grzegorz Brzeczyszczykiewicz",
+    "correctAnswerId": "correct-q2",
+    "media": {
+      "beforeQuestion": {
+        "type": "video",
+        "sources": ["gregor/gregor.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
+  },
+  {
+    "id": "q3",
+    "text": "Wie gewinnt Norman Butcher im Film 'Der Spion und sein Bruder' (Grimsby) die WM für England?",
+    "type": "custom-answers",
+    "correctAnswer": "Er schießt mit einer Pistole erst den Ball platt, dann auf den Schiedsrichter",
+    "correctAnswerId": "correct-q3",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["grimsby/grimsby.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
+  },
+  {
+    "id": "q4",
+    "text": "Wie sind Harry Potters Eltern in der legendären Parodie 'Harry Potter und ein Stein' ums Leben gekommen?",
     "type": "multiple-choice",
     "answers": [
       {
         "id": "a1",
-        "text": "Venus"
+        "text": "Sie sind bei einem Autounfall gestorben"
       },
       {
         "id": "a2",
-        "text": "Mars"
+        "text": "Sie wurden von einem Toaster erschlagen"
       },
       {
         "id": "a3",
-        "text": "Jupiter"
+        "text": "Sie sind an verdorbener Butterbier-Allergie gestorben"
       },
       {
         "id": "a4",
-        "text": "Saturn"
+        "text": "Sie haben sich beim Quidditch-Spielen verirrt"
       }
     ],
-    "correctAnswerId": "a2"
+    "correctAnswerId": "a1",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["hp/harrypotter.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
   },
   {
-    "id": "q3",
-    "text": "In what year did the Titanic sink?",
+    "id": "q5",
+    "text": "Aus welchem Film stammt folgende Szene?",
+    "type": "multiple-choice",
+    "answers": [
+      {
+        "id": "a1",
+        "text": "High School Musical"
+      },
+      {
+        "id": "a2",
+        "text": "Grease 2: Electric Boogaloo"
+      },
+      {
+        "id": "a3",
+        "text": "Twilight: Breaking Dawn - Part 3"
+      },
+      {
+        "id": "a4",
+        "text": "Fast & Furious: Cafeteria Drift"
+      }
+    ],
+    "correctAnswerId": "a1",
+    "media": {
+      "beforeQuestion": {
+        "type": "video",
+        "sources": ["hsm/hsmmuted.mp4"],
+        "autoplay": true,
+        "loop": true,
+        "allowReplay": true
+      },
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["hsm/hsm.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
+  },
+  {
+    "id": "q6",
+    "text": "Wie findet Joe Black im Film 'Rendezvous mit Joe Black' seinen vorzeitigen Tod?",
     "type": "custom-answers",
-    "correctAnswer": "1912",
-    "correctAnswerId": "correct-q3"
+    "correctAnswer": "Er wird gleich von zwei Autos angefahren",
+    "correctAnswerId": "correct-q6",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["joeblack/joeblack.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
+  },
+  {
+    "id": "q7",
+    "text": "Im wunderbar kitschigen 'Love Actually' (2004) will der junge Sam seine große Liebe ein letztes Mal am Flughafengate sehen. Wie kommt er in der Extended Edition am Wachpersonal vorbei?",
+    "type": "multiple-choice",
+    "answers": [
+      {
+        "id": "a1",
+        "text": "Er vollführt mehrere unrealistische Akrobatikstunts"
+      },
+      {
+        "id": "a2",
+        "text": "Er verkleidet sich als Weihnachtsmann"
+      },
+      {
+        "id": "a3",
+        "text": "Er singt 'All I Want for Christmas' so überzeugend, dass alle weinen"
+      },
+      {
+        "id": "a4",
+        "text": "Er wirft mit Lebkuchen um sich"
+      }
+    ],
+    "correctAnswerId": "a1",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["loveac/loveactually.webm"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
+  },
+  {
+    "id": "q8",
+    "text": "What is the favorite game of the cullens family of the twilight series?",
+    "type": "multiple-choice",
+    "answers": [
+      {
+        "id": "a1",
+        "text": "Soccer"
+      },
+      {
+        "id": "a2",
+        "text": "American Football"
+      },
+      {
+        "id": "a3",
+        "text": "Baseball"
+      },
+      {
+        "id": "a4",
+        "text": "Tennis"
+      }
+    ],
+    "correctAnswerId": "a3",
+    "media": {
+      "beforeAnswer": {
+        "type": "video",
+        "sources": ["twilight/twilight.mp4"],
+        "autoplay": true,
+        "loop": false,
+        "allowReplay": true
+      }
+    }
   }
 ]

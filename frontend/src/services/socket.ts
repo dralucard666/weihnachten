@@ -6,7 +6,7 @@ import type {
 
 class SocketService {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
-  private url: string = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+  private url: string = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
 
   connect(): Socket<ServerToClientEvents, ClientToServerEvents> {
     if (!this.socket) {

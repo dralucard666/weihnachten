@@ -7,7 +7,7 @@ interface GameLobbyViewProps {
 }
 
 export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps) {
-  const playerJoinUrl = `${window.location.origin}/player/${lobby.id}`;
+  const playerJoinUrl = `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/player/${lobby.id}`;
   const playersWithNames = lobby.players.filter((p) => p.name);
 
   return (

@@ -30,3 +30,4 @@ logs/
 .cache/
 
 backend/game-state.json
+frontend/src/assets

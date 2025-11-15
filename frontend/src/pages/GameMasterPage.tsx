@@ -4,7 +4,7 @@ import { useGameMaster } from '../hooks/useGameMaster';
 import GameLobbyView from '../components/GameLobbyView';
 import GamePlayingView from '../components/GamePlayingView';
 import GameFinishedView from '../components/GameFinishedView';
-import type { Answer, QuestionType } from '../../../shared/types';
+import type { Answer, QuestionType, QuestionMedia } from '../../../shared/types';
 import questionsData from '../data/questions.json';
 
 interface Question {
@@ -14,6 +14,7 @@ interface Question {
   answers?: Answer[];
   correctAnswerId?: string;
   correctAnswer?: string;
+  media?: QuestionMedia;
 }
 
 export default function GameMasterPage() {

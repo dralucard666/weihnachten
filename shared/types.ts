@@ -114,6 +114,26 @@ export interface Answer {
 // Question Types
 export type QuestionType = 'multiple-choice' | 'custom-answers';
 
+// Media configuration for questions
+export type MediaType = 'video' | 'images';
+
+export interface MediaConfig {
+  type: MediaType;
+  sources: string[]; // Paths relative to assets folder
+  autoplay?: boolean; // Whether to start automatically
+  loop?: boolean; // For videos, whether to loop
+  allowReplay?: boolean; // Allow replaying the media
+  allowMinimize?: boolean; // Allow minimizing the media display
+  allowMaximize?: boolean; // Allow maximizing/fullscreen
+  slideshow?: boolean; // For images, whether to show as slideshow
+  slideshowInterval?: number; // Milliseconds between slides (if slideshow)
+}
+
+export interface QuestionMedia {
+  beforeQuestion?: MediaConfig; // Media to show before displaying the question
+  beforeAnswer?: MediaConfig; // Media to show before revealing the answer
+}
+
 export interface NextQuestionRequest {
   lobbyId: string;
   questionId: string; // Next question ID

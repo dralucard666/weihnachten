@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Player, Answer, QuestionType } from '../../../shared/types';
 
 interface CurrentQuestion {
@@ -34,6 +34,15 @@ export default function PlayerGameView({
   onVoteForAnswer,
 }: PlayerGameViewProps) {
   const [localCustomAnswer, setLocalCustomAnswer] = useState('');
+  const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | null>(null);
+  const [localVoteAnswer, setLocalVoteAnswer] = useState<string | null>(null);
+
+  // Reset selections when question changes
+  useEffect(() => {
+    setLocalCustomAnswer('');
+    setLocalSelectedAnswer(null);
+    setLocalVoteAnswer(null);
+  }, [currentQuestion?.questionId, currentQuestion?.questionIndex]);
 
   // Waiting for question
   if (!currentQuestion) {
@@ -175,11 +184,13 @@ export default function PlayerGameView({
               {votingAnswers.map((answer, idx) => (
                 <button
                   key={answer.id}
-                  onClick={() => onVoteForAnswer(answer.id)}
+                  onClick={() => setLocalVoteAnswer(answer.id)}
                   disabled={hasSubmitted}
                   className={`p-5 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
                     hasSubmitted && selectedAnswer === answer.id
                       ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ring-4 ring-blue-300 scale-105'
+                      : localVoteAnswer === answer.id
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white ring-4 ring-blue-300'
                       : hasSubmitted
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
@@ -187,7 +198,7 @@ export default function PlayerGameView({
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                      hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-orange-900'
+                      hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : localVoteAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-orange-900'
                     }`}>
                       {idx + 1}
                     </div>
@@ -196,6 +207,16 @@ export default function PlayerGameView({
                 </button>
               ))}
             </div>
+
+            {!hasSubmitted && localVoteAnswer && (
+              <button
+                onClick={() => onVoteForAnswer(localVoteAnswer)}
+                className="mt-6 w-full py-4 rounded-xl text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
+              >
+                <span>✓</span>
+                <span>Confirm Vote</span>
+              </button>
+            )}
 
             {hasSubmitted && (
               <div className="mt-6 text-center">
@@ -248,11 +269,13 @@ export default function PlayerGameView({
               {currentQuestion.answers.map((answer, idx) => (
                 <button
                   key={answer.id}
-                  onClick={() => onSubmitAnswer(answer.id)}
+                  onClick={() => setLocalSelectedAnswer(answer.id)}
                   disabled={hasSubmitted}
                   className={`p-5 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
                     hasSubmitted && selectedAnswer === answer.id
                       ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ring-4 ring-blue-300 scale-105'
+                      : localSelectedAnswer === answer.id
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white ring-4 ring-blue-300'
                       : hasSubmitted
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
@@ -260,7 +283,7 @@ export default function PlayerGameView({
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                      hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-purple-900'
+                      hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : localSelectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-purple-900'
                     }`}>
                       {String.fromCharCode(65 + idx)}
                     </div>
@@ -269,6 +292,16 @@ export default function PlayerGameView({
                 </button>
               ))}
             </div>
+
+            {!hasSubmitted && localSelectedAnswer && (
+              <button
+                onClick={() => onSubmitAnswer(localSelectedAnswer)}
+                className="mt-6 w-full py-4 rounded-xl text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
+              >
+                <span>✓</span>
+                <span>Confirm Answer</span>
+              </button>
+            )}
 
             {hasSubmitted && (
               <div className="mt-6 text-center">
