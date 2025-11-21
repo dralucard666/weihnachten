@@ -22,7 +22,12 @@ import {
   TriggerAnswerVotingRequest,
   VoteForAnswerRequest,
   VoteForAnswerResponse,
-  CustomAnswerResultRequest
+  CustomAnswerResultRequest,
+  SubmitTextInputRequest,
+  SubmitTextInputResponse,
+  GetTextInputPlayerAnswersRequest,
+  GetTextInputPlayerAnswersResponse,
+  TextInputResultRequest
 } from '../../../shared/types';
 import { LobbyManager } from './LobbyManager';
 
@@ -174,7 +179,7 @@ export class SocketHandler {
             questionId: data.questionId,
             questionIndex: 0,
             questionType: data.questionType,
-            answers: data.answers
+            answers: data.answers,
           });
         }
         console.log(`Game started in lobby ${data.lobbyId}`);
@@ -246,7 +251,7 @@ export class SocketHandler {
             questionId: data.questionId,
             questionIndex: lobby.currentQuestionIndex,
             questionType: data.questionType,
-            answers: data.answers
+            answers: data.answers,
           });
         }
         console.log(`Next question ${data.questionId} in lobby ${data.lobbyId}`);
@@ -384,6 +389,62 @@ export class SocketHandler {
         
         this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
         console.log(`Custom answer results processed for lobby ${data.lobbyId}`);
+      }
+    });
+
+    // Submit Text Input
+    socket.on('submitTextInput', (data: SubmitTextInputRequest, callback) => {
+      const success = this.lobbyManager.submitTextInput(
+        data.lobbyId,
+        data.playerId,
+        data.questionId,
+        data.answerText
+      );
+      
+      callback({ success });
+      
+      if (success) {
+        // Notify game master that player submitted
+        socket.to(data.lobbyId).emit('playerAnswered', data.playerId);
+        
+        // Check if everyone submitted
+        if (this.lobbyManager.hasEveryoneSubmittedTextInput(data.lobbyId)) {
+          this.io.to(data.lobbyId).emit('everybodyAnswered');
+        }
+        
+        console.log(`Player ${data.playerId} submitted text input for question ${data.questionId}`);
+      }
+    });
+
+    // Get Text Input Player Answers (without scoring)
+    socket.on('getTextInputPlayerAnswers', (data: GetTextInputPlayerAnswersRequest, callback: (response: GetTextInputPlayerAnswersResponse) => void) => {
+      const playerAnswers = this.lobbyManager.getTextInputPlayerAnswers(
+        data.lobbyId,
+        data.questionId
+      );
+      
+      callback({ playerAnswers });
+      console.log(`Retrieved ${playerAnswers.length} text input answers for lobby ${data.lobbyId}`);
+    });
+
+    // Text Input Result
+    socket.on('textInputResult', (data: TextInputResultRequest) => {
+      const result = this.lobbyManager.processTextInputResult(
+        data.lobbyId,
+        data.questionId,
+        data.correctAnswers
+      );
+      
+      if (result.players.length > 0) {
+        // Send text input result data
+        this.io.to(data.lobbyId).emit('textInputResultReady', {
+          correctAnswers: data.correctAnswers,
+          playerAnswers: result.playerAnswers,
+          correctPlayerIds: result.correctPlayerIds
+        });
+        
+        this.io.to(data.lobbyId).emit('scoresUpdated', result.players);
+        console.log(`Text input results processed for lobby ${data.lobbyId}`);
       }
     });
 

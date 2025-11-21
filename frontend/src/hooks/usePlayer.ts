@@ -195,6 +195,33 @@ export function usePlayer(lobbyId: string | undefined) {
     );
   };
 
+  const handleSubmitTextInput = (answerText: string) => {
+    if (!playerId || !lobbyId || !currentQuestion || hasSubmitted) return;
+
+    setCustomAnswerText(answerText);
+    setHasSubmitted(true);
+
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.emit(
+      'submitTextInput',
+      {
+        lobbyId,
+        playerId,
+        questionId: currentQuestion.questionId,
+        answerText: answerText.trim(),
+      },
+      (response) => {
+        console.log('Text input submitted:', response);
+        if (!response.success) {
+          setHasSubmitted(false);
+          setError('Failed to submit answer');
+        }
+      }
+    );
+  };
+
   const clearStoredSession = () => {
     localStorage.removeItem(STORAGE_KEYS.LOBBY_ID);
     localStorage.removeItem(STORAGE_KEYS.PLAYER_ID);
@@ -278,6 +305,7 @@ export function usePlayer(lobbyId: string | undefined) {
     handleJoinLobby,
     handleSubmitAnswer,
     handleSubmitCustomAnswer,
+    handleSubmitTextInput,
     handleVoteForAnswer,
     handleReconnect,
     setPlayerName,

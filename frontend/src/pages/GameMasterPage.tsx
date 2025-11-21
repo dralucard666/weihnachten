@@ -14,6 +14,7 @@ interface Question {
   answers?: Answer[];
   correctAnswerId?: string;
   correctAnswer?: string;
+  correctAnswers?: string[]; // For text-input type
   media?: QuestionMedia;
 }
 
@@ -34,6 +35,7 @@ export default function GameMasterPage() {
     isVotingPhase,
     allVotesReceived,
     playerAnswers,
+    correctPlayerIds,
     handleStartGame,
     handleShowAnswer,
     handleTriggerVoting,
@@ -84,6 +86,7 @@ export default function GameMasterPage() {
         isVotingPhase={isVotingPhase}
         allVotesReceived={allVotesReceived}
         playerAnswers={playerAnswers}
+        correctPlayerIds={correctPlayerIds}
         onShowAnswer={handleShowAnswer}
         onTriggerVoting={handleTriggerVoting}
         onShowVotingResults={handleShowVotingResults}

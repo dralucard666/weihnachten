@@ -10,6 +10,7 @@ interface Question {
   answers?: Answer[];
   correctAnswerId?: string;
   correctAnswer?: string; // For custom-answers type
+  correctAnswers?: string[]; // For text-input type
 }
 
 export function useGameMaster(lobbyId: string | undefined, questions: Question[]) {
@@ -25,6 +26,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
   const [isVotingPhase, setIsVotingPhase] = useState(false);
   const [allVotesReceived, setAllVotesReceived] = useState(false);
   const [playerAnswers, setPlayerAnswers] = useState<PlayerAnswerInfo[]>([]);
+  const [correctPlayerIds, setCorrectPlayerIds] = useState<string[]>([]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -114,6 +116,12 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       setLobby((prev) => prev ? { ...prev, players } : null);
     });
 
+    socket.on('textInputResultReady', (data: { correctAnswers: string[]; playerAnswers: PlayerAnswerInfo[]; correctPlayerIds: string[] }) => {
+      console.log('Text input result ready:', data.playerAnswers);
+      setPlayerAnswers(data.playerAnswers);
+      setCorrectPlayerIds(data.correctPlayerIds);
+    });
+
     return () => {
       socket.off('lobbyUpdated');
       socket.off('playerJoined');
@@ -125,6 +133,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       socket.off('questionResultReady');
       socket.off('customAnswerResultReady');
       socket.off('scoresUpdated');
+      socket.off('textInputResultReady');
     };
   }, [lobbyId, navigate, questions.length]);
 
@@ -150,6 +159,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       setIsVotingPhase(false);
       setAllVotesReceived(false);
       setPlayerAnswers([]);
+      setCorrectPlayerIds([]);
     }
   };
 
@@ -166,6 +176,17 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
           correctAnswerId: currentQuestion.correctAnswerId || 'correct-' + currentQuestion.id,
           correctAnswerText: currentQuestion.correctAnswer || '',
         });
+        return;
+      }
+
+      // For text-input questions
+      if (currentQuestion.type === 'text-input' && currentQuestion.correctAnswers) {
+        socket.emit('textInputResult', {
+          lobbyId: lobby.id,
+          questionId: currentQuestion.id,
+          correctAnswers: currentQuestion.correctAnswers,
+        });
+        setShowCorrectAnswer(true);
         return;
       }
 
@@ -202,12 +223,15 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     
     const socket = socketService.getSocket();
     if (socket) {
-      socket.emit('customAnswerResult', {
-        lobbyId: lobby.id,
-        questionId: currentQuestion.id,
-        correctAnswerId: currentQuestion.correctAnswerId || 'correct-' + currentQuestion.id,
-      });
-      setShowCorrectAnswer(true);
+      // For custom answers voting
+      if (currentQuestion.type === 'custom-answers') {
+        socket.emit('customAnswerResult', {
+          lobbyId: lobby.id,
+          questionId: currentQuestion.id,
+          correctAnswerId: currentQuestion.correctAnswerId || 'correct-' + currentQuestion.id,
+        });
+        setShowCorrectAnswer(true);
+      }
     }
   };
 
@@ -243,6 +267,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       setIsVotingPhase(false);
       setAllVotesReceived(false);
       setPlayerAnswers([]);
+      setCorrectPlayerIds([]);
     }
   };
 
@@ -264,6 +289,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
       setIsVotingPhase(false);
       setAllVotesReceived(false);
       setPlayerAnswers([]);
+      setCorrectPlayerIds([]);
     }
   };
 
@@ -280,6 +306,7 @@ export function useGameMaster(lobbyId: string | undefined, questions: Question[]
     isVotingPhase,
     allVotesReceived,
     playerAnswers,
+    correctPlayerIds,
     handleStartGame,
     handleShowAnswer,
     handleTriggerVoting,

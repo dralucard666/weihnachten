@@ -28,6 +28,7 @@ export default function PlayerPage() {
     handleJoinLobby,
     handleSubmitAnswer,
     handleSubmitCustomAnswer,
+    handleSubmitTextInput,
     handleVoteForAnswer,
     handleReconnect,
     getStoredSession,
@@ -188,6 +189,7 @@ export default function PlayerPage() {
           isVotingPhase={isVotingPhase}
           onSubmitAnswer={handleSubmitAnswer}
           onSubmitCustomAnswer={handleSubmitCustomAnswer}
+          onSubmitTextInput={handleSubmitTextInput}
           onVoteForAnswer={handleVoteForAnswer}
         />
       );

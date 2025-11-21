@@ -112,7 +112,7 @@ export interface Answer {
 }
 
 // Question Types
-export type QuestionType = 'multiple-choice' | 'custom-answers';
+export type QuestionType = 'multiple-choice' | 'custom-answers' | 'text-input';
 
 // Media configuration for questions
 export type MediaType = 'video' | 'images';
@@ -196,6 +196,39 @@ export interface CustomAnswerResultData {
   playerVotes: PlayerAnswerInfo[];
 }
 
+// Text Input Question Type
+export interface SubmitTextInputRequest {
+  lobbyId: string;
+  playerId: string;
+  questionId: string;
+  answerText: string;
+}
+
+export interface SubmitTextInputResponse {
+  success: boolean;
+}
+
+export interface GetTextInputPlayerAnswersRequest {
+  lobbyId: string;
+  questionId: string;
+}
+
+export interface GetTextInputPlayerAnswersResponse {
+  playerAnswers: PlayerAnswerInfo[];
+}
+
+export interface TextInputResultRequest {
+  lobbyId: string;
+  questionId: string;
+  correctAnswers: string[]; // Array of acceptable answers
+}
+
+export interface TextInputResultData {
+  correctAnswers: string[];
+  playerAnswers: PlayerAnswerInfo[];
+  correctPlayerIds: string[]; // Players who got it right
+}
+
 // Socket.IO Event Types
 export interface ServerToClientEvents {
   // Emitted to all in lobby
@@ -222,6 +255,7 @@ export interface ServerToClientEvents {
   // Emitted after questionResult processed - includes what each player picked
   questionResultReady: (data: QuestionResultData) => void;
   customAnswerResultReady: (data: CustomAnswerResultData) => void;
+  textInputResultReady: (data: TextInputResultData) => void;
   
   // Emitted after questionResult processed
   scoresUpdated: (players: Player[]) => void;
@@ -246,6 +280,11 @@ export interface ClientToServerEvents {
   triggerAnswerVoting: (data: TriggerAnswerVotingRequest) => void;
   voteForAnswer: (data: VoteForAnswerRequest, callback: (response: VoteForAnswerResponse) => void) => void;
   customAnswerResult: (data: CustomAnswerResultRequest) => void;
+  
+  // Text input events
+  submitTextInput: (data: SubmitTextInputRequest, callback: (response: SubmitTextInputResponse) => void) => void;
+  getTextInputPlayerAnswers: (data: GetTextInputPlayerAnswersRequest, callback: (response: GetTextInputPlayerAnswersResponse) => void) => void;
+  textInputResult: (data: TextInputResultRequest) => void;
   
   endGame: (lobbyId: string) => void;
 }
