@@ -18,7 +18,7 @@
  */
 
 // Get all media files from assets folder
-const mediaModules = import.meta.glob<{ default: string }>('../assets/**/*.{mp4,webm,jpg,jpeg,png,gif,svg}', { 
+const mediaModules = import.meta.glob<{ default: string }>('../assets/**/*.{mp4,webm,mp3,jpg,jpeg,png,gif,svg}', { 
   eager: false 
 });
 

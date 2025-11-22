@@ -8,6 +8,7 @@ import {
   HostControlButtons,
   HostCustomAnswersDisplay,
   HostTextInputDisplay,
+  HostOrderDisplay,
   type Question,
 } from "./host";
 import type {
@@ -29,8 +30,8 @@ interface GamePlayingViewProps {
   allVotesReceived: boolean;
   playerAnswers: PlayerAnswerInfo[];
   correctPlayerIds: string[];
+  playerScores: { [playerId: string]: number };
   onShowAnswer: () => void;
-  onTriggerVoting: () => void;
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
   onReloadQuestion: () => void;
@@ -50,8 +51,8 @@ export default function GamePlayingView({
   playerAnswers,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   correctPlayerIds: _correctPlayerIds,
+  playerScores,
   onShowAnswer,
-  onTriggerVoting,
   onShowVotingResults,
   onNextQuestion,
   onReloadQuestion,
@@ -59,6 +60,7 @@ export default function GamePlayingView({
   const playersWithNames = lobby.players.filter((p) => p.name);
   const isCustomAnswersMode = currentQuestion.type === "custom-answers";
   const isTextInputMode = currentQuestion.type === "text-input";
+  const isOrderMode = currentQuestion.type === "order";
   
   // Media display states
   const [showBeforeQuestionMedia, setShowBeforeQuestionMedia] = useState(
@@ -178,6 +180,14 @@ export default function GamePlayingView({
                 playerAnswers={textInputPlayerAnswers}
                 players={lobby.players}
               />
+            ) : isOrderMode ? (
+              <HostOrderDisplay
+                question={currentQuestion}
+                showCorrectAnswer={showCorrectAnswer}
+                playerOrders={playerAnswers}
+                playerScores={playerScores}
+                players={lobby.players}
+              />
             ) : (
               currentQuestion.answers &&
               currentQuestion.correctAnswerId && (
@@ -205,16 +215,15 @@ export default function GamePlayingView({
         <HostControlButtons
           isCustomAnswersMode={isCustomAnswersMode}
           isTextInputMode={isTextInputMode}
+          isOrderMode={isOrderMode}
           isVotingPhase={isVotingPhase}
           showCorrectAnswer={showCorrectAnswer}
           allPlayersAnswered={allPlayersAnswered}
           allVotesReceived={allVotesReceived}
-          customAnswers={customAnswers}
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={totalQuestions}
           showTextInputPlayerResults={showTextInputPlayerResults}
           onShowAnswer={handleShowAnswerClick}
-          onTriggerVoting={onTriggerVoting}
           onShowVotingResults={handleShowVotingResultsClick}
           onNextQuestion={onNextQuestion}
           onShowTextInputPlayerResults={handleShowTextInputPlayerResults}

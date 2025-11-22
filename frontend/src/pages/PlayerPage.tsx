@@ -29,9 +29,11 @@ export default function PlayerPage() {
     handleSubmitAnswer,
     handleSubmitCustomAnswer,
     handleSubmitTextInput,
+    handleSubmitOrder,
     handleVoteForAnswer,
     handleReconnect,
     getStoredSession,
+    submittedOrder,
   } = usePlayer(lobbyId);
 
   const handleManualJoin = (e: React.FormEvent) => {
@@ -190,7 +192,9 @@ export default function PlayerPage() {
           onSubmitAnswer={handleSubmitAnswer}
           onSubmitCustomAnswer={handleSubmitCustomAnswer}
           onSubmitTextInput={handleSubmitTextInput}
+          onSubmitOrder={handleSubmitOrder}
           onVoteForAnswer={handleVoteForAnswer}
+          submittedOrder={submittedOrder}
         />
       );
 

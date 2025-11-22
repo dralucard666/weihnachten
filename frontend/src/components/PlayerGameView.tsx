@@ -1,10 +1,11 @@
-import type { Player, Answer, QuestionType } from '../../../shared/types';
+import type { Player, Answer, QuestionType, OrderItem } from '../../../shared/types';
 import {
   WaitingView,
   CustomAnswerInput,
   VotingView,
   MultipleChoiceView,
   TextInputView,
+  OrderView,
 } from './player-game';
 
 interface CurrentQuestion {
@@ -12,6 +13,7 @@ interface CurrentQuestion {
   questionIndex: number;
   questionType: QuestionType;
   answers?: Answer[];
+  orderItems?: OrderItem[];
 }
 
 interface PlayerGameViewProps {
@@ -26,6 +28,8 @@ interface PlayerGameViewProps {
   onSubmitCustomAnswer: (answerText: string) => void;
   onSubmitTextInput: (answerText: string) => void;
   onVoteForAnswer: (answerId: string) => void;
+  onSubmitOrder: (orderedItemIds: string[]) => void;
+  submittedOrder: string[];
 }
 
 export default function PlayerGameView({
@@ -40,6 +44,8 @@ export default function PlayerGameView({
   onSubmitCustomAnswer,
   onSubmitTextInput,
   onVoteForAnswer,
+  onSubmitOrder,
+  submittedOrder,
 }: PlayerGameViewProps) {
   // Waiting for question
   if (!currentQuestion) {
@@ -92,6 +98,19 @@ export default function PlayerGameView({
         hasSubmitted={hasSubmitted}
         submittedText={customAnswerText}
         onSubmitTextInput={onSubmitTextInput}
+      />
+    );
+  }
+
+  // Order Mode - Arrange Items in Order
+  if (currentQuestion.questionType === 'order' && currentQuestion.orderItems) {
+    return (
+      <OrderView
+        player={currentPlayer}
+        orderItems={currentQuestion.orderItems}
+        hasSubmitted={hasSubmitted}
+        submittedOrder={submittedOrder}
+        onSubmitOrder={onSubmitOrder}
       />
     );
   }

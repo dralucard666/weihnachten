@@ -76,6 +76,7 @@ export interface StartGameRequest {
   questionId: string; // First question ID
   questionType: QuestionType; // Type of first question
   answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
+  orderItems?: OrderItem[]; // Items to order (only for order questions)
 }
 
 export interface SetAnswerRequest {
@@ -109,10 +110,11 @@ export interface QuestionResultData {
 export interface Answer {
   id: string;
   text: string;
+  sound?: string[]; // Optional sound files to play on hover
 }
 
 // Question Types
-export type QuestionType = 'multiple-choice' | 'custom-answers' | 'text-input';
+export type QuestionType = 'multiple-choice' | 'custom-answers' | 'text-input' | 'order';
 
 // Media configuration for questions
 export type MediaType = 'video' | 'images';
@@ -139,6 +141,7 @@ export interface NextQuestionRequest {
   questionId: string; // Next question ID
   questionType: QuestionType; // Type of question
   answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
+  orderItems?: OrderItem[]; // Items to order (only for order questions)
 }
 
 // Custom Answers Game Mode
@@ -229,6 +232,36 @@ export interface TextInputResultData {
   correctPlayerIds: string[]; // Players who got it right
 }
 
+// Order Question Type
+export interface OrderItem {
+  id: string;
+  text: string;
+  sound?: string[]; // Optional sound files to play on hover
+}
+
+export interface SubmitOrderRequest {
+  lobbyId: string;
+  playerId: string;
+  questionId: string;
+  orderedItemIds: string[]; // Array of item IDs in player's chosen order
+}
+
+export interface SubmitOrderResponse {
+  success: boolean;
+}
+
+export interface OrderResultRequest {
+  lobbyId: string;
+  questionId: string;
+  correctOrder: string[]; // Array of item IDs in correct order
+}
+
+export interface OrderResultData {
+  correctOrder: string[];
+  playerOrders: PlayerAnswerInfo[]; // answerId contains comma-separated order, answerText has score info
+  playerScores: { [playerId: string]: number }; // Points earned by each player
+}
+
 // Socket.IO Event Types
 export interface ServerToClientEvents {
   // Emitted to all in lobby
@@ -237,7 +270,7 @@ export interface ServerToClientEvents {
   playerLeft: (playerId: string) => void;
   
   // Emitted when game starts or next question
-  questionStarted: (data: { questionId: string, questionIndex: number, questionType: QuestionType, answers?: Answer[] }) => void;
+  questionStarted: (data: { questionId: string, questionIndex: number, questionType: QuestionType, answers?: Answer[], orderItems?: OrderItem[] }) => void;
   
   // Emitted to game master only
   playerAnswered: (playerId: string) => void;
@@ -256,6 +289,7 @@ export interface ServerToClientEvents {
   questionResultReady: (data: QuestionResultData) => void;
   customAnswerResultReady: (data: CustomAnswerResultData) => void;
   textInputResultReady: (data: TextInputResultData) => void;
+  orderResultReady: (data: OrderResultData) => void;
   
   // Emitted after questionResult processed
   scoresUpdated: (players: Player[]) => void;
@@ -285,6 +319,10 @@ export interface ClientToServerEvents {
   submitTextInput: (data: SubmitTextInputRequest, callback: (response: SubmitTextInputResponse) => void) => void;
   getTextInputPlayerAnswers: (data: GetTextInputPlayerAnswersRequest, callback: (response: GetTextInputPlayerAnswersResponse) => void) => void;
   textInputResult: (data: TextInputResultRequest) => void;
+  
+  // Order events
+  submitOrder: (data: SubmitOrderRequest, callback: (response: SubmitOrderResponse) => void) => void;
+  orderResult: (data: OrderResultRequest) => void;
   
   endGame: (lobbyId: string) => void;
 }

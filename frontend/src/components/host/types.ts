@@ -4,6 +4,7 @@ import type {
   CustomAnswer,
   PlayerAnswerInfo,
   QuestionMedia,
+  OrderItem,
 } from "../../../../shared/types";
 
 export interface Question {
@@ -14,5 +15,7 @@ export interface Question {
   correctAnswerId?: string;
   correctAnswer?: string;
   correctAnswers?: string[];
+  orderItems?: OrderItem[];
+  correctOrder?: string[];
   media?: QuestionMedia;
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Player, Answer } from '../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 
@@ -18,6 +18,11 @@ export default function VotingView({
   onVoteForAnswer,
 }: VotingViewProps) {
   const [localVoteAnswer, setLocalVoteAnswer] = useState<string | null>(null);
+
+  // Reset local vote when voting answers change (new voting phase)
+  useEffect(() => {
+    setLocalVoteAnswer(null);
+  }, [votingAnswers]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-200 to-red-100 p-4">

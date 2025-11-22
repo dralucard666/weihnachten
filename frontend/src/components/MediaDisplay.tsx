@@ -35,6 +35,18 @@ export default function MediaDisplay({
     loadMedia();
   }, [media.sources]);
 
+  // Handle Escape key to continue/dismiss
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onComplete) {
+        onComplete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onComplete]);
+
   // Handle video playback
   useEffect(() => {
     if (media.type === "video" && videoRef.current && mediaSources.length > 0) {
@@ -135,20 +147,20 @@ export default function MediaDisplay({
         ? "fixed inset-0 z-50 bg-black"
         : isMinimized
           ? ""
-          : "w-full max-w-4xl mx-auto"
+          : "max-w-4xl max-h-[70vh] mx-auto"
     }
-    bg-black rounded-xl shadow-2xl border-2 border-yellow-400 overflow-hidden
+    bg-black rounded-xl shadow-2xl border-2 border-yellow-400 overflow-hidden flex items-center justify-center
   `;
 
   return (
     <div className={containerClass}>
-      <div className="relative w-full h-full">
+      <div className="relative max-w-full max-h-full flex items-center justify-center">
         {/* Media Content */}
         {media.type === "video" ? (
           <video
             ref={videoRef}
             src={mediaSources[0]}
-            className="w-full h-full object-contain"
+            className="max-w-full max-h-[70vh] object-contain"
             onEnded={handleVideoEnd}
             playsInline
             controls

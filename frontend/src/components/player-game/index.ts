@@ -5,3 +5,4 @@ export { default as CustomAnswerInput } from './CustomAnswerInput';
 export { default as VotingView } from './VotingView';
 export { default as MultipleChoiceView } from './MultipleChoiceView';
 export { default as TextInputView } from './TextInputView';
+export { default as OrderView } from './OrderView';

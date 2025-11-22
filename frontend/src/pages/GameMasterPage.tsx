@@ -4,7 +4,7 @@ import { useGameMaster } from '../hooks/useGameMaster';
 import GameLobbyView from '../components/GameLobbyView';
 import GamePlayingView from '../components/GamePlayingView';
 import GameFinishedView from '../components/GameFinishedView';
-import type { Answer, QuestionType, QuestionMedia } from '../../../shared/types';
+import type { Answer, QuestionType, QuestionMedia, OrderItem } from '../../../shared/types';
 import questionsData from '../data/questions.json';
 
 interface Question {
@@ -15,12 +15,20 @@ interface Question {
   correctAnswerId?: string;
   correctAnswer?: string;
   correctAnswers?: string[]; // For text-input type
+  orderItems?: OrderItem[]; // For order type
+  correctOrder?: string[]; // For order type
   media?: QuestionMedia;
 }
 
 export default function GameMasterPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
-  const [questions] = useState<Question[]>(questionsData as Question[]);
+  const [questions] = useState<Question[]>(
+    (questionsData as Omit<Question, 'id'>[]).map((q, index) => ({
+      ...q,
+      id: index.toString(),
+      correctAnswerId: q.correctAnswerId || `correct-${index}`
+    }))
+  );
 
   const {
     lobby,
@@ -36,9 +44,9 @@ export default function GameMasterPage() {
     allVotesReceived,
     playerAnswers,
     correctPlayerIds,
+    playerScores,
     handleStartGame,
     handleShowAnswer,
-    handleTriggerVoting,
     handleShowVotingResults,
     handleNextQuestion,
     handleReloadQuestion,
@@ -87,8 +95,8 @@ export default function GameMasterPage() {
         allVotesReceived={allVotesReceived}
         playerAnswers={playerAnswers}
         correctPlayerIds={correctPlayerIds}
+        playerScores={playerScores}
         onShowAnswer={handleShowAnswer}
-        onTriggerVoting={handleTriggerVoting}
         onShowVotingResults={handleShowVotingResults}
         onNextQuestion={handleNextQuestion}
         onReloadQuestion={handleReloadQuestion}

@@ -23,6 +23,11 @@ interface PlayerTextInput {
   answerText: string;
 }
 
+interface PlayerOrder {
+  playerId: string;
+  orderedItemIds: string[];
+}
+
 export class LobbyManager {
   private lobbies: Map<string, Lobby> = new Map();
   private playerAnswers: Map<string, Map<string, PlayerAnswer>> = new Map(); // lobbyId -> Map<playerId, answer>
@@ -30,6 +35,7 @@ export class LobbyManager {
   private playerVotes: Map<string, Map<string, PlayerVote>> = new Map(); // lobbyId -> Map<playerId, vote>
   private shuffledAnswers: Map<string, CustomAnswer[]> = new Map(); // lobbyId -> shuffled answers cache
   private textInputAnswers: Map<string, Map<string, PlayerTextInput>> = new Map(); // lobbyId -> Map<playerId, textInput>
+  private orderAnswers: Map<string, Map<string, PlayerOrder>> = new Map(); // lobbyId -> Map<playerId, order>
   private persistenceService: PersistenceService;
 
   constructor() {
@@ -51,6 +57,7 @@ export class LobbyManager {
     this.customAnswers.set(lobbyId, new Map());
     this.playerVotes.set(lobbyId, new Map());
     this.textInputAnswers.set(lobbyId, new Map());
+    this.orderAnswers.set(lobbyId, new Map());
     
     return lobby;
   }
@@ -227,6 +234,7 @@ export class LobbyManager {
     this.playerVotes.set(lobbyId, new Map());
     this.shuffledAnswers.delete(lobbyId);
     this.textInputAnswers.set(lobbyId, new Map());
+    this.orderAnswers.set(lobbyId, new Map());
     
     // Reset hasAnswered flags
     for (const player of lobby.players) {
@@ -580,6 +588,107 @@ export class LobbyManager {
     return { players: lobby.players, correctPlayerIds, playerAnswers };
   }
 
+  // Order Question Methods
+  submitOrder(lobbyId: string, playerId: string, questionId: string, orderedItemIds: string[]): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    
+    if (!lobby || lobby.gameState !== 'playing') {
+      return false;
+    }
+
+    if (lobby.currentQuestionId !== questionId) {
+      return false;
+    }
+
+    const player = lobby.players.find(p => p.id === playerId);
+    
+    if (!player) {
+      return false;
+    }
+
+    const orders = this.orderAnswers.get(lobbyId);
+    
+    if (!orders) {
+      return false;
+    }
+
+    orders.set(playerId, { playerId, orderedItemIds });
+    player.hasAnswered = true;
+    
+    return true;
+  }
+
+  hasEveryoneSubmittedOrder(lobbyId: string): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    
+    if (!lobby) {
+      return false;
+    }
+
+    const playersWithNames = lobby.players.filter(p => p.name);
+    const orders = this.orderAnswers.get(lobbyId);
+    
+    if (!orders || playersWithNames.length === 0) {
+      return false;
+    }
+
+    return playersWithNames.every(player => orders.has(player.id));
+  }
+
+  processOrderResult(lobbyId: string, questionId: string, correctOrder: string[]): { players: Player[], playerOrders: PlayerAnswerInfo[], playerScores: { [playerId: string]: number } } {
+    const lobby = this.lobbies.get(lobbyId);
+    
+    if (!lobby || lobby.currentQuestionId !== questionId) {
+      return { players: [], playerOrders: [], playerScores: {} };
+    }
+
+    const orders = this.orderAnswers.get(lobbyId);
+    
+    if (!orders) {
+      return { players: [], playerOrders: [], playerScores: {} };
+    }
+
+    const playerOrders: PlayerAnswerInfo[] = [];
+    const playerScores: { [playerId: string]: number } = {};
+
+    // Helper function to calculate points based on correct positions
+    const calculateScore = (playerOrder: string[], correctOrder: string[]): number => {
+      let score = 0;
+      const maxPoints = correctOrder.length;
+      
+      for (let i = 0; i < correctOrder.length; i++) {
+        if (playerOrder[i] === correctOrder[i]) {
+          score++;
+        }
+      }
+      
+      // Award full points for perfect order, proportional points otherwise
+      return score === maxPoints ? maxPoints : score;
+    };
+
+    // Process each player's order
+    for (const player of lobby.players) {
+      const order = orders.get(player.id);
+      
+      if (order) {
+        const score = calculateScore(order.orderedItemIds, correctOrder);
+        player.score += score;
+        playerScores[player.id] = score;
+        
+        playerOrders.push({
+          playerId: player.id,
+          answerId: order.orderedItemIds.join(','), // Store as comma-separated string
+          answerText: `${score}/${correctOrder.length} correct`
+        });
+      }
+      
+      // Reset hasAnswered flag
+      player.hasAnswered = false;
+    }
+
+    return { players: lobby.players, playerOrders, playerScores };
+  }
+
   endGame(lobbyId: string): Player[] {
     const lobby = this.lobbies.get(lobbyId);
     
@@ -623,6 +732,7 @@ export class LobbyManager {
       this.playerVotes.delete(lobbyId);
       this.shuffledAnswers.delete(lobbyId);
       this.textInputAnswers.delete(lobbyId);
+      this.orderAnswers.delete(lobbyId);
     }
   }
 
@@ -672,6 +782,9 @@ export class LobbyManager {
       }
       if (!this.textInputAnswers.has(lobbyId)) {
         this.textInputAnswers.set(lobbyId, new Map());
+      }
+      if (!this.orderAnswers.has(lobbyId)) {
+        this.orderAnswers.set(lobbyId, new Map());
       }
       
       console.log(`Lobby ${lobbyId} restored from persistence`);

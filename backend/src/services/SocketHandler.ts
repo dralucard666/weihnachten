@@ -27,7 +27,10 @@ import {
   SubmitTextInputResponse,
   GetTextInputPlayerAnswersRequest,
   GetTextInputPlayerAnswersResponse,
-  TextInputResultRequest
+  TextInputResultRequest,
+  SubmitOrderRequest,
+  SubmitOrderResponse,
+  OrderResultRequest
 } from '../../../shared/types';
 import { LobbyManager } from './LobbyManager';
 
@@ -180,6 +183,7 @@ export class SocketHandler {
             questionIndex: 0,
             questionType: data.questionType,
             answers: data.answers,
+            orderItems: data.orderItems,
           });
         }
         console.log(`Game started in lobby ${data.lobbyId}`);
@@ -252,6 +256,7 @@ export class SocketHandler {
             questionIndex: lobby.currentQuestionIndex,
             questionType: data.questionType,
             answers: data.answers,
+            orderItems: data.orderItems,
           });
         }
         console.log(`Next question ${data.questionId} in lobby ${data.lobbyId}`);
@@ -445,6 +450,51 @@ export class SocketHandler {
         
         this.io.to(data.lobbyId).emit('scoresUpdated', result.players);
         console.log(`Text input results processed for lobby ${data.lobbyId}`);
+      }
+    });
+
+    // Submit Order
+    socket.on('submitOrder', (data: SubmitOrderRequest, callback) => {
+      const success = this.lobbyManager.submitOrder(
+        data.lobbyId,
+        data.playerId,
+        data.questionId,
+        data.orderedItemIds
+      );
+      
+      callback({ success });
+      
+      if (success) {
+        // Notify game master that player submitted
+        socket.to(data.lobbyId).emit('playerAnswered', data.playerId);
+        
+        // Check if everyone submitted
+        if (this.lobbyManager.hasEveryoneSubmittedOrder(data.lobbyId)) {
+          this.io.to(data.lobbyId).emit('everybodyAnswered');
+        }
+        
+        console.log(`Player ${data.playerId} submitted order for question ${data.questionId}`);
+      }
+    });
+
+    // Order Result
+    socket.on('orderResult', (data: OrderResultRequest) => {
+      const result = this.lobbyManager.processOrderResult(
+        data.lobbyId,
+        data.questionId,
+        data.correctOrder
+      );
+      
+      if (result.players.length > 0) {
+        // Send order result data
+        this.io.to(data.lobbyId).emit('orderResultReady', {
+          correctOrder: data.correctOrder,
+          playerOrders: result.playerOrders,
+          playerScores: result.playerScores
+        });
+        
+        this.io.to(data.lobbyId).emit('scoresUpdated', result.players);
+        console.log(`Order results processed for lobby ${data.lobbyId}`);
       }
     });
 

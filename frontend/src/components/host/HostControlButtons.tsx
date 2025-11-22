@@ -1,18 +1,15 @@
-import type { CustomAnswer } from "../../../../shared/types";
-
 interface HostControlButtonsProps {
   isCustomAnswersMode: boolean;
   isTextInputMode: boolean;
+  isOrderMode: boolean;
   isVotingPhase: boolean;
   showCorrectAnswer: boolean;
   allPlayersAnswered: boolean;
   allVotesReceived: boolean;
-  customAnswers: CustomAnswer[];
   currentQuestionIndex: number;
   totalQuestions: number;
   showTextInputPlayerResults: boolean;
   onShowAnswer: () => void;
-  onTriggerVoting: () => void;
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
   onShowTextInputPlayerResults: () => void;
@@ -21,16 +18,15 @@ interface HostControlButtonsProps {
 export default function HostControlButtons({
   isCustomAnswersMode,
   isTextInputMode,
+  isOrderMode,
   isVotingPhase,
   showCorrectAnswer,
   allPlayersAnswered,
   allVotesReceived,
-  customAnswers,
   currentQuestionIndex,
   totalQuestions,
   showTextInputPlayerResults,
   onShowAnswer,
-  onTriggerVoting,
   onShowVotingResults,
   onNextQuestion,
   onShowTextInputPlayerResults,
@@ -50,18 +46,9 @@ export default function HostControlButtons({
         >
           <span>📋</span>
           <span>
-            {allPlayersAnswered ? "Get Answers" : "Waiting for All Players..."}
+            {allPlayersAnswered ? "Get Answers & Start Voting" : "Waiting for All Players..."}
           </span>
         </button>
-        {allPlayersAnswered && customAnswers.length > 0 && (
-          <button
-            onClick={onTriggerVoting}
-            className="px-10 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
-          >
-            <span>🗳️</span>
-            <span>Start Voting</span>
-          </button>
-        )}
       </div>
     );
   }

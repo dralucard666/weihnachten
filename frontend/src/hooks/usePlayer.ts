@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { socketService } from '../services/socket';
-import type { Lobby, Answer, QuestionType } from '../../../shared/types';
+import type { Lobby, Answer, QuestionType, OrderItem } from '../../../shared/types';
 
 interface CurrentQuestion {
   questionId: string;
   questionIndex: number;
   questionType: QuestionType;
   answers?: Answer[];
+  orderItems?: OrderItem[];
 }
 
 const STORAGE_KEYS = {
@@ -29,6 +30,7 @@ export function usePlayer(lobbyId: string | undefined) {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [votingAnswers, setVotingAnswers] = useState<Answer[]>([]);
   const [isVotingPhase, setIsVotingPhase] = useState(false);
+  const [submittedOrder, setSubmittedOrder] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
@@ -43,18 +45,20 @@ export function usePlayer(lobbyId: string | undefined) {
       setLobby(updatedLobby);
     });
 
-    socket.on('questionStarted', (data: { questionId: string; questionIndex: number; questionType: QuestionType; answers?: Answer[] }) => {
+    socket.on('questionStarted', (data: { questionId: string; questionIndex: number; questionType: QuestionType; answers?: Answer[]; orderItems?: OrderItem[] }) => {
       setCurrentQuestion({
         questionId: data.questionId,
         questionIndex: data.questionIndex,
         questionType: data.questionType,
         answers: data.answers,
+        orderItems: data.orderItems,
       });
       setSelectedAnswer(null);
       setCustomAnswerText('');
       setHasSubmitted(false);
       setIsVotingPhase(false);
       setVotingAnswers([]);
+      setSubmittedOrder([]);
       console.log('Question started:', data.questionIndex + 1, 'Type:', data.questionType);
     });
 
@@ -222,6 +226,34 @@ export function usePlayer(lobbyId: string | undefined) {
     );
   };
 
+  const handleSubmitOrder = (orderedItemIds: string[]) => {
+    if (!playerId || !lobbyId || !currentQuestion || hasSubmitted) return;
+
+    setSubmittedOrder(orderedItemIds);
+    setHasSubmitted(true);
+
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.emit(
+      'submitOrder',
+      {
+        lobbyId,
+        playerId,
+        questionId: currentQuestion.questionId,
+        orderedItemIds,
+      },
+      (response) => {
+        console.log('Order submitted:', response);
+        if (!response.success) {
+          setHasSubmitted(false);
+          setSubmittedOrder([]);
+          setError('Failed to submit order');
+        }
+      }
+    );
+  };
+
   const clearStoredSession = () => {
     localStorage.removeItem(STORAGE_KEYS.LOBBY_ID);
     localStorage.removeItem(STORAGE_KEYS.PLAYER_ID);
@@ -306,10 +338,12 @@ export function usePlayer(lobbyId: string | undefined) {
     handleSubmitAnswer,
     handleSubmitCustomAnswer,
     handleSubmitTextInput,
+    handleSubmitOrder,
     handleVoteForAnswer,
     handleReconnect,
     setPlayerName,
     clearStoredSession,
     getStoredSession,
+    submittedOrder,
   };
 }

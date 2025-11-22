@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Player, Answer } from '../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
+import { useHoverSound } from '../../hooks/useHoverSound';
 
 interface MultipleChoiceViewProps {
   player: Player;
@@ -18,6 +19,43 @@ export default function MultipleChoiceView({
   onSubmitAnswer,
 }: MultipleChoiceViewProps) {
   const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | null>(null);
+
+  // Reset local selection when answers change (new question)
+  useEffect(() => {
+    setLocalSelectedAnswer(null);
+  }, [answers]);
+
+  const AnswerButton = ({ answer, idx }: { answer: Answer; idx: number }) => {
+    const soundHandlers = useHoverSound(answer.sound);
+    
+    return (
+      <button
+        key={answer.id}
+        onClick={() => setLocalSelectedAnswer(answer.id)}
+        onMouseEnter={soundHandlers.onMouseEnter}
+        onMouseLeave={soundHandlers.onMouseLeave}
+        disabled={hasSubmitted}
+        className={`p-5 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
+          hasSubmitted && selectedAnswer === answer.id
+            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ring-4 ring-blue-300 scale-105'
+            : localSelectedAnswer === answer.id
+            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white ring-4 ring-blue-300'
+            : hasSubmitted
+            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+            hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : localSelectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-purple-900'
+          }`}>
+            {String.fromCharCode(65 + idx)}
+          </div>
+          <span className="flex-1 text-left">{answer.text}</span>
+        </div>
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-200 to-purple-100 p-4">
@@ -37,29 +75,7 @@ export default function MultipleChoiceView({
 
           <div className="grid grid-cols-1 gap-4">
             {answers.map((answer, idx) => (
-              <button
-                key={answer.id}
-                onClick={() => setLocalSelectedAnswer(answer.id)}
-                disabled={hasSubmitted}
-                className={`p-5 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
-                  hasSubmitted && selectedAnswer === answer.id
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ring-4 ring-blue-300 scale-105'
-                    : localSelectedAnswer === answer.id
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white ring-4 ring-blue-300'
-                    : hasSubmitted
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                    hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : localSelectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-purple-900'
-                  }`}>
-                    {String.fromCharCode(65 + idx)}
-                  </div>
-                  <span className="flex-1 text-left">{answer.text}</span>
-                </div>
-              </button>
+              <AnswerButton key={answer.id} answer={answer} idx={idx} />
             ))}
           </div>
 

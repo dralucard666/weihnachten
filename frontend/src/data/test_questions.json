@@ -1,0 +1,53 @@
+[
+  {
+    "id": "q1",
+    "text": "Ordne die folgenden Filme nach ihrem Erscheinungsjahr (ältester zuerst):",
+    "type": "order",
+    "orderItems": [
+      {
+        "id": "item1",
+        "text": "Der Pate"
+      },
+      {
+        "id": "item2",
+        "text": "Star Wars: Eine neue Hoffnung"
+      },
+      {
+        "id": "item3",
+        "text": "E.T. - Der Außerirdische"
+      },
+      {
+        "id": "item4",
+        "text": "Jurassic Park"
+      },
+      {
+        "id": "item5",
+        "text": "Titanic"
+      }
+    ],
+    "correctOrder": ["item1", "item2", "item3", "item4", "item5"]
+  },
+  {
+    "id": "q3",
+    "text": "Wie viele Oscars hat der Film 'Titanic' (1997) gewonnen?",
+    "type": "text-input",
+    "correctAnswers": ["11", "elf", "Elf", "11 Oscars", "elf Oscars"]
+  },
+  {
+    "id": "q4",
+    "text": "In welchem Jahr wurde der erste Harry Potter Film veröffentlicht?",
+    "type": "text-input",
+    "correctAnswers": ["2001"]
+  },
+  {
+    "id": "q5",
+    "text": "Wer ist der Regisseur von 'Pulp Fiction'?",
+    "type": "text-input",
+    "correctAnswers": [
+      "Quentin Tarantino",
+      "Tarantino",
+      "tarantino",
+      "quentin tarantino"
+    ]
+  }
+]
