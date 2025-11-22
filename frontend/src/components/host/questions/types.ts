@@ -5,7 +5,7 @@ import type {
   PlayerAnswerInfo,
   QuestionMedia,
   OrderItem,
-} from "../../../../shared/types";
+} from "../../../../../shared/types";
 
 export interface Question {
   id: string;

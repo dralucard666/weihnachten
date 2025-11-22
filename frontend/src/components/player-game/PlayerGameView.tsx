@@ -1,4 +1,4 @@
-import type { Player, Answer, QuestionType, OrderItem } from '../../../shared/types';
+import type { Player, Answer, QuestionType, OrderItem } from '../../../../shared/types';
 import {
   WaitingView,
   CustomAnswerInput,
@@ -6,7 +6,7 @@ import {
   MultipleChoiceView,
   TextInputView,
   OrderView,
-} from './player-game';
+} from './answers';
 
 interface CurrentQuestion {
   questionId: string;

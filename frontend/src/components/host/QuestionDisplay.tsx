@@ -1,5 +1,5 @@
-import type { Answer } from '../../../shared/types';
-import { useHoverSound } from '../hooks/useHoverSound';
+import type { Answer } from '../../../../shared/types';
+import { useHoverSound } from '../../hooks/useHoverSound';
 
 interface QuestionDisplayProps {
   questionText: string;

@@ -1,6 +1,6 @@
 import type { Question } from './types';
-import type { Player, PlayerAnswerInfo, OrderItem } from '../../../../shared/types';
-import { useHoverSound } from '../../hooks/useHoverSound';
+import type { Player, PlayerAnswerInfo, OrderItem } from '../../../../../shared/types';
+import { useHoverSound } from '../../../hooks/useHoverSound';
 
 interface HostOrderDisplayProps {
   question: Question;

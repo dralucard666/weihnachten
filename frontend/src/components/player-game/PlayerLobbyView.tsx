@@ -1,4 +1,4 @@
-import type { Lobby } from '../../../shared/types';
+import type { Lobby } from '../../../../shared/types';
 
 interface PlayerLobbyViewProps {
   lobby: Lobby;

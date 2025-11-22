@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { Player, Answer } from '../../../../shared/types';
+import type { Player, Answer } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
-import { useHoverSound } from '../../hooks/useHoverSound';
+import { useHoverSound } from '../../../hooks/useHoverSound';
 
 interface MultipleChoiceViewProps {
   player: Player;

@@ -1,4 +1,4 @@
-import type { Player, PlayerAnswerInfo } from "../../../../shared/types";
+import type { Player, PlayerAnswerInfo } from "../../../../../shared/types";
 import type { Question } from "./types";
 
 interface HostTextInputDisplayProps {

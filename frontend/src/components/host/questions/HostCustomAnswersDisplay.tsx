@@ -1,4 +1,4 @@
-import type { CustomAnswer, Player } from "../../../../shared/types";
+import type { CustomAnswer, Player } from "../../../../../shared/types";
 import type { Question } from "./types";
 
 interface HostCustomAnswersDisplayProps {

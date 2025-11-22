@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import type { Player, OrderItem } from '../../../../shared/types';
+import type { Player, OrderItem } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
-import { useHoverSound } from '../../hooks/useHoverSound';
+import { useHoverSound } from '../../../hooks/useHoverSound';
 
 interface OrderViewProps {
   player: Player;

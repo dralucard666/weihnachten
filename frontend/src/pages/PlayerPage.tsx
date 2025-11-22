@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
-import PlayerJoinView from '../components/PlayerJoinView';
-import PlayerLobbyView from '../components/PlayerLobbyView';
-import PlayerGameView from '../components/PlayerGameView';
-import PlayerFinishedView from '../components/PlayerFinishedView';
+import PlayerJoinView from '../components/player-game/PlayerJoinView';
+import PlayerLobbyView from '../components/player-game/PlayerLobbyView';
+import PlayerGameView from '../components/player-game/PlayerGameView';
+import PlayerFinishedView from '../components/player-game/PlayerFinishedView';
 import ReconnectModal from '../components/ReconnectModal';
 
 export default function PlayerPage() {

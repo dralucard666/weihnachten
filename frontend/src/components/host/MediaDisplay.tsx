@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import type { MediaConfig } from "../../../shared/types";
-import { loadMediaBatch } from "../utils/mediaLoader";
+import type { MediaConfig } from "../../../../shared/types";
+import { loadMediaBatch } from "../../utils/mediaLoader";
 
 interface MediaDisplayProps {
   media: MediaConfig;

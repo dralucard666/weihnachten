@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Player, Answer } from '../../../../shared/types';
+import type { Player, Answer } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 
 interface VotingViewProps {

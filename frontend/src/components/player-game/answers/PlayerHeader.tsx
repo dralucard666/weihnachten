@@ -1,4 +1,4 @@
-import type { Player } from '../../../../shared/types';
+import type { Player } from '../../../../../shared/types';
 
 interface PlayerHeaderProps {
   player: Player;

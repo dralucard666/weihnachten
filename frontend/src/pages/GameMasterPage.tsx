@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGameMaster } from '../hooks/useGameMaster';
 import GameLobbyView from '../components/GameLobbyView';
-import GamePlayingView from '../components/GamePlayingView';
-import GameFinishedView from '../components/GameFinishedView';
+import GamePlayingView from '../components/host/GamePlayingView';
+import GameFinishedView from '../components/host/GameFinishedView';
 import type { Answer, QuestionType, QuestionMedia, OrderItem } from '../../../shared/types';
 import questionsData from '../data/questions.json';
 

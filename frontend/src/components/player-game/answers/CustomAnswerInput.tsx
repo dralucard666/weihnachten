@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Player } from '../../../../shared/types';
+import type { Player } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
 

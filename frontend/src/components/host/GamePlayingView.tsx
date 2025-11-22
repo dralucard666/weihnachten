@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import QuestionDisplay from "./QuestionDisplay";
 import MediaDisplay from "./MediaDisplay";
-import { socketService } from "../services/socket";
+import { socketService } from "../../services/socket";
 import {
   HostHeader,
   HostPlayerStatus,
@@ -10,12 +10,12 @@ import {
   HostTextInputDisplay,
   HostOrderDisplay,
   type Question,
-} from "./host";
+} from "../host/questions";
 import type {
   Lobby,
   CustomAnswer,
   PlayerAnswerInfo,
-} from "../../../shared/types";
+} from "../../../../shared/types";
 
 interface GamePlayingViewProps {
   lobby: Lobby;
