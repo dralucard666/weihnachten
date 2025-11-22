@@ -1,10 +1,12 @@
-import type { Lobby } from '../../../shared/types';
+import type { Lobby } from '../../../../shared/types';
+import { useI18n } from '../../i18n/useI18n';
 
 interface GameFinishedViewProps {
   lobby: Lobby;
 }
 
 export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
+  const { t } = useI18n();
   const sortedPlayers = [...lobby.players].sort((a, b) => b.score - a.score);
 
   const getPodiumEmoji = (index: number) => {
@@ -20,10 +22,10 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <h1 className="text-5xl font-extrabold text-gray-800">Game Over!</h1>
+            <h1 className="text-5xl font-extrabold text-gray-800">{t.gameFinished.gameOver}</h1>
             <span className="ml-3 text-6xl">🎉</span>
           </div>
-          <p className="text-xl text-gray-700">Final Results</p>
+          <p className="text-xl text-gray-700">{t.gameFinished.finalResults}</p>
         </div>
 
         {/* Main Results Card */}
@@ -37,7 +39,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
                 <div className="bg-gradient-to-br from-gray-300 to-gray-400 rounded-xl p-4 w-full text-center shadow-lg h-28 flex flex-col justify-center">
                   <div className="font-bold text-gray-800 text-lg truncate">{sortedPlayers[1].name}</div>
                   <div className="text-2xl font-extrabold text-gray-700">{sortedPlayers[1].score}</div>
-                  <div className="text-xs text-gray-600">points</div>
+                  <div className="text-xs text-gray-600">{t.lobby.points}</div>
                 </div>
               </div>
 
@@ -47,7 +49,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
                 <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl p-4 w-full text-center shadow-2xl h-36 flex flex-col justify-center ring-4 ring-yellow-300">
                   <div className="font-bold text-yellow-900 text-xl truncate">{sortedPlayers[0].name}</div>
                   <div className="text-3xl font-extrabold text-yellow-900">{sortedPlayers[0].score}</div>
-                  <div className="text-xs text-yellow-800">points</div>
+                  <div className="text-xs text-yellow-800">{t.lobby.points}</div>
                 </div>
               </div>
 
@@ -58,7 +60,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
                   <div className="bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl p-4 w-full text-center shadow-lg h-24 flex flex-col justify-center">
                     <div className="font-bold text-orange-900 text-lg truncate">{sortedPlayers[2].name}</div>
                     <div className="text-2xl font-extrabold text-orange-800">{sortedPlayers[2].score}</div>
-                    <div className="text-xs text-orange-700">points</div>
+                    <div className="text-xs text-orange-700">{t.lobby.points}</div>
                   </div>
                 </div>
               )}
@@ -67,7 +69,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
 
           {/* All Players List */}
           <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">Full Scoreboard</h2>
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">{t.gameFinished.fullScoreboard}</h2>
             {sortedPlayers.map((player, index) => (
               <div
                 key={player.id}
@@ -102,7 +104,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
                   index === 0 ? 'text-yellow-700' : 'text-gray-700'
                 }`}>
                   {player.score}
-                  <span className="text-sm ml-1">pts</span>
+                  <span className="text-sm ml-1">{t.gameFinished.pts}</span>
                 </div>
               </div>
             ))}
@@ -112,7 +114,7 @@ export default function GameFinishedView({ lobby }: GameFinishedViewProps) {
         {/* Thank You Message */}
         <div className="text-center bg-white/60 backdrop-blur-md rounded-[20px] shadow-lg p-6">
           <p className="text-lg text-gray-700 font-semibold">
-            🎊 Thanks for playing! 🎊
+            🎊 {t.gameFinished.thanksForPlaying} 🎊
           </p>
         </div>
       </div>

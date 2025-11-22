@@ -6,8 +6,10 @@ import PlayerLobbyView from '../components/player-game/PlayerLobbyView';
 import PlayerGameView from '../components/player-game/PlayerGameView';
 import PlayerFinishedView from '../components/player-game/PlayerFinishedView';
 import ReconnectModal from '../components/ReconnectModal';
+import { useI18n } from '../i18n/useI18n';
 
 export default function PlayerPage() {
+  const { t } = useI18n();
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   const [manualLobbyId, setManualLobbyId] = useState('');
@@ -85,29 +87,29 @@ export default function PlayerPage() {
             )}
 
             <div className="flex items-center justify-center mb-6">
-              <h1 className="text-4xl font-extrabold text-gray-800">Join a Game</h1>
+              <h1 className="text-4xl font-extrabold text-gray-800">{t.playerJoin.joinGame}</h1>
               <span className="ml-2 text-5xl">📱</span>
             </div>
             
             <div className="text-6xl mb-6">🎯</div>
             
             <p className="text-gray-700 mb-2 font-semibold">
-              To join a game, scan the QR code displayed by the game master.
+              {t.playerJoin.scanQR}
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              The QR code will automatically take you to the right lobby.
+              {t.playerJoin.qrDescription}
             </p>
             
             <div className="border-t-2 border-gray-200 pt-6 mt-6">
               <p className="text-gray-700 font-bold mb-3">
-                Or enter a lobby code:
+                {t.playerJoin.orEnterCode}
               </p>
               <form onSubmit={handleManualJoin} className="space-y-3">
                 <input
                   type="text"
                   value={manualLobbyId}
                   onChange={(e) => setManualLobbyId(e.target.value)}
-                  placeholder="Enter lobby code"
+                  placeholder={t.playerJoin.enterLobbyCode}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-center font-mono text-lg"
                 />
                 <button
@@ -115,7 +117,7 @@ export default function PlayerPage() {
                   disabled={!manualLobbyId.trim()}
                   className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
                 >
-                  🚀 Join Game
+                  🚀 {t.playerJoin.joinGameAction}
                 </button>
               </form>
             </div>
@@ -153,7 +155,7 @@ export default function PlayerPage() {
   if (!lobby || !playerId) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-gray-600">{t.common.loading}</div>
       </div>
     );
   }
@@ -163,7 +165,7 @@ export default function PlayerPage() {
   if (!currentPlayer) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-xl text-gray-600">Error: Player not found</div>
+        <div className="text-xl text-gray-600">{t.common.error}: Player not found</div>
       </div>
     );
   }

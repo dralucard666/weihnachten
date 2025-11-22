@@ -247,6 +247,7 @@ export class SocketHandler {
     socket.on('nextQuestion', (data: NextQuestionRequest) => {
       const success = this.lobbyManager.nextQuestion(data.lobbyId, data.questionId);
       
+      console.log('next question triggered')
       if (success) {
         const lobby = this.lobbyManager.getLobby(data.lobbyId);
         if (lobby) {

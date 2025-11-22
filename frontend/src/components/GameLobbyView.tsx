@@ -1,13 +1,21 @@
-import { QRCodeSVG } from 'qrcode.react';
-import type { Lobby } from '../../../shared/types';
+import { QRCodeSVG } from "qrcode.react";
+import type { Lobby } from "../../../shared/types";
+import { useI18n } from "../i18n/useI18n";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface GameLobbyViewProps {
   lobby: Lobby;
   onStartGame: () => void;
 }
 
-export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps) {
-  const playerJoinUrl = `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/player/${lobby.id}`;
+export default function GameLobbyView({
+  lobby,
+  onStartGame,
+}: GameLobbyViewProps) {
+  const { t } = useI18n();
+  const playerJoinUrl = `${
+    import.meta.env.VITE_FRONTEND_URL || window.location.origin
+  }/player/${lobby.id}`;
   const playersWithNames = lobby.players.filter((p) => p.name);
 
   return (
@@ -16,43 +24,52 @@ export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <h1 className="text-5xl font-extrabold text-gray-800">Game Lobby</h1>
+            <h1 className="text-5xl font-extrabold text-gray-800">
+              {t.lobby.title}
+            </h1>
             <span className="ml-3 text-6xl">🎮</span>
           </div>
           <div className="bg-white/60 backdrop-blur-md rounded-[20px] shadow-lg p-4 inline-block">
             <p className="text-gray-700 text-lg">
-              Lobby Code: <span className="font-mono font-bold text-3xl text-blue-600">{lobby.id}</span>
+              {t.lobby.lobbyCode}:{" "}
+              <span className="font-mono font-bold text-3xl text-blue-600">
+                {lobby.id}
+              </span>
             </p>
           </div>
         </div>
+
+        <LanguageSwitcher />
 
         {/* Main Content Card */}
         <div className="bg-white rounded-[20px] shadow-xl p-8 mb-6">
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             {/* QR Code Section */}
-            <div className="flex flex-col items-center justify-center">
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-[20px] p-6 shadow-md">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">📱 Scan to Join</h2>
-                <div className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex flex-col items-center justify-center flex-1">
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-[20px] p-6 shadow-md w-full">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">
+                  📱 {t.lobby.scanToJoin}
+                </h2>
+                <div className="bg-white p-6 rounded-xl shadow-lg flex items-center justify-center">
                   <QRCodeSVG value={playerJoinUrl} size={220} level="H" />
                 </div>
-                <p className="text-sm text-gray-600 mt-4 text-center max-w-[250px]">
-                  Players can scan this QR code with their phones to join instantly
+                <p className="text-sm text-gray-600 mt-4 text-center min-h-[40px] max-w-[300px] mx-auto">
+                  {t.lobby.scanDescription}
                 </p>
               </div>
             </div>
 
             {/* Players List Section */}
-            <div className="flex flex-col">
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-[20px] p-6 shadow-md h-full flex flex-col">
+            <div className="flex flex-col flex-1">
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-[20px] p-6 shadow-md h-full flex flex-col w-full">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">
-                  👥 Players ({playersWithNames.length})
+                  👥 {t.lobby.players} ({playersWithNames.length})
                 </h2>
                 <div className="flex-1 overflow-auto">
                   {playersWithNames.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 py-8">
                       <span className="text-5xl mb-3">⏳</span>
-                      <p className="text-center">Waiting for players to join...</p>
+                      <p className="text-center">{t.lobby.waitingForPlayers}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -66,16 +83,32 @@ export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps
                               {player.name!.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-bold text-gray-800 text-lg">{player.name}</div>
+                              <div className="font-bold text-gray-800 text-lg">
+                                {player.name}
+                              </div>
                               <div className="text-sm text-gray-500 flex items-center gap-1">
-                                <span className={player.connected ? 'text-green-500' : 'text-red-500'}>●</span>
-                                {player.connected ? 'Connected' : 'Disconnected'}
+                                <span
+                                  className={
+                                    player.connected
+                                      ? "text-green-500"
+                                      : "text-red-500"
+                                  }
+                                >
+                                  ●
+                                </span>
+                                {player.connected
+                                  ? t.lobby.connected
+                                  : t.lobby.disconnected}
                               </div>
                             </div>
                           </div>
                           <div className="flex flex-col items-end">
-                            <div className="text-2xl font-bold text-blue-600">{player.score}</div>
-                            <div className="text-xs text-gray-500">points</div>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {player.score}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {t.lobby.points}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -94,19 +127,25 @@ export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps
             disabled={playersWithNames.length === 0}
             className={`px-12 py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
               playersWithNames.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
             }`}
           >
             {playersWithNames.length === 0 ? (
               <>
                 <span>⏳</span>
-                <span>Waiting for Players</span>
+                <span>{t.lobby.waitingForPlayersButton}</span>
               </>
             ) : (
               <>
                 <span>🚀</span>
-                <span>Start Game ({playersWithNames.length} player{playersWithNames.length !== 1 ? 's' : ''})</span>
+                <span>
+                  {t.lobby.startGame} ({playersWithNames.length}{" "}
+                  {playersWithNames.length === 1
+                    ? t.lobby.player
+                    : t.lobby.players_plural}
+                  )
+                </span>
               </>
             )}
           </button>

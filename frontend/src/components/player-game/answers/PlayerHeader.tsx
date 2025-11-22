@@ -1,4 +1,5 @@
 import type { Player } from '../../../../../shared/types';
+import { useI18n } from '../../../i18n/useI18n';
 
 interface PlayerHeaderProps {
   player: Player;
@@ -6,6 +7,7 @@ interface PlayerHeaderProps {
 }
 
 export default function PlayerHeader({ player, scoreColor = 'blue' }: PlayerHeaderProps) {
+  const { t } = useI18n();
   const colorClasses = {
     blue: 'text-blue-600',
     orange: 'text-orange-600',
@@ -23,7 +25,7 @@ export default function PlayerHeader({ player, scoreColor = 'blue' }: PlayerHead
           </h2>
         </div>
         <div className="text-right">
-          <div className="text-sm text-gray-600">Score</div>
+          <div className="text-sm text-gray-600">{t.game.score}</div>
           <div className={`text-2xl font-extrabold ${colorClasses[scoreColor as keyof typeof colorClasses] || colorClasses.blue}`}>
             {player.score || 0}
           </div>

@@ -61,16 +61,19 @@ export default function GamePlayingView({
   const isCustomAnswersMode = currentQuestion.type === "custom-answers";
   const isTextInputMode = currentQuestion.type === "text-input";
   const isOrderMode = currentQuestion.type === "order";
-  
+
   // Media display states
   const [showBeforeQuestionMedia, setShowBeforeQuestionMedia] = useState(
     !!currentQuestion.media?.beforeQuestion
   );
   const [showBeforeAnswerMedia, setShowBeforeAnswerMedia] = useState(false);
-  
+
   // Text-input player results state
-  const [showTextInputPlayerResults, setShowTextInputPlayerResults] = useState(false);
-  const [textInputPlayerAnswers, setTextInputPlayerAnswers] = useState<PlayerAnswerInfo[]>([]);
+  const [showTextInputPlayerResults, setShowTextInputPlayerResults] =
+    useState(false);
+  const [textInputPlayerAnswers, setTextInputPlayerAnswers] = useState<
+    PlayerAnswerInfo[]
+  >([]);
 
   // Reset media states when question changes
   useEffect(() => {
@@ -84,13 +87,17 @@ export default function GamePlayingView({
     const socket = socketService.getSocket();
     if (!socket) return;
 
-    socket.emit('getTextInputPlayerAnswers', {
-      lobbyId: lobby.id,
-      questionId: currentQuestion.id
-    }, (response) => {
-      setTextInputPlayerAnswers(response.playerAnswers);
-      setShowTextInputPlayerResults(true);
-    });
+    socket.emit(
+      "getTextInputPlayerAnswers",
+      {
+        lobbyId: lobby.id,
+        questionId: currentQuestion.id,
+      },
+      (response) => {
+        setTextInputPlayerAnswers(response.playerAnswers);
+        setShowTextInputPlayerResults(true);
+      }
+    );
   };
 
   // Show before-answer media when correct answer is revealed
@@ -125,7 +132,7 @@ export default function GamePlayingView({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 p-6">
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 p-6">
       <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col">
         {/* Header with Progress */}
         <HostHeader
@@ -210,7 +217,6 @@ export default function GamePlayingView({
         <HostControlButtons
           isCustomAnswersMode={isCustomAnswersMode}
           isTextInputMode={isTextInputMode}
-          isOrderMode={isOrderMode}
           isVotingPhase={isVotingPhase}
           showCorrectAnswer={showCorrectAnswer}
           allPlayersAnswered={allPlayersAnswered}
@@ -221,8 +227,8 @@ export default function GamePlayingView({
           onShowAnswer={handleShowAnswerClick}
           onShowVotingResults={handleShowVotingResultsClick}
           onNextQuestion={onNextQuestion}
-          onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
           onReloadQuestion={onReloadQuestion}
+          onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
         />
       </div>
     </div>

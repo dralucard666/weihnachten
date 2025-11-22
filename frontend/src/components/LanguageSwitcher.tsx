@@ -1,0 +1,28 @@
+import { useI18n } from "../i18n/useI18n";
+
+interface LanguageSwitcherProps {
+  className?: string;
+}
+
+export default function LanguageSwitcher({ className }: LanguageSwitcherProps) {
+  const { language, setLanguage } = useI18n();
+
+  const toggleLanguage = () => {
+    setLanguage(language === "de" ? "en" : "de");
+  };
+
+  return (
+    <button
+      onClick={toggleLanguage}
+      className={`absolute bottom-4 right-4 z-50 cursor-pointer flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md hover:bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ${
+        className || ""
+      }`}
+      title={`Switch to ${language === "de" ? "English" : "Deutsch"}`}
+    >
+      <span className="text-lg">🗣️</span>
+      <span className="font-semibold text-gray-700">
+        {language.toUpperCase()}
+      </span>
+    </button>
+  );
+}

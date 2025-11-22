@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import type { Player } from '../../../../../shared/types';
-import PlayerHeader from './PlayerHeader';
-import SubmissionConfirmation from './SubmissionConfirmation';
+import { useState } from "react";
+import type { Player } from "../../../../../shared/types";
+import PlayerHeader from "./PlayerHeader";
+import SubmissionConfirmation from "./SubmissionConfirmation";
+import { useI18n } from "../../../i18n/useI18n";
 
 interface CustomAnswerInputProps {
   player: Player;
@@ -16,7 +17,8 @@ export default function CustomAnswerInput({
   submittedText,
   onSubmitCustomAnswer,
 }: CustomAnswerInputProps) {
-  const [localCustomAnswer, setLocalCustomAnswer] = useState('');
+  const { t } = useI18n();
+  const [localCustomAnswer, setLocalCustomAnswer] = useState("");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 to-pink-100 p-4">
@@ -27,11 +29,9 @@ export default function CustomAnswerInput({
           <div className="text-center mb-6">
             <span className="text-4xl mb-2 block">✍️</span>
             <h3 className="text-2xl font-extrabold text-gray-800 mb-2">
-              WRITE YOUR ANSWER
+              {t.playerGame.writeYourAnswer}
             </h3>
-            <p className="text-gray-600">
-              Look at the game master's screen for the question, then write your answer below.
-            </p>
+            <p className="text-gray-600">{t.playerGame.lookAtScreen}</p>
           </div>
 
           {!hasSubmitted ? (
@@ -39,7 +39,7 @@ export default function CustomAnswerInput({
               <textarea
                 value={localCustomAnswer}
                 onChange={(e) => setLocalCustomAnswer(e.target.value)}
-                placeholder="Type your answer here..."
+                placeholder={t.playerGame.yourAnswer}
                 className="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-lg min-h-[140px] resize-none shadow-inner"
                 maxLength={200}
               />
@@ -53,14 +53,14 @@ export default function CustomAnswerInput({
                   }
                 }}
                 disabled={!localCustomAnswer.trim()}
-                className="mt-4 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
+                className="cursor-pointer  mt-4 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
               >
                 <span>📤</span>
-                <span>Submit Answer</span>
+                <span>{t.playerGame.submitAnswer}</span>
               </button>
             </div>
           ) : (
-            <SubmissionConfirmation 
+            <SubmissionConfirmation
               submittedText={submittedText}
               backgroundColor="from-purple-50 to-pink-50"
             />

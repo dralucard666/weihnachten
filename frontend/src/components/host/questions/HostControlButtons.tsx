@@ -1,7 +1,9 @@
+import { useI18n } from "../../../i18n/useI18n";
+import LanguageSwitcher from "../../LanguageSwitcher";
+
 interface HostControlButtonsProps {
   isCustomAnswersMode: boolean;
   isTextInputMode: boolean;
-  isOrderMode: boolean;
   isVotingPhase: boolean;
   showCorrectAnswer: boolean;
   allPlayersAnswered: boolean;
@@ -19,7 +21,6 @@ interface HostControlButtonsProps {
 export default function HostControlButtons({
   isCustomAnswersMode,
   isTextInputMode,
-  isOrderMode,
   isVotingPhase,
   showCorrectAnswer,
   allPlayersAnswered,
@@ -33,6 +34,7 @@ export default function HostControlButtons({
   onShowTextInputPlayerResults,
   onReloadQuestion,
 }: HostControlButtonsProps) {
+  const { t } = useI18n();
   const isLastQuestion = currentQuestionIndex + 1 >= totalQuestions;
 
   // Render primary action button
@@ -49,9 +51,11 @@ export default function HostControlButtons({
               : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
           }`}
         >
-          <span>📋</span>
+          <span>💡</span>
           <span>
-            {allPlayersAnswered ? "Get Answers & Start Voting" : "Waiting for All Players..."}
+            {allPlayersAnswered
+              ? t.hostControls.showAnswer
+              : t.hostControls.waitingForAllPlayers}
           </span>
         </button>
       );
@@ -71,7 +75,9 @@ export default function HostControlButtons({
         >
           <span>📊</span>
           <span>
-            {allVotesReceived ? "Show Results" : "Waiting for All Votes..."}
+            {allVotesReceived
+              ? t.hostControls.showResults
+              : t.hostControls.waitingForAllVotes}
           </span>
         </button>
       );
@@ -85,7 +91,7 @@ export default function HostControlButtons({
           className="px-10 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>📝</span>
-          <span>Show Player Results</span>
+          <span>{t.hostControls.showPlayerResults}</span>
         </button>
       ) : null;
     }
@@ -98,7 +104,7 @@ export default function HostControlButtons({
           className="px-10 py-4 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>💡</span>
-          <span>Show Answer</span>
+          <span>{t.hostControls.showAnswer}</span>
         </button>
       );
     }
@@ -111,7 +117,11 @@ export default function HostControlButtons({
           className="px-10 py-4 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>{isLastQuestion ? "🏁" : "➡️"}</span>
-          <span>{isLastQuestion ? "Finish Game" : "Next Question"}</span>
+          <span>
+            {isLastQuestion
+              ? t.hostControls.finishGame
+              : t.hostControls.nextQuestion}
+          </span>
         </button>
       );
     }
@@ -129,25 +139,29 @@ export default function HostControlButtons({
       >
         <span>💡</span>
         <span>
-          {allPlayersAnswered ? "Show Answer" : "Waiting for All Players..."}
+          {allPlayersAnswered
+            ? t.hostControls.showAnswer
+            : t.hostControls.waitingForAllPlayers}
         </span>
       </button>
     );
   };
 
   return (
-    <div className="relative">
+    <div>
       <div className="flex justify-center items-center gap-4 flex-wrap">
         {renderPrimaryButton()}
       </div>
-      <button
-        onClick={onReloadQuestion}
-        className="cursor-pointer absolute bottom-0 right-0 px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md"
-        title="Reset current question state"
-      >
-        <span>🔄</span>
-        <span className="font-semibold">Reload</span>
-      </button>
+      <div className="absolute bottom-3 left-4 flex gap-2">
+        <button
+          onClick={onReloadQuestion}
+          className="cursor-pointer px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md"
+          title={t.game.reload}
+        >
+          <span>🔄</span>
+        </button>
+      </div>
+      <LanguageSwitcher />
     </div>
   );
 }

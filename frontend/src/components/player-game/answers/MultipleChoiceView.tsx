@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { Player, Answer } from '../../../../../shared/types';
-import PlayerHeader from './PlayerHeader';
-import { useHoverSound } from '../../../hooks/useHoverSound';
+import { useState, useEffect } from "react";
+import type { Player, Answer } from "../../../../../shared/types";
+import PlayerHeader from "./PlayerHeader";
+import { useHoverSound } from "../../../hooks/useHoverSound";
+import { useI18n } from "../../../i18n/useI18n";
 
 interface MultipleChoiceViewProps {
   player: Player;
@@ -18,7 +19,10 @@ export default function MultipleChoiceView({
   hasSubmitted,
   onSubmitAnswer,
 }: MultipleChoiceViewProps) {
-  const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | null>(null);
+  const { t } = useI18n();
+  const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | null>(
+    null
+  );
 
   // Reset local selection when answers change (new question)
   useEffect(() => {
@@ -27,7 +31,7 @@ export default function MultipleChoiceView({
 
   const AnswerButton = ({ answer, idx }: { answer: Answer; idx: number }) => {
     const soundHandlers = useHoverSound(answer.sound);
-    
+
     return (
       <button
         key={answer.id}
@@ -35,20 +39,26 @@ export default function MultipleChoiceView({
         onMouseEnter={soundHandlers.onMouseEnter}
         onMouseLeave={soundHandlers.onMouseLeave}
         disabled={hasSubmitted}
-        className={`p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
+        className={`cursor-pointer p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
           hasSubmitted && selectedAnswer === answer.id
-            ? 'bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]'
+            ? "bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]"
             : localSelectedAnswer === answer.id
-            ? 'bg-blue-500 text-white ring-2 ring-blue-300'
+            ? "bg-blue-500 text-white ring-2 ring-blue-300"
             : hasSubmitted
-            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            : 'bg-purple-500 text-white hover:bg-purple-600'
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-purple-500 text-white hover:bg-purple-600"
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-            hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-200 text-blue-900' : localSelectedAnswer === answer.id ? 'bg-blue-200 text-blue-900' : 'bg-white/30 text-white'
-          }`}>
+          <div
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+              hasSubmitted && selectedAnswer === answer.id
+                ? "bg-blue-200 text-blue-900"
+                : localSelectedAnswer === answer.id
+                ? "bg-blue-200 text-blue-900"
+                : "bg-white/30 text-white"
+            }`}
+          >
             {String.fromCharCode(65 + idx)}
           </div>
           <span className="flex-1 text-left">{answer.text}</span>
@@ -82,10 +92,10 @@ export default function MultipleChoiceView({
           {!hasSubmitted && localSelectedAnswer && (
             <button
               onClick={() => onSubmitAnswer(localSelectedAnswer)}
-              className="mt-6 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
+              className="cursor-pointer  mt-6 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
             >
               <span>✓</span>
-              <span>Confirm Answer</span>
+              <span>{t.playerGame.submitAnswer}</span>
             </button>
           )}
 
@@ -93,7 +103,9 @@ export default function MultipleChoiceView({
             <div className="mt-6 text-center">
               <div className="bg-green-50 border-2 border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center justify-center gap-2">
                 <span className="text-2xl">✓</span>
-                <span className="font-bold">Answer submitted! Watch the screen for results.</span>
+                <span className="font-bold">
+                  {t.playerGame.answerSubmittedWatch}
+                </span>
               </div>
             </div>
           )}

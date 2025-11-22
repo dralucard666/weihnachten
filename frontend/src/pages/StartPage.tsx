@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import ReconnectMasterModal from "../components/ReconnectMasterModal";
+import { useI18n } from "../i18n/useI18n";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function StartPage() {
+  const { t } = useI18n();
   // VARIABLES: Preserving existing state variable
   const [showReconnectModal, setShowReconnectModal] = useState(false);
 
@@ -12,10 +15,13 @@ export default function StartPage() {
       className="min-h-screen flex flex-col items-center justify-center 
                     bg-gradient-to-br from-blue-200 to-purple-100 p-4"
     >
+      {/* Language Switcher */}
+      <LanguageSwitcher />
+      
       {/* Quiz App Header (Centered Title - Moved from absolute left) */}
       <div className="flex flex-col items-center text-center mb-16 mt-10">
         <div className="flex items-center mb-6">
-          <h1 className="text-4xl font-extrabold text-gray-800">Quiz App</h1>
+          <h1 className="text-4xl font-extrabold text-gray-800">{t.startPage.title}</h1>
           <span className="ml-2 text-5xl">💡</span>
         </div>
 
@@ -23,7 +29,7 @@ export default function StartPage() {
         <button
           onClick={() => setShowReconnectModal(true)}
           title="Help / Reconnect"
-          className="absolute top-6 right-6 flex items-center justify-center w-10 h-10 rounded-full 
+          className="cursor-pointer absolute top-6 right-6 flex items-center justify-center w-10 h-10 rounded-full 
              bg-white/60 backdrop-blur-md shadow-md hover:bg-white/80 hover:shadow-lg 
              text-gray-600 hover:text-gray-800 transition-all duration-300"
         >
@@ -44,9 +50,9 @@ export default function StartPage() {
 
         {/* Centered Titles */}
         <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          Join the Fun!
+          {t.startPage.subtitle}
         </h2>
-        <p className="text-lg text-gray-600">Choose Your Role:</p>
+        <p className="text-lg text-gray-600">{t.startPage.chooseRole}</p>
       </div>
 
       {/* Role Selection Cards Container */}
@@ -58,7 +64,7 @@ export default function StartPage() {
                     transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
         >
           <div className="text-6xl mb-4">🎮</div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-6">Game Master</h3>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">{t.startPage.gameMaster}</h3>
 
           {/* BUTTON: Blue Gradient Style from the image */}
           <div
@@ -67,7 +73,7 @@ export default function StartPage() {
                        bg-gradient-to-r from-blue-500 to-blue-600 
                        hover:from-blue-600 hover:to-blue-700"
           >
-            Host a New Game
+            {t.startPage.hostNewGame}
           </div>
         </Link>
 
@@ -78,7 +84,7 @@ export default function StartPage() {
                     transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
         >
           <div className="text-6xl mb-4">👤</div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-6">Player</h3>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">{t.startPage.player}</h3>
 
           {/* BUTTON: Green Gradient Style from the image */}
           <div
@@ -87,7 +93,7 @@ export default function StartPage() {
                        bg-gradient-to-r from-green-500 to-green-600 
                        hover:from-green-600 hover:to-green-700"
           >
-            Join a Game
+            {t.startPage.joinGame}
           </div>
         </Link>
       </div>

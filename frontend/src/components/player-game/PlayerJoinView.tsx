@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 
 interface PlayerJoinViewProps {
   lobbyId: string;
@@ -13,6 +14,7 @@ export default function PlayerJoinView({
   loading,
   error,
 }: PlayerJoinViewProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
@@ -29,11 +31,11 @@ export default function PlayerJoinView({
         <div className="bg-white rounded-[20px] shadow-xl p-8">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-4">
-              <h1 className="text-4xl font-extrabold text-gray-800">Join Game</h1>
+              <h1 className="text-4xl font-extrabold text-gray-800">{t.playerJoin.joinGame}</h1>
               <span className="ml-2 text-5xl">🎮</span>
             </div>
             <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-3">
-              <p className="text-gray-700 text-sm font-medium">Lobby Code</p>
+              <p className="text-gray-700 text-sm font-medium">{t.playerJoin.lobbyCode}</p>
               <p className="font-mono font-bold text-2xl text-blue-600">{lobbyId}</p>
             </div>
           </div>
@@ -44,14 +46,14 @@ export default function PlayerJoinView({
                 htmlFor="playerName"
                 className="block text-sm font-bold text-gray-700 mb-2"
               >
-                👤 Your Name
+                👤 {t.playerJoin.yourName}
               </label>
               <input
                 type="text"
                 id="playerName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
+                placeholder={t.playerJoin.enterName}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-lg"
                 required
                 disabled={loading}
@@ -75,7 +77,7 @@ export default function PlayerJoinView({
                   : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
               }`}
             >
-              {loading ? '⏳ Joining...' : '🚀 Join Game'}
+              {loading ? `⏳ ${t.playerJoin.joining}` : `🚀 ${t.playerJoin.joinGameButton}`}
             </button>
           </form>
         </div>

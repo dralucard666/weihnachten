@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 
 interface ReconnectMasterModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface ReconnectMasterModalProps {
 }
 
 export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMasterModalProps) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [savedLobbyId, setSavedLobbyId] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
             <span>🔄</span>
-            <span>Reconnect to Game</span>
+            <span>{t.reconnect.reconnectToGame}</span>
           </h2>
           <button
             onClick={onClose}
@@ -45,11 +47,11 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
         {savedLobbyId ? (
           <div className="space-y-4">
             <p className="text-gray-600">
-              We found an active game session. You can try to reconnect to your previous game.
+              {t.reconnect.foundActive}
             </p>
             
             <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-xl">
-              <p className="text-sm text-gray-700 mb-1 font-medium">Lobby ID:</p>
+              <p className="text-sm text-gray-700 mb-1 font-medium">{t.reconnect.lobbyId}:</p>
               <p className="font-mono text-lg font-bold text-blue-600 break-all">{savedLobbyId}</p>
             </div>
 
@@ -58,26 +60,26 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
                 onClick={handleReconnect}
                 className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                🔗 Reconnect
+                🔗 {t.reconnect.reconnect}
               </button>
               <button
                 onClick={onClose}
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
               >
-                Cancel
+                {t.reconnect.cancel}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-gray-600 text-center">
-              No previous game session found.
+              {t.reconnect.noSession}
             </p>
             <button
               onClick={onClose}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
             >
-              Close
+              {t.reconnect.close}
             </button>
           </div>
         )}
