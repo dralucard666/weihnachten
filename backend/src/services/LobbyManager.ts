@@ -1,7 +1,14 @@
-import { Lobby, Player, GameState, CustomAnswer, PlayerAnswerInfo } from '../../../shared/types';
-import { v4 as uuidv4 } from 'uuid';
-import { PersistenceService } from './PersistenceService';
+import {
+  Lobby,
+  Player,
+  GameState,
+  CustomAnswer,
+  PlayerAnswerInfo,
+} from "../../../shared/types";
+import { v4 as uuidv4 } from "uuid";
+import { PersistenceService } from "./PersistenceService";
 
+// Answer storage interfaces
 interface PlayerAnswer {
   playerId: string;
   answerId: string;
@@ -10,7 +17,7 @@ interface PlayerAnswer {
 interface PlayerCustomAnswer {
   playerId: string;
   answerText: string;
-  answerId: string; // Generated ID for this custom answer
+  answerId: string;
 }
 
 interface PlayerVote {
@@ -31,10 +38,12 @@ interface PlayerOrder {
 export class LobbyManager {
   private lobbies: Map<string, Lobby> = new Map();
   private playerAnswers: Map<string, Map<string, PlayerAnswer>> = new Map(); // lobbyId -> Map<playerId, answer>
-  private customAnswers: Map<string, Map<string, PlayerCustomAnswer>> = new Map(); // lobbyId -> Map<playerId, customAnswer>
+  private customAnswers: Map<string, Map<string, PlayerCustomAnswer>> =
+    new Map(); // lobbyId -> Map<playerId, customAnswer>
   private playerVotes: Map<string, Map<string, PlayerVote>> = new Map(); // lobbyId -> Map<playerId, vote>
   private shuffledAnswers: Map<string, CustomAnswer[]> = new Map(); // lobbyId -> shuffled answers cache
-  private textInputAnswers: Map<string, Map<string, PlayerTextInput>> = new Map(); // lobbyId -> Map<playerId, textInput>
+  private textInputAnswers: Map<string, Map<string, PlayerTextInput>> =
+    new Map(); // lobbyId -> Map<playerId, textInput>
   private orderAnswers: Map<string, Map<string, PlayerOrder>> = new Map(); // lobbyId -> Map<playerId, order>
   private persistenceService: PersistenceService;
 
@@ -46,19 +55,15 @@ export class LobbyManager {
     const lobbyId = uuidv4();
     const lobby: Lobby = {
       id: lobbyId,
-      gameState: 'lobby',
+      gameState: "lobby",
       players: [],
       currentQuestionIndex: 0,
       createdAt: new Date().toISOString(),
     };
-    
+
     this.lobbies.set(lobbyId, lobby);
-    this.playerAnswers.set(lobbyId, new Map());
-    this.customAnswers.set(lobbyId, new Map());
-    this.playerVotes.set(lobbyId, new Map());
-    this.textInputAnswers.set(lobbyId, new Map());
-    this.orderAnswers.set(lobbyId, new Map());
-    
+    this.initializeLobbyAnswerMaps(lobbyId);
+
     return lobby;
   }
 
@@ -66,14 +71,14 @@ export class LobbyManager {
     return this.lobbies.get(lobbyId);
   }
 
-  joinLobby(lobbyId: string): { success: boolean; playerId?: string; lobby?: Lobby } {
+  joinLobby(lobbyId: string): {
+    success: boolean;
+    playerId?: string;
+    lobby?: Lobby;
+  } {
     const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return { success: false };
-    }
 
-    if (lobby.gameState !== 'lobby') {
+    if (!lobby || lobby.gameState !== "lobby") {
       return { success: false };
     }
 
@@ -85,19 +90,16 @@ export class LobbyManager {
     };
 
     lobby.players.push(player);
-    
+
     return { success: true, playerId, lobby };
   }
 
-  setPlayerName(lobbyId: string, playerId: string, playerName: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+  setPlayerName(
+    lobbyId: string,
+    playerId: string,
+    playerName: string
+  ): boolean {
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
@@ -108,165 +110,136 @@ export class LobbyManager {
 
   startGame(lobbyId: string, questionId: string): boolean {
     const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'lobby') {
+
+    if (!lobby || lobby.gameState !== "lobby") {
       return false;
     }
 
-    lobby.gameState = 'playing';
+    lobby.gameState = "playing";
     lobby.currentQuestionIndex = 0;
     lobby.currentQuestionId = questionId;
-    
-    // Clear any previous answers
-    this.playerAnswers.set(lobbyId, new Map());
-    
+    this.clearAllAnswers(lobbyId);
+
     return true;
   }
 
-  setAnswer(lobbyId: string, playerId: string, questionId: string, answerId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+  setAnswer(
+    lobbyId: string,
+    playerId: string,
+    questionId: string,
+    answerId: string
+  ): boolean {
+    if (!this.validateQuestionContext(lobbyId, questionId)) {
       return false;
     }
 
-    if (lobby.currentQuestionId !== questionId) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
 
     const answers = this.playerAnswers.get(lobbyId);
-    
     if (!answers) {
       return false;
     }
 
     answers.set(playerId, { playerId, answerId });
     player.hasAnswered = true;
-    
+
     return true;
   }
 
   hasEveryoneAnswered(lobbyId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const playersWithNames = lobby.players.filter(p => p.name);
-    const answers = this.playerAnswers.get(lobbyId);
-    
-    if (!answers || playersWithNames.length === 0) {
-      return false;
-    }
-
-    return playersWithNames.every(player => answers.has(player.id));
+    return this.hasEveryoneSubmitted(lobbyId, this.playerAnswers);
   }
 
-  processQuestionResult(lobbyId: string, questionId: string, correctAnswerId: string): Player[] {
+  processQuestionResult(
+    lobbyId: string,
+    questionId: string,
+    correctAnswerId: string
+  ): Player[] {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby || lobby.currentQuestionId !== questionId) {
       return [];
     }
 
     const answers = this.playerAnswers.get(lobbyId);
-    
     if (!answers) {
       return [];
     }
 
-    // Update scores for correct answers
     for (const player of lobby.players) {
       const answer = answers.get(player.id);
-      
       if (answer && answer.answerId === correctAnswerId) {
         player.score += 1;
       }
-      
-      // Reset hasAnswered flag
-      player.hasAnswered = false;
     }
 
+    this.resetPlayerAnswerFlags(lobby);
     return lobby.players;
   }
 
-  getPlayerAnswers(lobbyId: string, answersList?: Array<{ id: string; text: string }>): PlayerAnswerInfo[] {
+  getPlayerAnswers(
+    lobbyId: string,
+    answersList?: Array<{ id: string; text: string }>
+  ): PlayerAnswerInfo[] {
     const answers = this.playerAnswers.get(lobbyId);
-    
+
     if (!answers) {
       return [];
     }
 
     const playerAnswers: PlayerAnswerInfo[] = [];
-    
+
     for (const [playerId, answer] of answers.entries()) {
-      const answerText = answersList?.find(a => a.id === answer.answerId)?.text;
+      const answerText = answersList?.find(
+        (a) => a.id === answer.answerId
+      )?.text;
       playerAnswers.push({
         playerId,
         answerId: answer.answerId,
         answerText,
       });
     }
-    
+
     return playerAnswers;
   }
 
   nextQuestion(lobbyId: string, questionId: string): boolean {
     const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+
+    if (!lobby || lobby.gameState !== "playing") {
       return false;
     }
 
     lobby.currentQuestionIndex += 1;
     lobby.currentQuestionId = questionId;
-    
-    // Clear answers for new question
-    this.playerAnswers.set(lobbyId, new Map());
-    this.customAnswers.set(lobbyId, new Map());
-    this.playerVotes.set(lobbyId, new Map());
-    this.shuffledAnswers.delete(lobbyId);
-    this.textInputAnswers.set(lobbyId, new Map());
-    this.orderAnswers.set(lobbyId, new Map());
-    
-    // Reset hasAnswered flags
-    for (const player of lobby.players) {
-      player.hasAnswered = false;
-    }
-    
-    // Save state after moving to next question
+
+    this.clearAllAnswers(lobbyId);
+    this.resetPlayerAnswerFlags(lobby);
     this.saveState();
-    
+
     return true;
   }
 
   // Custom Answers Mode Methods
-  submitCustomAnswer(lobbyId: string, playerId: string, questionId: string, answerText: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+  submitCustomAnswer(
+    lobbyId: string,
+    playerId: string,
+    questionId: string,
+    answerText: string
+  ): boolean {
+    if (!this.validateQuestionContext(lobbyId, questionId)) {
       return false;
     }
 
-    if (lobby.currentQuestionId !== questionId) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
 
     const answers = this.customAnswers.get(lobbyId);
-    
     if (!answers) {
       return false;
     }
@@ -274,66 +247,38 @@ export class LobbyManager {
     const answerId = uuidv4();
     answers.set(playerId, { playerId, answerText, answerId });
     player.hasAnswered = true;
-    
+
     return true;
   }
 
   hasEveryoneSubmittedCustomAnswer(lobbyId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const playersWithNames = lobby.players.filter(p => p.name);
-    const answers = this.customAnswers.get(lobbyId);
-    
-    if (!answers || playersWithNames.length === 0) {
-      return false;
-    }
-
-    return playersWithNames.every(player => answers.has(player.id));
+    return this.hasEveryoneSubmitted(lobbyId, this.customAnswers);
   }
 
-  getAllCustomAnswers(lobbyId: string, correctAnswerId: string, correctAnswerText: string): CustomAnswer[] {
+  getAllCustomAnswers(
+    lobbyId: string,
+    correctAnswerId: string,
+    correctAnswerText: string
+  ): CustomAnswer[] {
     const answers = this.customAnswers.get(lobbyId);
-    
     if (!answers) {
       return [];
     }
 
-    const customAnswers: CustomAnswer[] = [];
-    
-    // Add all player answers (WITH playerId for internal tracking, but hidden from clients initially)
-    for (const [playerId, answer] of answers.entries()) {
-      customAnswers.push({
+    const customAnswers: CustomAnswer[] = [
+      ...Array.from(answers.entries()).map(([playerId, answer]) => ({
         id: answer.answerId,
         text: answer.answerText,
-        playerId: playerId
-      });
-    }
-    
-    // Add the correct answer (without playerId)
-    customAnswers.push({
-      id: correctAnswerId,
-      text: correctAnswerText
-    });
-    
-    // Shuffle the answers
-    for (let i = customAnswers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [customAnswers[i], customAnswers[j]] = [customAnswers[j], customAnswers[i]];
-    }
-    
-    // Cache the shuffled answers WITH playerIds for later scoring
+        playerId,
+      })),
+      { id: correctAnswerId, text: correctAnswerText },
+    ];
+
+    this.shuffleArray(customAnswers);
     this.shuffledAnswers.set(lobbyId, customAnswers);
-    
-    // Return answers WITHOUT playerId to hide who submitted what
-    return customAnswers.map(answer => ({
-      id: answer.id,
-      text: answer.text
-      // playerId intentionally omitted
-    }));
+
+    // Return answers without playerId to hide attribution
+    return customAnswers.map(({ id, text }) => ({ id, text }));
   }
 
   getShuffledAnswers(lobbyId: string): CustomAnswer[] {
@@ -345,183 +290,147 @@ export class LobbyManager {
     return this.shuffledAnswers.get(lobbyId) || [];
   }
 
-  voteForAnswer(lobbyId: string, playerId: string, questionId: string, answerId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+  voteForAnswer(
+    lobbyId: string,
+    playerId: string,
+    questionId: string,
+    answerId: string
+  ): boolean {
+    if (!this.validateQuestionContext(lobbyId, questionId)) {
       return false;
     }
 
-    if (lobby.currentQuestionId !== questionId) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
 
-    // Check if player is voting for their own answer
-    const customAnswers = this.customAnswers.get(lobbyId);
-    if (customAnswers) {
-      const playerAnswer = customAnswers.get(playerId);
-      if (playerAnswer && playerAnswer.answerId === answerId) {
-        return false; // Can't vote for own answer
-      }
+    // Prevent voting for own answer
+    if (this.isVotingForOwnAnswer(lobbyId, playerId, answerId)) {
+      return false;
     }
 
     const votes = this.playerVotes.get(lobbyId);
-    
     if (!votes) {
       return false;
     }
 
     votes.set(playerId, { playerId, votedAnswerId: answerId });
     player.hasAnswered = true;
-    
+
     return true;
   }
 
   hasEveryoneVoted(lobbyId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const playersWithNames = lobby.players.filter(p => p.name);
-    const votes = this.playerVotes.get(lobbyId);
-    
-    if (!votes || playersWithNames.length === 0) {
-      return false;
-    }
-
-    return playersWithNames.every(player => votes.has(player.id));
+    return this.hasEveryoneSubmitted(lobbyId, this.playerVotes);
   }
 
-  processCustomAnswerResult(lobbyId: string, questionId: string, correctAnswerId: string): Player[] {
+  processCustomAnswerResult(
+    lobbyId: string,
+    questionId: string,
+    correctAnswerId: string
+  ): Player[] {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby || lobby.currentQuestionId !== questionId) {
       return [];
     }
 
     const votes = this.playerVotes.get(lobbyId);
     const customAnswers = this.customAnswers.get(lobbyId);
-    
+
     if (!votes || !customAnswers) {
       return [];
     }
 
-    // Count votes for each answer
-    const voteCounts = new Map<string, number>();
-    for (const vote of votes.values()) {
-      const count = voteCounts.get(vote.votedAnswerId) || 0;
-      voteCounts.set(vote.votedAnswerId, count + 1);
-    }
+    const voteCounts = this.countVotes(votes);
 
-    // Update scores
     for (const player of lobby.players) {
       const vote = votes.get(player.id);
-      
-      // Points for voting for the correct answer
+
+      // Points for correct vote
       if (vote && vote.votedAnswerId === correctAnswerId) {
         player.score += 1;
       }
-      
-      // Points for other players voting for this player's answer
+
+      // Points for receiving votes
       const playerAnswer = customAnswers.get(player.id);
       if (playerAnswer) {
-        const votesForThisAnswer = voteCounts.get(playerAnswer.answerId) || 0;
-        player.score += votesForThisAnswer;
+        player.score += voteCounts.get(playerAnswer.answerId) || 0;
       }
-      
-      // Reset hasAnswered flag
-      player.hasAnswered = false;
     }
 
+    this.resetPlayerAnswerFlags(lobby);
     return lobby.players;
   }
 
   getPlayerVotes(lobbyId: string): PlayerAnswerInfo[] {
     const votes = this.playerVotes.get(lobbyId);
     const allAnswers = this.shuffledAnswers.get(lobbyId);
-    
+
     if (!votes) {
       return [];
     }
 
     const playerVotes: PlayerAnswerInfo[] = [];
-    
+
     for (const [playerId, vote] of votes.entries()) {
-      const answerText = allAnswers?.find(a => a.id === vote.votedAnswerId)?.text;
+      const answerText = allAnswers?.find(
+        (a) => a.id === vote.votedAnswerId
+      )?.text;
       playerVotes.push({
         playerId,
         answerId: vote.votedAnswerId,
         answerText,
       });
     }
-    
+
     return playerVotes;
   }
 
   // Text Input Methods
-  submitTextInput(lobbyId: string, playerId: string, questionId: string, answerText: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+  submitTextInput(
+    lobbyId: string,
+    playerId: string,
+    questionId: string,
+    answerText: string
+  ): boolean {
+    if (!this.validateQuestionContext(lobbyId, questionId)) {
       return false;
     }
 
-    if (lobby.currentQuestionId !== questionId) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
 
     const answers = this.textInputAnswers.get(lobbyId);
-    
     if (!answers) {
       return false;
     }
 
     answers.set(playerId, { playerId, answerText: answerText.trim() });
     player.hasAnswered = true;
-    
+
     return true;
   }
 
   hasEveryoneSubmittedTextInput(lobbyId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const playersWithNames = lobby.players.filter(p => p.name);
-    const answers = this.textInputAnswers.get(lobbyId);
-    
-    if (!answers || playersWithNames.length === 0) {
-      return false;
-    }
-
-    return playersWithNames.every(player => answers.has(player.id));
+    return this.hasEveryoneSubmitted(lobbyId, this.textInputAnswers);
   }
 
-  getTextInputPlayerAnswers(lobbyId: string, questionId: string): PlayerAnswerInfo[] {
+  getTextInputPlayerAnswers(
+    lobbyId: string,
+    questionId: string
+  ): PlayerAnswerInfo[] {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby || lobby.currentQuestionId !== questionId) {
       return [];
     }
 
     const answers = this.textInputAnswers.get(lobbyId);
-    
+
     if (!answers) {
       return [];
     }
@@ -530,12 +439,12 @@ export class LobbyManager {
 
     for (const player of lobby.players) {
       const answer = answers.get(player.id);
-      
+
       if (answer) {
         playerAnswers.push({
           playerId: player.id,
-          answerId: '',
-          answerText: answer.answerText
+          answerId: "",
+          answerText: answer.answerText,
         });
       }
     }
@@ -543,107 +452,104 @@ export class LobbyManager {
     return playerAnswers;
   }
 
-  processTextInputResult(lobbyId: string, questionId: string, correctAnswers: string[]): { players: Player[], correctPlayerIds: string[], playerAnswers: PlayerAnswerInfo[] } {
+  processTextInputResult(
+    lobbyId: string,
+    questionId: string,
+    correctAnswers: string[]
+  ): {
+    players: Player[];
+    correctPlayerIds: string[];
+    playerAnswers: PlayerAnswerInfo[];
+  } {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby || lobby.currentQuestionId !== questionId) {
       return { players: [], correctPlayerIds: [], playerAnswers: [] };
     }
 
     const answers = this.textInputAnswers.get(lobbyId);
-    
     if (!answers) {
       return { players: [], correctPlayerIds: [], playerAnswers: [] };
     }
 
-    // Normalize correct answers (lowercase, trimmed)
-    const normalizedCorrectAnswers = correctAnswers.map(a => a.toLowerCase().trim());
+    const normalizedCorrectAnswers = correctAnswers.map((a) =>
+      a.toLowerCase().trim()
+    );
     const correctPlayerIds: string[] = [];
     const playerAnswers: PlayerAnswerInfo[] = [];
 
-    // Update scores for correct answers
     for (const player of lobby.players) {
       const answer = answers.get(player.id);
-      
+
       if (answer) {
-        const normalizedPlayerAnswer = answer.answerText.toLowerCase().trim();
-        const isCorrect = normalizedCorrectAnswers.includes(normalizedPlayerAnswer);
-        
+        const isCorrect = normalizedCorrectAnswers.includes(
+          answer.answerText.toLowerCase().trim()
+        );
+
         if (isCorrect) {
           player.score += 1;
           correctPlayerIds.push(player.id);
         }
-        
+
         playerAnswers.push({
           playerId: player.id,
-          answerId: '', // Not used for text input
-          answerText: answer.answerText
+          answerId: "",
+          answerText: answer.answerText,
         });
       }
-      
-      // Reset hasAnswered flag
-      player.hasAnswered = false;
     }
 
+    this.resetPlayerAnswerFlags(lobby);
     return { players: lobby.players, correctPlayerIds, playerAnswers };
   }
 
   // Order Question Methods
-  submitOrder(lobbyId: string, playerId: string, questionId: string, orderedItemIds: string[]): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby || lobby.gameState !== 'playing') {
+  submitOrder(
+    lobbyId: string,
+    playerId: string,
+    questionId: string,
+    orderedItemIds: string[]
+  ): boolean {
+    if (!this.validateQuestionContext(lobbyId, questionId)) {
       return false;
     }
 
-    if (lobby.currentQuestionId !== questionId) {
-      return false;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+    const player = this.findPlayer(lobbyId, playerId);
     if (!player) {
       return false;
     }
 
     const orders = this.orderAnswers.get(lobbyId);
-    
     if (!orders) {
       return false;
     }
 
     orders.set(playerId, { playerId, orderedItemIds });
     player.hasAnswered = true;
-    
+
     return true;
   }
 
   hasEveryoneSubmittedOrder(lobbyId: string): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return false;
-    }
-
-    const playersWithNames = lobby.players.filter(p => p.name);
-    const orders = this.orderAnswers.get(lobbyId);
-    
-    if (!orders || playersWithNames.length === 0) {
-      return false;
-    }
-
-    return playersWithNames.every(player => orders.has(player.id));
+    return this.hasEveryoneSubmitted(lobbyId, this.orderAnswers);
   }
 
-  processOrderResult(lobbyId: string, questionId: string, correctOrder: string[]): { players: Player[], playerOrders: PlayerAnswerInfo[], playerScores: { [playerId: string]: number } } {
+  processOrderResult(
+    lobbyId: string,
+    questionId: string,
+    correctOrder: string[]
+  ): {
+    players: Player[];
+    playerOrders: PlayerAnswerInfo[];
+    playerScores: { [playerId: string]: number };
+  } {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby || lobby.currentQuestionId !== questionId) {
       return { players: [], playerOrders: [], playerScores: {} };
     }
 
     const orders = this.orderAnswers.get(lobbyId);
-    
     if (!orders) {
       return { players: [], playerOrders: [], playerScores: {} };
     }
@@ -651,100 +557,69 @@ export class LobbyManager {
     const playerOrders: PlayerAnswerInfo[] = [];
     const playerScores: { [playerId: string]: number } = {};
 
-    // Helper function to calculate points based on correct positions
-    const calculateScore = (playerOrder: string[], correctOrder: string[]): number => {
-      let score = 0;
-      const maxPoints = correctOrder.length;
-      
-      for (let i = 0; i < correctOrder.length; i++) {
-        if (playerOrder[i] === correctOrder[i]) {
-          score++;
-        }
-      }
-      
-      // Award full points for perfect order, proportional points otherwise
-      return score === maxPoints ? maxPoints : score;
-    };
-
-    // Process each player's order
     for (const player of lobby.players) {
       const order = orders.get(player.id);
-      
+
       if (order) {
-        const score = calculateScore(order.orderedItemIds, correctOrder);
+        const score = correctOrder.every(
+          (id, i) => id === order.orderedItemIds[i]
+        )
+          ? 1
+          : 0;
         player.score += score;
         playerScores[player.id] = score;
-        
+
         playerOrders.push({
           playerId: player.id,
-          answerId: order.orderedItemIds.join(','), // Store as comma-separated string
-          answerText: `${score}/${correctOrder.length} correct`
+          answerId: order.orderedItemIds.join(","),
+          answerText: `${score}/${correctOrder.length} correct`,
         });
       }
-      
-      // Reset hasAnswered flag
-      player.hasAnswered = false;
     }
 
+    this.resetPlayerAnswerFlags(lobby);
     return { players: lobby.players, playerOrders, playerScores };
   }
 
   endGame(lobbyId: string): Player[] {
     const lobby = this.lobbies.get(lobbyId);
-    
+
     if (!lobby) {
       return [];
     }
 
-    lobby.gameState = 'finished';
-    
+    lobby.gameState = "finished";
+
     // Remove lobby from persistence when game ends
     this.removeLobbyFromPersistence(lobbyId);
-    
+
     return lobby.players.sort((a, b) => b.score - a.score);
   }
 
   removePlayer(lobbyId: string, playerId: string): void {
     const lobby = this.lobbies.get(lobbyId);
-    
     if (!lobby) {
       return;
     }
 
-    const playerIndex = lobby.players.findIndex(p => p.id === playerId);
-    
+    const playerIndex = lobby.players.findIndex((p) => p.id === playerId);
     if (playerIndex !== -1) {
       lobby.players.splice(playerIndex, 1);
     }
 
-    // Remove their answer if any
-    const answers = this.playerAnswers.get(lobbyId);
-    
-    if (answers) {
-      answers.delete(playerId);
-    }
+    this.playerAnswers.get(lobbyId)?.delete(playerId);
 
-    // Clean up empty lobbies
     if (lobby.players.length === 0) {
-      this.lobbies.delete(lobbyId);
-      this.playerAnswers.delete(lobbyId);
-      this.customAnswers.delete(lobbyId);
-      this.playerVotes.delete(lobbyId);
-      this.shuffledAnswers.delete(lobbyId);
-      this.textInputAnswers.delete(lobbyId);
-      this.orderAnswers.delete(lobbyId);
+      this.cleanupLobby(lobbyId);
     }
   }
 
-  setPlayerConnected(lobbyId: string, playerId: string, connected: boolean): void {
-    const lobby = this.lobbies.get(lobbyId);
-    
-    if (!lobby) {
-      return;
-    }
-
-    const player = lobby.players.find(p => p.id === playerId);
-    
+  setPlayerConnected(
+    lobbyId: string,
+    playerId: string,
+    connected: boolean
+  ): void {
+    const player = this.findPlayer(lobbyId, playerId);
     if (player) {
       player.connected = connected;
     }
@@ -752,44 +627,125 @@ export class LobbyManager {
 
   // Persistence methods
   private saveState(): void {
-    this.persistenceService.saveState(this.lobbies).catch(error => {
-      console.error('Failed to persist state:', error);
+    this.persistenceService.saveState(this.lobbies).catch((error) => {
+      console.error("Failed to persist state:", error);
     });
   }
 
   private removeLobbyFromPersistence(lobbyId: string): void {
-    this.persistenceService.removeLobby(lobbyId).catch(error => {
-      console.error('Failed to remove lobby from persistence:', error);
+    this.persistenceService.removeLobby(lobbyId).catch((error) => {
+      console.error("Failed to remove lobby from persistence:", error);
     });
   }
 
   async loadLobbyFromPersistence(lobbyId: string): Promise<Lobby | undefined> {
     const lobby = await this.persistenceService.getLobby(lobbyId);
-    
+
     if (lobby) {
-      // Restore lobby to memory
       this.lobbies.set(lobbyId, lobby);
-      
-      // Initialize empty answer maps for this lobby
-      if (!this.playerAnswers.has(lobbyId)) {
-        this.playerAnswers.set(lobbyId, new Map());
-      }
-      if (!this.customAnswers.has(lobbyId)) {
-        this.customAnswers.set(lobbyId, new Map());
-      }
-      if (!this.playerVotes.has(lobbyId)) {
-        this.playerVotes.set(lobbyId, new Map());
-      }
-      if (!this.textInputAnswers.has(lobbyId)) {
-        this.textInputAnswers.set(lobbyId, new Map());
-      }
-      if (!this.orderAnswers.has(lobbyId)) {
-        this.orderAnswers.set(lobbyId, new Map());
-      }
-      
+      this.initializeLobbyAnswerMaps(lobbyId);
       console.log(`Lobby ${lobbyId} restored from persistence`);
     }
-    
+
     return lobby;
+  }
+
+  // Private helper methods
+  private initializeLobbyAnswerMaps(lobbyId: string): void {
+    this.playerAnswers.set(lobbyId, new Map());
+    this.customAnswers.set(lobbyId, new Map());
+    this.playerVotes.set(lobbyId, new Map());
+    this.textInputAnswers.set(lobbyId, new Map());
+    this.orderAnswers.set(lobbyId, new Map());
+  }
+
+  private clearAllAnswers(lobbyId: string): void {
+    this.playerAnswers.set(lobbyId, new Map());
+    this.customAnswers.set(lobbyId, new Map());
+    this.playerVotes.set(lobbyId, new Map());
+    this.shuffledAnswers.delete(lobbyId);
+    this.textInputAnswers.set(lobbyId, new Map());
+    this.orderAnswers.set(lobbyId, new Map());
+  }
+
+  private cleanupLobby(lobbyId: string): void {
+    this.lobbies.delete(lobbyId);
+    this.playerAnswers.delete(lobbyId);
+    this.customAnswers.delete(lobbyId);
+    this.playerVotes.delete(lobbyId);
+    this.shuffledAnswers.delete(lobbyId);
+    this.textInputAnswers.delete(lobbyId);
+    this.orderAnswers.delete(lobbyId);
+  }
+
+  private findPlayer(lobbyId: string, playerId: string): Player | undefined {
+    const lobby = this.lobbies.get(lobbyId);
+    return lobby?.players.find((p) => p.id === playerId);
+  }
+
+  private validateQuestionContext(
+    lobbyId: string,
+    questionId: string
+  ): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    return (
+      lobby !== undefined &&
+      lobby.gameState === "playing" &&
+      lobby.currentQuestionId === questionId
+    );
+  }
+
+  private resetPlayerAnswerFlags(lobby: Lobby): void {
+    for (const player of lobby.players) {
+      player.hasAnswered = false;
+    }
+  }
+
+  private hasEveryoneSubmitted<T>(
+    lobbyId: string,
+    answerMap: Map<string, Map<string, T>>
+  ): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    if (!lobby) {
+      return false;
+    }
+
+    const playersWithNames = lobby.players.filter((p) => p.name);
+    const answers = answerMap.get(lobbyId);
+
+    if (!answers || playersWithNames.length === 0) {
+      return false;
+    }
+
+    return playersWithNames.every((player) => answers.has(player.id));
+  }
+
+  private shuffleArray<T>(array: T[]): void {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  private isVotingForOwnAnswer(
+    lobbyId: string,
+    playerId: string,
+    answerId: string
+  ): boolean {
+    const customAnswers = this.customAnswers.get(lobbyId);
+    if (!customAnswers) {
+      return false;
+    }
+    const playerAnswer = customAnswers.get(playerId);
+    return playerAnswer?.answerId === answerId;
+  }
+
+  private countVotes(votes: Map<string, PlayerVote>): Map<string, number> {
+    const voteCounts = new Map<string, number>();
+    for (const vote of votes.values()) {
+      const count = voteCounts.get(vote.votedAnswerId) || 0;
+      voteCounts.set(vote.votedAnswerId, count + 1);
+    }
+    return voteCounts;
   }
 }

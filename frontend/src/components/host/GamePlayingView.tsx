@@ -131,11 +131,6 @@ export default function GamePlayingView({
         <HostHeader
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={totalQuestions}
-          playersAnsweredCount={playersWhoAnswered.size}
-          totalPlayersCount={playersWithNames.length}
-          isVotingPhase={isVotingPhase}
-          isCustomAnswersMode={isCustomAnswersMode}
-          onReloadQuestion={onReloadQuestion}
         />
 
         {/* Before-Question Media Display */}
@@ -227,6 +222,7 @@ export default function GamePlayingView({
           onShowVotingResults={handleShowVotingResultsClick}
           onNextQuestion={onNextQuestion}
           onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
+          onReloadQuestion={onReloadQuestion}
         />
       </div>
     </div>

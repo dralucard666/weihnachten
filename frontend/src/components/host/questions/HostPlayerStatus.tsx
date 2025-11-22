@@ -16,40 +16,47 @@ export default function HostPlayerStatus({
   getPlayerAnswer,
 }: HostPlayerStatusProps) {
   return (
-    <div className="bg-black/40 backdrop-blur-md rounded-[20px] p-6 shadow-2xl mb-6 border-2 border-blue-400/30">
-      <h2 className="text-xl font-bold text-white mb-4 text-center">
+    <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 shadow-xl mb-6 border border-blue-400/30">
+      <h2 className="text-base font-bold text-white mb-3 text-center drop-shadow-md">
         👥 Player Status
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
         {players.map((player) => {
           const hasAnswered = playersWhoAnswered.has(player.id);
           const playerAnswer = getPlayerAnswer(player.id);
           return (
             <div
               key={player.id}
-              className={`p-3 rounded-xl transition-all shadow-md ${
+              className={`p-2 rounded-lg transition-all shadow-md ${
                 hasAnswered
-                  ? "bg-gradient-to-br from-green-500 to-green-600 ring-2 ring-green-300"
-                  : "bg-gradient-to-br from-gray-700 to-gray-800"
+                  ? "bg-green-600/90 border border-green-400"
+                  : "bg-gray-700/80 border border-gray-600"
               }`}
             >
-              <div className="font-semibold text-white text-sm truncate">
-                {player.name}
+              <div className="flex items-center gap-1 mb-1">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                  hasAnswered ? 'bg-green-300 text-green-900' : 'bg-gray-600 text-gray-300'
+                }`}>
+                  {player.name?.charAt(0).toUpperCase() || '?'}
+                </div>
+                <div className="text-xs font-semibold text-white truncate flex-1">
+                  {player.name}
+                </div>
               </div>
-              <div className="text-xs text-gray-200 mt-1">
+              <div className="text-[10px] text-gray-200">
                 {hasAnswered
                   ? isVotingPhase
                     ? "✓ Voted"
-                    : "✓ Answered"
-                  : "⏳ Waiting..."}
+                    : "✓ Done"
+                  : "⏳ Wait"}
               </div>
               {showCorrectAnswer && playerAnswer && (
-                <div className="text-xs text-yellow-200 mt-1 border-t border-gray-500 pt-1 truncate">
+                <div className="text-[10px] text-yellow-200 mt-1 border-t border-gray-500/50 pt-1 truncate">
                   {playerAnswer}
                 </div>
               )}
-              <div className="text-sm font-bold text-yellow-400 mt-1">
-                {player.score} pts
+              <div className="text-xs font-bold text-yellow-400 mt-1">
+                {player.score}
               </div>
             </div>
           );

@@ -92,7 +92,7 @@ export default function GameLobbyView({ lobby, onStartGame }: GameLobbyViewProps
           <button
             onClick={onStartGame}
             disabled={playersWithNames.length === 0}
-            className={`px-12 py-5 rounded-xl text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+            className={`px-12 py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
               playersWithNames.length === 0
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'

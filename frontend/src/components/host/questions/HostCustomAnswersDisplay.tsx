@@ -21,29 +21,29 @@ export default function HostCustomAnswersDisplay({
   // Collection phase
   if (!isVotingPhase) {
     return (
-      <div className="bg-black/30 backdrop-blur-md rounded-[20px] p-8 shadow-2xl border-2 border-purple-400/30">
-        <h2 className="text-4xl font-bold text-white mb-6 text-center">
+      <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-purple-400/30">
+        <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
           <p>Players are writing their answers...</p>
-          <p className="text-sm mt-2 text-yellow-400">
+          <p className="text-sm mt-2 text-yellow-300">
             📝 Custom Answer Mode: Players submit their own answers
           </p>
         </div>
         {allPlayersAnswered && customAnswers.length > 0 && (
-          <div className="mt-6 bg-gray-800/50 p-6 rounded-xl border border-blue-400/30">
+          <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-blue-400/30">
             <h3 className="text-xl font-bold text-white mb-4 text-center">
               ✨ Submitted Answers:
             </h3>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 auto-rows-fr gap-3">
               {customAnswers.map((answer, idx) => (
                 <div
                   key={answer.id}
-                  className="p-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg border border-blue-400/30"
+                  className="p-4 rounded-lg bg-blue-600/90 shadow-lg border border-blue-400/40 h-full flex items-center"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-blue-900">
+                    <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-blue-900">
                       {idx + 1}
                     </div>
                     <div className="text-white font-medium text-lg">
@@ -65,28 +65,28 @@ export default function HostCustomAnswersDisplay({
   // Voting phase (without results)
   if (!showCorrectAnswer) {
     return (
-      <div className="bg-black/30 backdrop-blur-md rounded-[20px] p-8 shadow-2xl border-2 border-orange-400/30">
-        <h2 className="text-4xl font-bold text-white mb-6 text-center">
+      <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-orange-400/30">
+        <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
           <p>Players are voting for the correct answer...</p>
-          <p className="text-sm mt-2 text-orange-400">
+          <p className="text-sm mt-2 text-orange-300">
             🗳️ Voting Phase: Players pick which answer they think is correct
           </p>
         </div>
-        <div className="mt-6 bg-gray-800/50 p-6 rounded-xl border border-purple-400/30">
+        <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-purple-400/30">
           <h3 className="text-xl font-bold text-white mb-4 text-center">
             All Answers:
           </h3>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 auto-rows-fr gap-3">
             {customAnswers.map((answer, idx) => (
               <div
                 key={answer.id}
-                className="p-4 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg border border-purple-400/30"
+                className="p-4 rounded-lg bg-purple-600/90 shadow-lg border border-purple-400/40 h-full flex items-center"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-purple-900">
+                  <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-purple-900">
                     {idx + 1}
                   </div>
                   <div className="text-white font-medium text-lg">
@@ -103,30 +103,30 @@ export default function HostCustomAnswersDisplay({
 
   // Results phase
   return (
-    <div className="bg-black/30 backdrop-blur-md rounded-[20px] p-8 shadow-2xl border-2 border-green-400/30">
-      <h2 className="text-4xl font-bold text-white mb-6 text-center">
+    <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-green-400/30">
+      <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
         {question.text}
       </h2>
       <div className="text-center text-green-300 text-lg mb-4">
-        <p className="text-3xl font-bold">🎉 Results!</p>
+        <p className="text-3xl font-bold drop-shadow-md">🎉 Results!</p>
       </div>
-      <div className="mt-6 bg-gray-800/50 p-6 rounded-xl border border-green-400/30">
+      <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-green-400/30">
         <h3 className="text-xl font-bold text-white mb-4 text-center">
           All Answers with Results:
         </h3>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 auto-rows-fr gap-3">
           {customAnswers.map((answer, idx) => (
             <div
               key={answer.id}
-              className={`p-4 rounded-lg shadow-lg ${
+              className={`p-4 rounded-lg shadow-lg h-full flex items-center ${
                 !answer.playerId
-                  ? "bg-gradient-to-r from-green-500 to-green-600 ring-4 ring-yellow-400 animate-pulse"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700 border border-blue-400/30"
+                  ? "bg-green-600 ring-2 ring-yellow-400"
+                  : "bg-blue-600/90 border border-blue-400/40"
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
                     !answer.playerId
                       ? "bg-yellow-400 text-green-900"
                       : "bg-yellow-400 text-blue-900"
@@ -139,7 +139,7 @@ export default function HostCustomAnswersDisplay({
                     {answer.text}
                   </div>
                   {!answer.playerId && (
-                    <div className="text-lg text-green-200 mt-1 font-bold flex items-center gap-2">
+                    <div className="text-base text-green-200 mt-1 font-bold flex items-center gap-2">
                       <span>✓</span>
                       <span>CORRECT ANSWER</span>
                     </div>

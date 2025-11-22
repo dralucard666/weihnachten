@@ -46,19 +46,19 @@ export default function VotingView({
                 key={answer.id}
                 onClick={() => setLocalVoteAnswer(answer.id)}
                 disabled={hasSubmitted}
-                className={`p-5 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                className={`p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
                   hasSubmitted && selectedAnswer === answer.id
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ring-4 ring-blue-300 scale-105'
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]'
                     : localVoteAnswer === answer.id
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white ring-4 ring-blue-300'
+                    ? 'bg-blue-500 text-white ring-2 ring-blue-300'
                     : hasSubmitted
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
+                    : 'bg-orange-500 text-white hover:bg-orange-600'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                    hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-300 text-blue-900' : localVoteAnswer === answer.id ? 'bg-blue-300 text-blue-900' : 'bg-yellow-400 text-orange-900'
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                    hasSubmitted && selectedAnswer === answer.id ? 'bg-blue-200 text-blue-900' : localVoteAnswer === answer.id ? 'bg-blue-200 text-blue-900' : 'bg-white/30 text-white'
                   }`}>
                     {idx + 1}
                   </div>
@@ -71,7 +71,7 @@ export default function VotingView({
           {!hasSubmitted && localVoteAnswer && (
             <button
               onClick={() => onVoteForAnswer(localVoteAnswer)}
-              className="mt-6 w-full py-4 rounded-xl text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
+              className="mt-6 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
             >
               <span>✓</span>
               <span>Confirm Vote</span>

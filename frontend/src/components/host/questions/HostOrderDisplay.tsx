@@ -68,13 +68,13 @@ export default function HostOrderDisplay({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/20">
+    <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/30">
       <div className="text-center mb-8">
         <span className="text-6xl mb-4 block">🔢</span>
         <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
           {question.text}
         </h2>
-        <p className="text-xl text-blue-100">Put the items in the correct order</p>
+        <p className="text-xl text-blue-200">Put the items in the correct order</p>
       </div>
 
       {/* Question Items Display */}
@@ -129,7 +129,7 @@ export default function HostOrderDisplay({
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3">
                         <div
-                          className="bg-gradient-to-r from-orange-400 to-red-500 h-3 rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>

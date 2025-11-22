@@ -13,6 +13,7 @@ interface HostControlButtonsProps {
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
   onShowTextInputPlayerResults: () => void;
+  onReloadQuestion: () => void;
 }
 
 export default function HostControlButtons({
@@ -30,18 +31,22 @@ export default function HostControlButtons({
   onShowVotingResults,
   onNextQuestion,
   onShowTextInputPlayerResults,
+  onReloadQuestion,
 }: HostControlButtonsProps) {
-  // Custom Answers - Collection Phase
-  if (isCustomAnswersMode && !isVotingPhase && !showCorrectAnswer) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
+  const isLastQuestion = currentQuestionIndex + 1 >= totalQuestions;
+
+  // Render primary action button
+  const renderPrimaryButton = () => {
+    // Custom Answers - Collection Phase
+    if (isCustomAnswersMode && !isVotingPhase && !showCorrectAnswer) {
+      return (
         <button
           onClick={onShowAnswer}
           disabled={!allPlayersAnswered}
-          className={`px-10 py-4 rounded-xl font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
             allPlayersAnswered
-              ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-gray-900"
-              : "bg-gray-600 text-gray-400 cursor-not-allowed"
+              ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+              : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
           }`}
         >
           <span>📋</span>
@@ -49,21 +54,19 @@ export default function HostControlButtons({
             {allPlayersAnswered ? "Get Answers & Start Voting" : "Waiting for All Players..."}
           </span>
         </button>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Custom Answers - Voting Phase
-  if (isCustomAnswersMode && isVotingPhase && !showCorrectAnswer) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
+    // Custom Answers - Voting Phase
+    if (isCustomAnswersMode && isVotingPhase && !showCorrectAnswer) {
+      return (
         <button
           onClick={onShowVotingResults}
           disabled={!allVotesReceived}
-          className={`px-10 py-4 rounded-xl font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
             allVotesReceived
               ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
-              : "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
           }`}
         >
           <span>📊</span>
@@ -71,96 +74,79 @@ export default function HostControlButtons({
             {allVotesReceived ? "Show Results" : "Waiting for All Votes..."}
           </span>
         </button>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Custom Answers - Results Phase
-  if (isCustomAnswersMode && showCorrectAnswer) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
+    // Text Input - Before showing player results
+    if (isTextInputMode && !showCorrectAnswer && !showTextInputPlayerResults) {
+      return allPlayersAnswered ? (
         <button
-          onClick={onNextQuestion}
-          className="px-10 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+          onClick={onShowTextInputPlayerResults}
+          className="px-10 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
-          <span>{currentQuestionIndex + 1 >= totalQuestions ? "🏁" : "➡️"}</span>
-          <span>
-            {currentQuestionIndex + 1 >= totalQuestions
-              ? "Finish Game"
-              : "Next Question"}
-          </span>
+          <span>📝</span>
+          <span>Show Player Results</span>
         </button>
-      </div>
-    );
-  }
+      ) : null;
+    }
 
-  // Text Input - Before showing player results
-  if (isTextInputMode && !showCorrectAnswer && !showTextInputPlayerResults) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
-        {allPlayersAnswered && (
-          <button
-            onClick={onShowTextInputPlayerResults}
-            className="px-10 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
-          >
-            <span>📝</span>
-            <span>Show Player Results</span>
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // Text Input - After showing player results
-  if (isTextInputMode && !showCorrectAnswer && showTextInputPlayerResults) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
+    // Text Input - After showing player results but before answer
+    if (isTextInputMode && !showCorrectAnswer && showTextInputPlayerResults) {
+      return (
         <button
           onClick={onShowAnswer}
-          className="px-10 py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-gray-900 font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+          className="px-10 py-4 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>💡</span>
           <span>Show Answer</span>
         </button>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Multiple Choice / Text Input - Before showing answer
-  if (!showCorrectAnswer) {
-    return (
-      <div className="flex justify-center gap-4 flex-wrap">
+    // Results shown - Next Question
+    if (showCorrectAnswer) {
+      return (
         <button
-          onClick={onShowAnswer}
-          disabled={!allPlayersAnswered}
-          className={`px-10 py-4 rounded-xl font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
-            allPlayersAnswered
-              ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-gray-900"
-              : "bg-gray-600 text-gray-400 cursor-not-allowed"
-          }`}
+          onClick={onNextQuestion}
+          className="px-10 py-4 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
-          <span>💡</span>
-          <span>
-            {allPlayersAnswered ? "Show Answer" : "Waiting for All Players..."}
-          </span>
+          <span>{isLastQuestion ? "🏁" : "➡️"}</span>
+          <span>{isLastQuestion ? "Finish Game" : "Next Question"}</span>
         </button>
-      </div>
-    );
-  }
+      );
+    }
 
-  // After showing answer - Next Question
-  return (
-    <div className="flex justify-center gap-4 flex-wrap">
+    // Default - Show Answer
+    return (
       <button
-        onClick={onNextQuestion}
-        className="px-10 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+        onClick={onShowAnswer}
+        disabled={!allPlayersAnswered}
+        className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          allPlayersAnswered
+            ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+            : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
+        }`}
       >
-        <span>{currentQuestionIndex + 1 >= totalQuestions ? "🏁" : "➡️"}</span>
+        <span>💡</span>
         <span>
-          {currentQuestionIndex + 1 >= totalQuestions
-            ? "Finish Game"
-            : "Next Question"}
+          {allPlayersAnswered ? "Show Answer" : "Waiting for All Players..."}
         </span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex justify-center items-center gap-4 flex-wrap">
+        {renderPrimaryButton()}
+      </div>
+      <button
+        onClick={onReloadQuestion}
+        className="cursor-pointer absolute bottom-0 right-0 px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md"
+        title="Reset current question state"
+      >
+        <span>🔄</span>
+        <span className="font-semibold">Reload</span>
       </button>
     </div>
   );
