@@ -1,6 +1,5 @@
 import type { Player } from '../../../../../shared/types';
 import { useI18n } from '../../../i18n/useI18n';
-import LanguageSwitcher from '../../LanguageSwitcher';
 
 interface WaitingViewProps {
   player: Player;
@@ -20,8 +19,8 @@ export default function WaitingView({
   const displayMessage = message || t.playerGame.watchScreen;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 to-purple-100 p-4">
-      <div className="w-full max-w-md">
+    <div className="bg-gradient-to-br from-blue-200 to-purple-100 p-4">
+      <div className="max-w-md mx-auto py-8">
         <div className="bg-white rounded-[20px] shadow-xl p-8 text-center">
           <div className="text-6xl mb-4">{emoji}</div>
           <h2 className="text-3xl font-extrabold text-gray-800 mb-4">
@@ -37,7 +36,6 @@ export default function WaitingView({
           </div>
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

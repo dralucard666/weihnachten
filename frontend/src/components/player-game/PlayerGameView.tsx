@@ -7,6 +7,7 @@ import {
   TextInputView,
   OrderView,
 } from './answers';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 interface CurrentQuestion {
   questionId: string;
@@ -49,79 +50,130 @@ export default function PlayerGameView({
 }: PlayerGameViewProps) {
   // Waiting for question
   if (!currentQuestion) {
-    return <WaitingView player={currentPlayer} />;
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <WaitingView player={currentPlayer} />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
+    );
   }
 
   // Custom Answers Mode - Submit Answer
   if (currentQuestion.questionType === 'custom-answers' && !isVotingPhase) {
     return (
-      <CustomAnswerInput
-        player={currentPlayer}
-        hasSubmitted={hasSubmitted}
-        submittedText={customAnswerText}
-        onSubmitCustomAnswer={onSubmitCustomAnswer}
-      />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <CustomAnswerInput
+            player={currentPlayer}
+            hasSubmitted={hasSubmitted}
+            submittedText={customAnswerText}
+            onSubmitCustomAnswer={onSubmitCustomAnswer}
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
     );
   }
 
   // Voting Phase - Vote for Answers
   if (isVotingPhase && votingAnswers.length > 0) {
     return (
-      <VotingView
-        player={currentPlayer}
-        votingAnswers={votingAnswers}
-        selectedAnswer={selectedAnswer}
-        hasSubmitted={hasSubmitted}
-        onVoteForAnswer={onVoteForAnswer}
-      />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <VotingView
+            player={currentPlayer}
+            votingAnswers={votingAnswers}
+            selectedAnswer={selectedAnswer}
+            hasSubmitted={hasSubmitted}
+            onVoteForAnswer={onVoteForAnswer}
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
     );
   }
 
   // Multiple Choice Mode - Select Answer
   if (currentQuestion.questionType === 'multiple-choice' && currentQuestion.answers) {
     return (
-      <MultipleChoiceView
-        player={currentPlayer}
-        answers={currentQuestion.answers}
-        selectedAnswer={selectedAnswer}
-        hasSubmitted={hasSubmitted}
-        onSubmitAnswer={onSubmitAnswer}
-      />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <MultipleChoiceView
+            player={currentPlayer}
+            answers={currentQuestion.answers}
+            selectedAnswer={selectedAnswer}
+            hasSubmitted={hasSubmitted}
+            onSubmitAnswer={onSubmitAnswer}
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
     );
   }
 
   // Text Input Mode - Submit Text Answer
   if (currentQuestion.questionType === 'text-input') {
     return (
-      <TextInputView
-        player={currentPlayer}
-        hasSubmitted={hasSubmitted}
-        submittedText={customAnswerText}
-        onSubmitTextInput={onSubmitTextInput}
-      />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <TextInputView
+            player={currentPlayer}
+            hasSubmitted={hasSubmitted}
+            submittedText={customAnswerText}
+            onSubmitTextInput={onSubmitTextInput}
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
     );
   }
 
   // Order Mode - Arrange Items in Order
   if (currentQuestion.questionType === 'order' && currentQuestion.orderItems) {
     return (
-      <OrderView
-        player={currentPlayer}
-        orderItems={currentQuestion.orderItems}
-        hasSubmitted={hasSubmitted}
-        submittedOrder={submittedOrder}
-        onSubmitOrder={onSubmitOrder}
-      />
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1">
+          <OrderView
+            player={currentPlayer}
+            orderItems={currentQuestion.orderItems}
+            hasSubmitted={hasSubmitted}
+            submittedOrder={submittedOrder}
+            onSubmitOrder={onSubmitOrder}
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <LanguageSwitcher absolute={false} />
+        </div>
+      </div>
     );
   }
 
   // Fallback - waiting state
   return (
-    <WaitingView
-      player={currentPlayer}
-      emoji="⏳"
-      title="Get Ready!"
-      message="Watch the game master's screen..."
-    />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-1">
+        <WaitingView
+          player={currentPlayer}
+          emoji="⏳"
+          title="Get Ready!"
+          message="Watch the game master's screen..."
+        />
+      </div>
+      <div className="p-4 flex justify-center">
+        <LanguageSwitcher absolute={false} />
+      </div>
+    </div>
   );
 }

@@ -63,12 +63,14 @@ export class LobbyManager {
       players: [],
       currentQuestionIndex: 0,
       totalQuestions: questions.length,
+      questionIds: questions.map(q => q.id),
       createdAt: new Date().toISOString(),
     };
 
     this.lobbies.set(lobbyId, lobby);
     this.lobbyQuestions.set(lobbyId, questions);
     this.initializeLobbyAnswerMaps(lobbyId);
+    this.saveState();
 
     return lobby;
   }
@@ -134,6 +136,7 @@ export class LobbyManager {
     };
 
     lobby.players.push(player);
+    this.saveState();
 
     return { success: true, playerId, lobby };
   }
@@ -149,6 +152,7 @@ export class LobbyManager {
     }
 
     player.name = playerName;
+    this.saveState();
     return true;
   }
 
@@ -165,6 +169,7 @@ export class LobbyManager {
     lobby.currentQuestionId = questions[0].id;
     lobby.currentPhase = "answering";
     this.clearAllAnswers(lobbyId);
+    this.saveState();
 
     return true;
   }
@@ -236,6 +241,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
+    this.saveState();
     return lobby.players;
   }
 
@@ -357,6 +363,7 @@ export class LobbyManager {
     // Transition to voting phase
     lobby.currentPhase = "voting";
     this.resetPlayerAnswerFlags(lobby);
+    this.saveState();
 
     // Return answers without playerId to hide attribution
     return customAnswers.map(({ id, text }) => ({ id, text }));
@@ -454,6 +461,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
+    this.saveState();
     return lobby.players;
   }
 
@@ -597,6 +605,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
+    this.saveState();
     return { players: lobby.players, correctPlayerIds, playerAnswers };
   }
 
@@ -680,6 +689,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
+    this.saveState();
     return { players: lobby.players, playerOrders, playerScores };
   }
 
@@ -740,11 +750,26 @@ export class LobbyManager {
     });
   }
 
-  async loadLobbyFromPersistence(lobbyId: string): Promise<Lobby | undefined> {
+  async loadLobbyFromPersistence(lobbyId: string, allQuestions: StoredQuestion[]): Promise<Lobby | undefined> {
     const lobby = await this.persistenceService.getLobby(lobbyId);
 
     if (lobby) {
       this.lobbies.set(lobbyId, lobby);
+      
+      // Restore questions from questionIds
+      if (lobby.questionIds && lobby.questionIds.length > 0) {
+        const questions = lobby.questionIds
+          .map(id => allQuestions.find(q => q.id === id))
+          .filter((q): q is StoredQuestion => q !== undefined);
+        
+        if (questions.length > 0) {
+          this.lobbyQuestions.set(lobbyId, questions);
+          console.log(`Restored ${questions.length} questions for lobby ${lobbyId}`);
+        } else {
+          console.error(`Could not restore questions for lobby ${lobbyId}`);
+        }
+      }
+      
       this.initializeLobbyAnswerMaps(lobbyId);
       console.log(`Lobby ${lobbyId} restored from persistence`);
     }

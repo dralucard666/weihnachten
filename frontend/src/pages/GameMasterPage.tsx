@@ -81,7 +81,6 @@ export default function GameMasterPage() {
     allVotesReceived,
     playerAnswers,
     correctPlayerIds,
-    playerScores,
     correctAnswerId,
     correctAnswer,
     correctAnswers,
@@ -167,7 +166,6 @@ export default function GameMasterPage() {
         allVotesReceived={allVotesReceived}
         playerAnswers={playerAnswers}
         correctPlayerIds={correctPlayerIds}
-        playerScores={playerScores}
         onShowAnswer={handleShowAnswer}
         onShowVotingResults={handleShowVotingResults}
         onNextQuestion={handleNextQuestion}

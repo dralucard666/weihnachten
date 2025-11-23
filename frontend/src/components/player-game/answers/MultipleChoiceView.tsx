@@ -3,7 +3,6 @@ import type { Player, Answer } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import { useHoverSound } from "../../../hooks/useHoverSound";
 import { useI18n } from "../../../i18n/useI18n";
-import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface MultipleChoiceViewProps {
   player: Player;
@@ -73,7 +72,7 @@ export default function MultipleChoiceView({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-200 to-purple-100 p-4">
+    <div className="bg-gradient-to-br from-blue-200 to-purple-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
         <PlayerHeader player={player} scoreColor="blue" />
 
@@ -116,7 +115,6 @@ export default function MultipleChoiceView({
           )}
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

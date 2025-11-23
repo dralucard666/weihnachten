@@ -3,7 +3,6 @@ import type { Player } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import SubmissionConfirmation from "./SubmissionConfirmation";
 import { useI18n } from "../../../i18n/useI18n";
-import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface CustomAnswerInputProps {
   player: Player;
@@ -22,7 +21,7 @@ export default function CustomAnswerInput({
   const [localCustomAnswer, setLocalCustomAnswer] = useState("");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 to-pink-100 p-4">
+    <div className="bg-gradient-to-br from-purple-200 to-pink-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
         <PlayerHeader player={player} scoreColor="blue" />
 
@@ -68,7 +67,6 @@ export default function CustomAnswerInput({
           )}
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

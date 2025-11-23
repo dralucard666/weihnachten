@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Player } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
-import LanguageSwitcher from '../../LanguageSwitcher';
 import { useI18n } from '../../../i18n/useI18n';
 
 interface TextInputViewProps {
@@ -22,7 +21,7 @@ export default function TextInputView({
   const [localTextInput, setLocalTextInput] = useState('');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-200 to-teal-100 p-4">
+    <div className="bg-gradient-to-br from-green-200 to-teal-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
         <PlayerHeader player={player} scoreColor="green" />
 
@@ -72,7 +71,6 @@ export default function TextInputView({
           )}
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

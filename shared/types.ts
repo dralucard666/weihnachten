@@ -40,6 +40,7 @@ export interface Lobby {
   currentQuestionId?: string; // Current question ID
   currentPhase?: QuestionPhase; // Current phase of the question
   totalQuestions?: number; // Total number of questions in this game
+  questionIds: string[]; // IDs of questions for this game session (for persistence)
   createdAt: string;
 }
 

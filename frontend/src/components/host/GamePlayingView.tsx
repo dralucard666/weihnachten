@@ -29,7 +29,6 @@ interface GamePlayingViewProps {
   allVotesReceived: boolean;
   playerAnswers: PlayerAnswerInfo[];
   correctPlayerIds: string[];
-  playerScores: { [playerId: string]: number };
   onShowAnswer: () => void;
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
@@ -49,7 +48,6 @@ export default function GamePlayingView({
   playerAnswers,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   correctPlayerIds: _correctPlayerIds,
-  playerScores,
   onShowAnswer,
   onShowVotingResults,
   onNextQuestion,
@@ -174,7 +172,6 @@ export default function GamePlayingView({
                 question={currentQuestion}
                 showCorrectAnswer={showCorrectAnswer}
                 playerOrders={playerAnswers}
-                playerScores={playerScores}
                 players={lobby.players}
               />
             ) : (

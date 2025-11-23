@@ -3,7 +3,6 @@ import type { Player, OrderItem } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
 import { useHoverSound } from '../../../hooks/useHoverSound';
-import LanguageSwitcher from '../../LanguageSwitcher';
 import { useI18n } from '../../../i18n/useI18n';
 
 interface OrderViewProps {
@@ -120,7 +119,7 @@ export default function OrderView({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-200 to-red-100 p-4">
+    <div className="bg-gradient-to-br from-orange-200 to-red-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
         <PlayerHeader player={player} scoreColor="orange" />
 
@@ -159,7 +158,6 @@ export default function OrderView({
           )}
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

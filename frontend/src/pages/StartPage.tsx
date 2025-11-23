@@ -16,12 +16,13 @@ export default function StartPage() {
                     bg-gradient-to-br from-blue-200 to-purple-100 p-4"
     >
       {/* Language Switcher */}
-      <LanguageSwitcher />
-      
+
       {/* Quiz App Header (Centered Title - Moved from absolute left) */}
       <div className="flex flex-col items-center text-center mb-16 mt-10">
         <div className="flex items-center mb-6">
-          <h1 className="text-4xl font-extrabold text-gray-800">{t.startPage.title}</h1>
+          <h1 className="text-4xl font-extrabold text-gray-800">
+            {t.startPage.title}
+          </h1>
           <span className="ml-2 text-5xl">💡</span>
         </div>
 
@@ -64,7 +65,9 @@ export default function StartPage() {
                     transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
         >
           <div className="text-6xl mb-4">🎮</div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-6">{t.startPage.gameMaster}</h3>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">
+            {t.startPage.gameMaster}
+          </h3>
 
           {/* BUTTON: Blue Gradient Style from the image */}
           <div
@@ -84,7 +87,9 @@ export default function StartPage() {
                     transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
         >
           <div className="text-6xl mb-4">👤</div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-6">{t.startPage.player}</h3>
+          <h3 className="text-3xl font-bold text-gray-800 mb-6">
+            {t.startPage.player}
+          </h3>
 
           {/* BUTTON: Green Gradient Style from the image */}
           <div
@@ -96,6 +101,10 @@ export default function StartPage() {
             {t.startPage.joinGame}
           </div>
         </Link>
+      </div>
+
+      <div className="p-4 flex justify-center">
+        <LanguageSwitcher absolute={false} />
       </div>
 
       {/* MODAL: Preserving existing modal functionality */}

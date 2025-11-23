@@ -7,7 +7,6 @@ interface HostOrderDisplayProps {
   question: Question;
   showCorrectAnswer: boolean;
   playerOrders?: PlayerAnswerInfo[];
-  playerScores?: { [playerId: string]: number };
   players: Player[];
 }
 
@@ -15,7 +14,6 @@ export default function HostOrderDisplay({
   question,
   showCorrectAnswer,
   playerOrders = [],
-  playerScores = {},
   players,
 }: HostOrderDisplayProps) {
   const { t } = useI18n();
@@ -112,9 +110,15 @@ export default function HostOrderDisplay({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {playerOrders.map((playerOrder) => {
                   const player = getPlayerById(playerOrder.playerId);
-                  const score = playerScores[playerOrder.playerId] || 0;
+                  const playerOrderIds = playerOrder.answerId.split(',');
+                  
+                  // Count how many items are in the correct position
+                  const correctPositions = playerOrderIds.filter((id, index) => 
+                    correctOrder[index] === id
+                  ).length;
+                  
                   const maxScore = correctOrder.length;
-                  const percentage = Math.round((score / maxScore) * 100);
+                  const percentage = Math.round((correctPositions / maxScore) * 100);
                   
                   return (
                     <div
@@ -126,7 +130,7 @@ export default function HostOrderDisplay({
                           {player?.name || t.host.unknown}
                         </span>
                         <span className="text-lg font-bold text-orange-600">
-                          {score}/{maxScore} ({percentage}%)
+                          {correctPositions}/{maxScore} ({percentage}%)
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3">

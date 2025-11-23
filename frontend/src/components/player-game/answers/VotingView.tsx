@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import type { Player, Answer } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import { useI18n } from "../../../i18n/useI18n";
-import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface VotingViewProps {
   player: Player;
@@ -32,7 +31,7 @@ export default function VotingView({
   }, [votingAnswers]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-200 to-red-100 p-4">
+    <div className="bg-gradient-to-br from-orange-200 to-red-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
         <PlayerHeader player={player} scoreColor="orange" />
 
@@ -99,7 +98,6 @@ export default function VotingView({
           )}
         </div>
       </div>
-      <LanguageSwitcher />
     </div>
   );
 }

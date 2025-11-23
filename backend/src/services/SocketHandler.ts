@@ -192,7 +192,7 @@ export class SocketHandler {
       
       if (!lobby) {
         // Try to load from persistence
-        lobby = await this.lobbyManager.loadLobbyFromPersistence(data.lobbyId);
+        lobby = await this.lobbyManager.loadLobbyFromPersistence(data.lobbyId, this.allQuestions);
         
         if (!lobby) {
           callback({ success: false, error: 'Lobby not found' });
