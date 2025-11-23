@@ -15,6 +15,9 @@ import { SocketHandler } from "./services/SocketHandler";
 
 const app = express();
 
+// Trust proxy - required when running behind a reverse proxy (nginx, load balancer, etc.)
+app.set('trust proxy', true);
+
 // Configure CORS - allow multiple origins
 const isDevelopment = process.env.NODE_ENV !== "production";
 const allowedOrigins = [
