@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - FRONTEND_URL=https://192.168.178.22:3000
+      - FRONTEND_URL=https://weihnachten.ixtrader.de
       - PORT=3000
     volumes:
       # Persist game state
