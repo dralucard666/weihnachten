@@ -15,9 +15,16 @@ import { SocketHandler } from "./services/SocketHandler";
 
 const app = express();
 
-// Check if SSL certificates exist for HTTPS
-const useHttps = fs.existsSync(path.join(__dirname, "../server.key")) && 
-                 fs.existsSync(path.join(__dirname, "../server.cert"));
+// Configure CORS - allow multiple origins
+const isDevelopment = process.env.NODE_ENV !== "production";
+const allowedOrigins = [
+  isDevelopment && "http://localhost:5173",
+  isDevelopment && "http://127.0.0.1:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+// Always use HTTP in production, only use HTTPS in development if certificates exist
+const useHttps = false; // Disabled for production deployment
 
 let httpServer;
 if (useHttps) {
@@ -32,17 +39,9 @@ if (useHttps) {
   console.log("Using HTTP");
 }
 
-// Configure CORS - allow multiple origins
-const isDevelopment = process.env.NODE_ENV !== "production";
-const allowedOrigins = [
-  isDevelopment && "http://localhost:5173",
-  isDevelopment && "http://127.0.0.1:5173",
-  process.env.FRONTEND_URL,
-].filter(Boolean) as string[];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: isDevelopment ? (origin, callback) => {
       // Allow requests with no origin (direct navigation, same-origin requests)
       if (!origin) return callback(null, true);
 
@@ -52,7 +51,7 @@ app.use(
       }
 
       callback(null, true);
-    },
+    } : true, // Allow all origins in production
     credentials: true,
   })
 );
@@ -86,9 +85,9 @@ app.get("/health", (req, res) => {
 // Initialize Socket.IO with CORS
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
-    origin: allowedOrigins.filter(
+    origin: isDevelopment ? allowedOrigins.filter(
       (origin): origin is string => origin !== undefined
-    ),
+    ) : true, // Allow all origins in production
     credentials: true,
     methods: ["GET", "POST"],
   },
