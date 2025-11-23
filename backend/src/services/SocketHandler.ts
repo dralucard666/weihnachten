@@ -48,6 +48,15 @@ export class SocketHandler {
     this.loadQuestions();
   }
 
+  // Expose methods for API endpoints
+  getLobbyManager(): LobbyManager {
+    return this.lobbyManager;
+  }
+
+  getAllQuestions(): StoredQuestion[] {
+    return this.allQuestions;
+  }
+
   private loadQuestions(): void {
     try {
       const questionsPath = path.join(__dirname, '../data', 'questions.json');

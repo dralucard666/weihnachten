@@ -37,6 +37,8 @@ export default function GameMasterPage() {
   const [questionsError, setQuestionsError] = useState<string | null>(null);
 
   // Fetch questions from backend once
+  // If lobbyId exists, fetch lobby-specific shuffled questions
+  // Otherwise, fetch all questions for lobby creation
   useEffect(() => {
     const fetchQuestions = async () => {
       setQuestionsLoading(true);
@@ -44,7 +46,10 @@ export default function GameMasterPage() {
       try {
         const backendUrl =
           import.meta.env.VITE_BACKEND_URL || "http://192.168.178.22:3001";
-        const response = await fetch(`${backendUrl}/api/questions`);
+        const url = lobbyId 
+          ? `${backendUrl}/api/questions?lobbyId=${lobbyId}`
+          : `${backendUrl}/api/questions`;
+        const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error("Failed to fetch questions");
@@ -61,7 +66,7 @@ export default function GameMasterPage() {
     };
 
     fetchQuestions();
-  }, []);
+  }, [lobbyId]);
 
   // Memoize questionIds to prevent infinite re-renders
   const questionIds = useMemo(

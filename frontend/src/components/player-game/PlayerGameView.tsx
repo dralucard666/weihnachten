@@ -94,9 +94,6 @@ export default function PlayerGameView({
             onVoteForAnswer={onVoteForAnswer}
           />
         </div>
-        <div className="p-4 flex justify-center">
-          <LanguageSwitcher absolute={false} />
-        </div>
       </div>
     );
   }

@@ -57,18 +57,23 @@ export class LobbyManager {
 
   createLobby(questions: StoredQuestion[]): Lobby {
     const lobbyId = uuidv4();
+    
+    // Shuffle questions for this lobby
+    const shuffledQuestions = [...questions];
+    this.shuffleArray(shuffledQuestions);
+    
     const lobby: Lobby = {
       id: lobbyId,
       gameState: "lobby",
       players: [],
       currentQuestionIndex: 0,
-      totalQuestions: questions.length,
-      questionIds: questions.map(q => q.id),
+      totalQuestions: shuffledQuestions.length,
+      questionIds: shuffledQuestions.map(q => q.id),
       createdAt: new Date().toISOString(),
     };
 
     this.lobbies.set(lobbyId, lobby);
-    this.lobbyQuestions.set(lobbyId, questions);
+    this.lobbyQuestions.set(lobbyId, shuffledQuestions);
     this.initializeLobbyAnswerMaps(lobbyId);
     this.saveState();
 
@@ -88,6 +93,10 @@ export class LobbyManager {
     }
     
     return questions[lobby.currentQuestionIndex];
+  }
+
+  getLobbyQuestions(lobbyId: string): StoredQuestion[] | undefined {
+    return this.lobbyQuestions.get(lobbyId);
   }
 
   // Convert StoredQuestion to QuestionData (includes both languages for client-side switching)

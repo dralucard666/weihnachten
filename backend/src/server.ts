@@ -83,20 +83,56 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve questions by language
+// Initialize Socket.IO with CORS
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+  cors: {
+    origin: allowedOrigins.filter(
+      (origin): origin is string => origin !== undefined
+    ),
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Initialize socket handler
+const socketHandler = new SocketHandler(io);
+
+io.on("connection", (socket) => {
+  socketHandler.handleConnection(socket);
+});
+
+// Serve questions - either all questions or lobby-specific shuffled questions
 app.get("/api/questions", (req, res) => {
   try {
-    // Load the merged questions file
-    const questionsPath = path.join(__dirname, "data", "questions.json");
-    const rawQuestions = require(questionsPath);
+    const lobbyId = req.query.lobbyId as string | undefined;
     
-    // Add IDs to questions if they don't have them
-    const questions = rawQuestions.map((q: any, index: number) => ({
-      ...q,
-      id: q.id || `q-${index}`
-    }));
-    
-    res.json(questions);
+    if (lobbyId) {
+      // Return shuffled questions for specific lobby
+      const lobbyQuestions = socketHandler.getLobbyManager().getLobbyQuestions(lobbyId);
+      
+      if (!lobbyQuestions) {
+        return res.status(404).json({ error: "Lobby not found" });
+      }
+      
+      // Add IDs to questions if they don't have them
+      const questions = lobbyQuestions.map((q: any, index: number) => ({
+        ...q,
+        id: q.id || `q-${index}`
+      }));
+      
+      res.json(questions);
+    } else {
+      // Return all questions (not shuffled) for initial lobby creation
+      const allQuestions = socketHandler.getAllQuestions();
+      
+      // Add IDs to questions if they don't have them
+      const questions = allQuestions.map((q: any, index: number) => ({
+        ...q,
+        id: q.id || `q-${index}`
+      }));
+      
+      res.json(questions);
+    }
   } catch (error) {
     console.error("Error loading questions:", error);
     // Don't expose internal error details to client
@@ -126,24 +162,6 @@ if (!isDevelopment) {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
-
-// Initialize Socket.IO with CORS
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-  cors: {
-    origin: allowedOrigins.filter(
-      (origin): origin is string => origin !== undefined
-    ),
-    credentials: true,
-    methods: ["GET", "POST"],
-  },
-});
-
-// Initialize socket handler
-const socketHandler = new SocketHandler(io);
-
-io.on("connection", (socket) => {
-  socketHandler.handleConnection(socket);
-});
 
 const PORT = process.env.PORT || 3000;
 

@@ -4,8 +4,7 @@
   "description": "Backend server for quiz game with game master and players",
   "main": "dist/server.js",
   "scripts": {
-    "predev": "node scripts/randomize-questions.js",
-    "dev": "pnpm run predev && ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/backend/src/server.js"
   },
