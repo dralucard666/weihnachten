@@ -1,12 +1,10 @@
-import { useMemo, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGameMaster } from '../hooks/useGameMaster';
 import GameLobbyView from '../components/GameLobbyView';
 import GamePlayingView from '../components/host/GamePlayingView';
 import GameFinishedView from '../components/host/GameFinishedView';
 import type { Answer, QuestionType, QuestionMedia, OrderItem } from '../../../shared/types';
-import questionsDataDe from '../data/questions_de.json';
-import questionsDataEn from '../data/questions_en.json';
 import { useI18n } from '../i18n/useI18n';
 import { socketService } from '../services/socket';
 
@@ -27,15 +25,40 @@ export default function GameMasterPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const { language } = useI18n();
   const { t } = useI18n();
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
 
-  
-  const questions = useMemo<Question[]>(() => {
-    const questionsData = language === 'de' ? questionsDataDe : questionsDataEn;
-    return (questionsData as Omit<Question, 'id'>[]).map((q, index) => ({
-      ...q,
-      id: index.toString(),
-      correctAnswerId: q.correctAnswerId || `correct-${index}`
-    }));
+  // Fetch questions from backend
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setQuestionsLoading(true);
+      setQuestionsError(null);
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
+        const response = await fetch(`${backendUrl}/api/questions/${language}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch questions');
+        }
+        
+        const questionsData = await response.json();
+        const processedQuestions = questionsData.map((q: Omit<Question, 'id'>, index: number) => ({
+          ...q,
+          id: index.toString(),
+          correctAnswerId: q.correctAnswerId || `correct-${index}`
+        }));
+        
+        setQuestions(processedQuestions);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        setQuestionsError('Failed to load questions from server');
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchQuestions();
   }, [language]);
 
   const {
@@ -81,20 +104,22 @@ export default function GameMasterPage() {
   }, [language]);
 
 
-  if (loading) {
+  if (loading || questionsLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-xl text-gray-600">{t.common.creatingLobby}</div>
+        <div className="text-xl text-gray-600">
+          {loading ? t.common.creatingLobby : 'Loading questions...'}
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || questionsError) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">{t.common.error}</h2>
-          <p className="text-gray-700">{error}</p>
+          <p className="text-gray-700">{error || questionsError}</p>
         </div>
       </div>
     );

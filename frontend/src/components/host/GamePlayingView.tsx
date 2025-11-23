@@ -102,7 +102,7 @@ export default function GamePlayingView({
 
   // Show before-answer media when correct answer is revealed
   const handleShowAnswerClick = () => {
-    if (currentQuestion.media?.beforeAnswer) {
+    if (currentQuestion.media?.beforeAnswer && !(currentQuestion.type === "custom-answers" && !isVotingPhase)) {
       setShowBeforeAnswerMedia(true);
     } else {
       onShowAnswer();

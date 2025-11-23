@@ -19,20 +19,11 @@ export default function MediaDisplay({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(media.autoplay ?? false);
   const [mediaSources, setMediaSources] = useState<string[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadMedia = async () => {
-      try {
-        const loadedSources = await loadMediaBatch(media.sources);
-        setMediaSources(loadedSources);
-      } catch (error) {
-        console.error('Failed to load media:', error);
-        setLoadError(error instanceof Error ? error.message : 'Failed to load media files');
-      }
-    };
-
-    loadMedia();
+    // Load media URLs from backend
+    const loadedSources = loadMediaBatch(media.sources);
+    setMediaSources(loadedSources);
   }, [media.sources]);
 
   // Handle Escape key to continue/dismiss
@@ -126,14 +117,6 @@ export default function MediaDisplay({
       (prev) => (prev - 1 + mediaSources.length) % mediaSources.length
     );
   };
-
-  if (loadError) {
-    return (
-      <div className={`${className} p-8 bg-red-900/20 border-2 border-red-500 rounded-xl`}>
-        <p className="text-red-400 text-center">⚠️ {loadError}</p>
-      </div>
-    );
-  }
 
   if (mediaSources.length === 0) {
     return null;

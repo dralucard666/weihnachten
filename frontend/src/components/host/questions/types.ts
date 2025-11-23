@@ -1,8 +1,6 @@
 import type {
   Answer,
   QuestionType,
-  CustomAnswer,
-  PlayerAnswerInfo,
   QuestionMedia,
   OrderItem,
 } from "../../../../../shared/types";

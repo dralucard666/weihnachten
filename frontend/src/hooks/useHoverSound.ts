@@ -14,18 +14,13 @@ export function useHoverSound(soundPaths?: string[]) {
   useEffect(() => {
     if (!soundPaths || soundPaths.length === 0) return;
 
-    loadMediaBatch(soundPaths)
-      .then((urls) => {
-        loadedUrlsRef.current = urls;
-        // Create audio element for the first sound
-        if (urls.length > 0) {
-          audioRef.current = new Audio(urls[0]);
-          audioRef.current.preload = 'auto';
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load sound:', err);
-      });
+    const urls = loadMediaBatch(soundPaths);
+    loadedUrlsRef.current = urls;
+    // Create audio element for the first sound
+    if (urls.length > 0) {
+      audioRef.current = new Audio(urls[0]);
+      audioRef.current.preload = 'auto';
+    }
 
     return () => {
       if (audioRef.current) {

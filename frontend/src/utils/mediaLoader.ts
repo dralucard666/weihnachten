@@ -18,50 +18,45 @@
  */
 
 // Get all media files from assets folder
-const mediaModules = import.meta.glob<{ default: string }>('../assets/**/*.{mp4,webm,mp3,jpg,jpeg,png,gif,svg}', { 
+import.meta.glob<{ default: string }>('../assets/**/*.{mp4,webm,mp3,jpg,jpeg,png,gif,svg}', { 
   eager: false 
 });
 
 /**
- * Load a media file from the assets folder
- * @param path - Path relative to assets folder (e.g., 'twilight/twilight.mp4')
- * @returns Promise that resolves to the media URL
+ * Load a media file from the backend server
+ * @param path - Path relative to media folder (e.g., 'twilight/twilight.mp4')
+ * @returns The media URL
  */
-export async function loadMedia(path: string): Promise<string> {
-  const fullPath = `../assets/${path}`;
-  const loader = mediaModules[fullPath];
-  
-  if (!loader) {
-    throw new Error(`Media file not found: ${path}. Available files: ${Object.keys(mediaModules).join(', ')}`);
-  }
-  
-  const module = await loader();
-  return module.default;
+export function loadMedia(path: string): string {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
+  return `${backendUrl}/media/${path}`;
 }
 
 /**
  * Load multiple media files
- * @param paths - Array of paths relative to assets folder
- * @returns Promise that resolves to array of media URLs
+ * @param paths - Array of paths relative to media folder
+ * @returns Array of media URLs
  */
-export async function loadMediaBatch(paths: string[]): Promise<string[]> {
-  return Promise.all(paths.map(loadMedia));
+export function loadMediaBatch(paths: string[]): string[] {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
+  return paths.map(path => `${backendUrl}/media/${path}`);
 }
 
 /**
- * Check if a media file exists
- * @param path - Path relative to assets folder
+ * Check if a media file exists (now always returns true as validation happens on backend)
+ * @param path - Path relative to media folder
  * @returns Boolean indicating if the file exists
  */
-export function mediaExists(path: string): boolean {
-  const fullPath = `../assets/${path}`;
-  return fullPath in mediaModules;
+export function mediaExists(): boolean {
+  // Media validation now happens on the backend
+  return true;
 }
 
 /**
- * Get all available media file paths
- * @returns Array of all media file paths
+ * Get all available media file paths (no longer available with backend approach)
+ * @returns Empty array
  */
 export function getAvailableMedia(): string[] {
-  return Object.keys(mediaModules).map(path => path.replace('../assets/', ''));
+  // This function is no longer applicable with backend media serving
+  return [];
 }
