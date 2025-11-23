@@ -41,29 +41,20 @@ if (useHttps) {
 
 app.use(
   cors({
-    origin: isDevelopment ? (origin, callback) => {
-      // Allow requests with no origin (direct navigation, same-origin requests)
-      if (!origin) return callback(null, true);
-
-      if (!allowedOrigins.includes(origin)) {
-        console.warn(`CORS: Blocked request from origin: ${origin}`);
-        return callback(new Error("Not allowed by CORS"));
-      }
-
-      callback(null, true);
-    } : true, // Allow all origins in production
+    origin: true, // Allow all origins
     credentials: true,
   })
 );
 
-// Security headers
-app.use(
-  helmet({
-    contentSecurityPolicy: isDevelopment ? false : undefined,
-    crossOriginEmbedderPolicy: false,
-    //hsts: false, // Disable HSTS to prevent forcing HTTPS
-  })
-);
+// Security headers - disabled in production to avoid conflicts
+if (isDevelopment) {
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    })
+  );
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -85,9 +76,7 @@ app.get("/health", (req, res) => {
 // Initialize Socket.IO with CORS
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
-    origin: isDevelopment ? allowedOrigins.filter(
-      (origin): origin is string => origin !== undefined
-    ) : true, // Allow all origins in production
+    origin: "*", // Allow all origins
     credentials: true,
     methods: ["GET", "POST"],
   },
