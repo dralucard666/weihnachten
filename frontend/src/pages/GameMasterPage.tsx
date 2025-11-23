@@ -1,74 +1,80 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useGameMaster } from '../hooks/useGameMaster';
-import GameLobbyView from '../components/GameLobbyView';
-import GamePlayingView from '../components/host/GamePlayingView';
-import GameFinishedView from '../components/host/GameFinishedView';
-import type { Answer, QuestionType, QuestionMedia, OrderItem } from '../../../shared/types';
-import { useI18n } from '../i18n/useI18n';
-import { socketService } from '../services/socket';
+import { useEffect, useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import { useGameMaster } from "../hooks/useGameMaster";
+import GameLobbyView from "../components/GameLobbyView";
+import GamePlayingView from "../components/host/GamePlayingView";
+import GameFinishedView from "../components/host/GameFinishedView";
+import type { QuestionType, QuestionMedia } from "../../../shared/types";
+import { useI18n } from "../i18n/useI18n";
 
-interface Question {
+// Bilingual question structure from backend
+export interface BilingualQuestion {
   id: string;
-  text: string;
   type: QuestionType;
-  answers?: Answer[];
+  text: { de: string; en: string };
+  answers?: Array<{
+    id: string;
+    text: { de: string; en: string };
+    sound?: string[];
+  }>;
   correctAnswerId?: string;
-  correctAnswer?: string;
-  correctAnswers?: string[]; // For text-input type
-  orderItems?: OrderItem[]; // For order type
-  correctOrder?: string[]; // For order type
+  correctAnswer?: { de: string; en: string };
+  correctAnswers?: string[];
+  orderItems?: Array<{
+    id: string;
+    text: { de: string; en: string };
+    sound?: string[];
+  }>;
+  correctOrder?: string[];
   media?: QuestionMedia;
 }
 
 export default function GameMasterPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
-  const { language } = useI18n();
-  const { t } = useI18n();
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const { t, language } = useI18n();
+  const [questions, setQuestions] = useState<BilingualQuestion[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [questionsError, setQuestionsError] = useState<string | null>(null);
 
-  // Fetch questions from backend
+  // Fetch questions from backend once
   useEffect(() => {
     const fetchQuestions = async () => {
       setQuestionsLoading(true);
       setQuestionsError(null);
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
-        const response = await fetch(`${backendUrl}/api/questions/${language}`);
-        
+        const backendUrl =
+          import.meta.env.VITE_BACKEND_URL || "http://192.168.178.22:3001";
+        const response = await fetch(`${backendUrl}/api/questions`);
+
         if (!response.ok) {
-          throw new Error('Failed to fetch questions');
+          throw new Error("Failed to fetch questions");
         }
-        
+
         const questionsData = await response.json();
-        const processedQuestions = questionsData.map((q: Omit<Question, 'id'>, index: number) => ({
-          ...q,
-          id: index.toString(),
-          correctAnswerId: q.correctAnswerId || `correct-${index}`
-        }));
-        
-        setQuestions(processedQuestions);
+        setQuestions(questionsData);
       } catch (error) {
-        console.error('Error fetching questions:', error);
-        setQuestionsError('Failed to load questions from server');
+        console.error("Error fetching questions:", error);
+        setQuestionsError("Failed to load questions from server");
       } finally {
         setQuestionsLoading(false);
       }
     };
 
     fetchQuestions();
-  }, [language]);
+  }, []);
+
+  // Memoize questionIds to prevent infinite re-renders
+  const questionIds = useMemo(
+    () => questions.map((q, index) => q.id || `q-${index}`),
+    [questions]
+  );
 
   const {
     lobby,
     loading,
     error,
     currentQuestion,
-    currentQuestionIndex,
     allPlayersAnswered,
-    showCorrectAnswer,
     playersWhoAnswered,
     customAnswers,
     isVotingPhase,
@@ -76,39 +82,49 @@ export default function GameMasterPage() {
     playerAnswers,
     correctPlayerIds,
     playerScores,
+    correctAnswerId,
+    correctAnswer,
+    correctAnswers,
+    correctOrder,
     handleStartGame,
     handleShowAnswer,
     handleShowVotingResults,
     handleNextQuestion,
-    handleReloadQuestion,
-  } = useGameMaster(lobbyId, questions);
+  } = useGameMaster(lobbyId, questionIds);
 
-  // When language changes during an active game, update the question data
-  useEffect(() => {
-    if (lobby?.gameState === 'playing' && currentQuestion) {
-      const socket = socketService.getSocket();
-      if (socket) {
-        // Emit updated question data to players (answers/options in new language)
-        console.log('emitting updated question data due to language change');
-        socket.emit('nextQuestion', {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          questionType: currentQuestion.type,
-          answers: currentQuestion.answers,
-          orderItems: currentQuestion.orderItems,
-        });
+  // Adapt QuestionData to Question format for components (extract current language)
+  const adaptedQuestion = currentQuestion
+    ? {
+        id: currentQuestion.questionId,
+        text:
+          typeof currentQuestion.text === "string"
+            ? currentQuestion.text
+            : currentQuestion.text[language],
+        type: currentQuestion.type,
+        answers: currentQuestion.answers?.map((a) => ({
+          id: a.id,
+          text: typeof a.text === "string" ? a.text : a.text[language],
+          sound: a.sound,
+        })),
+        orderItems: currentQuestion.orderItems?.map((item) => ({
+          id: item.id,
+          text: typeof item.text === "string" ? item.text : item.text[language],
+          sound: item.sound,
+        })),
+        media: currentQuestion.media,
+        // Include correct answer data for host view (from result events)
+        correctAnswerId,
+        correctAnswer,
+        correctAnswers,
+        correctOrder,
       }
-    }
-    // Only trigger when language changes, not when lobby or currentQuestion objects are recreated
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
-
+    : undefined;
 
   if (loading || questionsLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-xl text-gray-600">
-          {loading ? t.common.creatingLobby : 'Loading questions...'}
+          {loading ? t.common.creatingLobby : t.common.loadingQuestions}
         </div>
       </div>
     );
@@ -118,7 +134,9 @@ export default function GameMasterPage() {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">{t.common.error}</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">
+            {t.common.error}
+          </h2>
           <p className="text-gray-700">{error || questionsError}</p>
         </div>
       </div>
@@ -130,20 +148,20 @@ export default function GameMasterPage() {
   }
 
   // Render based on game state
-  if (lobby.gameState === 'lobby') {
+  if (lobby.gameState === "lobby") {
     return <GameLobbyView lobby={lobby} onStartGame={handleStartGame} />;
   }
 
-  if (lobby.gameState === 'playing' && currentQuestion) {
+  if (lobby.gameState === "playing" && adaptedQuestion) {
     return (
       <GamePlayingView
         lobby={lobby}
-        currentQuestion={currentQuestion}
-        currentQuestionIndex={currentQuestionIndex}
-        totalQuestions={questions.length}
+        currentQuestion={adaptedQuestion}
+        currentQuestionIndex={currentQuestion!.questionIndex}
+        totalQuestions={lobby.totalQuestions!}
         playersWhoAnswered={playersWhoAnswered}
         allPlayersAnswered={allPlayersAnswered}
-        showCorrectAnswer={showCorrectAnswer}
+        showCorrectAnswer={lobby.currentPhase === "revealing"}
         customAnswers={customAnswers}
         isVotingPhase={isVotingPhase}
         allVotesReceived={allVotesReceived}
@@ -153,31 +171,34 @@ export default function GameMasterPage() {
         onShowAnswer={handleShowAnswer}
         onShowVotingResults={handleShowVotingResults}
         onNextQuestion={handleNextQuestion}
-        onReloadQuestion={handleReloadQuestion}
       />
     );
   }
 
-  if (lobby.gameState === 'playing' && !currentQuestion) {
-    // Fallback for when reconnecting but question index is out of bounds
+  if (lobby.gameState === "playing" && !adaptedQuestion) {
+    // Fallback for when reconnecting but question data is not available
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <h2 className="text-2xl font-bold text-yellow-600 mb-4">Game In Progress</h2>
+          <h2 className="text-2xl font-bold text-yellow-600 mb-4">
+            {t.common.gameInProgress}
+          </h2>
           <p className="text-gray-700 mb-4">
-            Connected to lobby but question data is not available.
+            {t.common.connectedButNoData}
           </p>
           <p className="text-sm text-gray-600">
-            Lobby ID: {lobby.id}<br />
-            Question Index: {currentQuestionIndex}<br />
-            Total Questions: {questions.length}
+            {t.common.lobbyIdLabel}: {lobby.id}
+            <br />
+            {t.common.questionIndex}: {lobby.currentQuestionIndex}
+            <br />
+            {t.common.totalQuestions}: {lobby.totalQuestions}
           </p>
         </div>
       </div>
     );
   }
 
-  if (lobby.gameState === 'finished') {
+  if (lobby.gameState === "finished") {
     return <GameFinishedView lobby={lobby} />;
   }
 

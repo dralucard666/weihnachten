@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { Player, Answer } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import { useI18n } from "../../../i18n/useI18n";
+import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface VotingViewProps {
   player: Player;
@@ -18,8 +19,12 @@ export default function VotingView({
   hasSubmitted,
   onVoteForAnswer,
 }: VotingViewProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [localVoteAnswer, setLocalVoteAnswer] = useState<string | null>(null);
+  
+  const getText = (text: string | { de: string; en: string }) => {
+    return typeof text === 'string' ? text : text[language];
+  };
 
   // Reset local vote when voting answers change (new voting phase)
   useEffect(() => {
@@ -68,7 +73,7 @@ export default function VotingView({
                   >
                     {idx + 1}
                   </div>
-                  <span className="flex-1 text-left">{answer.text}</span>
+                  <span className="flex-1 text-left">{getText(answer.text)}</span>
                 </div>
               </button>
             ))}
@@ -94,6 +99,7 @@ export default function VotingView({
           )}
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

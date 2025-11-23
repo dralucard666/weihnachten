@@ -9,7 +9,7 @@ import ReconnectModal from '../components/ReconnectModal';
 import { useI18n } from '../i18n/useI18n';
 
 export default function PlayerPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   const [manualLobbyId, setManualLobbyId] = useState('');
@@ -37,6 +37,23 @@ export default function PlayerPage() {
     getStoredSession,
     submittedOrder,
   } = usePlayer(lobbyId);
+
+  // Adapt QuestionData to extract current language text
+  const adaptedQuestion = currentQuestion ? {
+    questionId: currentQuestion.questionId,
+    questionIndex: currentQuestion.questionIndex,
+    questionType: currentQuestion.type,
+    answers: currentQuestion.answers?.map(a => ({
+      id: a.id,
+      text: typeof a.text === 'string' ? a.text : a.text[language],
+      sound: a.sound,
+    })),
+    orderItems: currentQuestion.orderItems?.map(item => ({
+      id: item.id,
+      text: typeof item.text === 'string' ? item.text : item.text[language],
+      sound: item.sound,
+    })),
+  } : null;
 
   const handleManualJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +84,7 @@ export default function PlayerPage() {
               <button
                 onClick={() => setShowReconnectModal(true)}
                 className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
-                title="Reconnect to previous session"
+                title={t.common.reconnectToPreviousSession}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -165,7 +182,7 @@ export default function PlayerPage() {
   if (!currentPlayer) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-xl text-gray-600">{t.common.error}: Player not found</div>
+        <div className="text-xl text-gray-600">{t.common.error}: {t.common.playerNotFound}</div>
       </div>
     );
   }
@@ -185,7 +202,7 @@ export default function PlayerPage() {
       return (
         <PlayerGameView
           currentPlayer={currentPlayer}
-          currentQuestion={currentQuestion}
+          currentQuestion={adaptedQuestion}
           selectedAnswer={selectedAnswer}
           customAnswerText={customAnswerText}
           hasSubmitted={hasSubmitted}

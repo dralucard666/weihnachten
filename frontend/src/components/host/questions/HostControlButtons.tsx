@@ -15,7 +15,6 @@ interface HostControlButtonsProps {
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
   onShowTextInputPlayerResults: () => void;
-  onReloadQuestion: () => void;
 }
 
 export default function HostControlButtons({
@@ -32,7 +31,6 @@ export default function HostControlButtons({
   onShowVotingResults,
   onNextQuestion,
   onShowTextInputPlayerResults,
-  onReloadQuestion,
 }: HostControlButtonsProps) {
   const { t } = useI18n();
   const isLastQuestion = currentQuestionIndex + 1 >= totalQuestions;
@@ -151,15 +149,6 @@ export default function HostControlButtons({
     <div>
       <div className="flex justify-center items-center gap-4 flex-wrap">
         {renderPrimaryButton()}
-      </div>
-      <div className="absolute bottom-3 left-4 flex gap-2">
-        <button
-          onClick={onReloadQuestion}
-          className="cursor-pointer px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-md"
-          title={t.game.reload}
-        >
-          <span>🔄</span>
-        </button>
       </div>
       <LanguageSwitcher />
     </div>

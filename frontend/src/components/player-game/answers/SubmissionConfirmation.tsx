@@ -12,7 +12,7 @@ export default function SubmissionConfirmation({
   waitMessage
 }: SubmissionConfirmationProps) {
   const { t } = useI18n();
-  const displayWaitMessage = waitMessage || t.playerGame.waitForPlayers;
+  const displayWaitMessage = waitMessage || t.playerAnswers.waitForAllPlayers;
 
   return (
     <div className="text-center">

@@ -1,4 +1,5 @@
 import type { Player } from "../../../../../shared/types";
+import { useI18n } from '../../../i18n/useI18n';
 
 interface HostPlayerStatusProps {
   players: Player[];
@@ -15,10 +16,12 @@ export default function HostPlayerStatus({
   showCorrectAnswer,
   getPlayerAnswer,
 }: HostPlayerStatusProps) {
+  const { t } = useI18n();
+  
   return (
     <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 shadow-xl mb-6 border border-blue-400/30">
       <h2 className="text-base font-bold text-white mb-3 text-center drop-shadow-md">
-        👥 Player Status
+        👥 {t.host.playerStatus}
       </h2>
       <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
         {players.map((player) => {
@@ -46,9 +49,9 @@ export default function HostPlayerStatus({
               <div className="text-[10px] text-gray-200">
                 {hasAnswered
                   ? isVotingPhase
-                    ? "✓ Voted"
-                    : "✓ Done"
-                  : "⏳ Wait"}
+                    ? `✓ ${t.host.voted}`
+                    : `✓ ${t.host.done}`
+                  : `⏳ ${t.host.wait}`}
               </div>
               {showCorrectAnswer && playerAnswer && (
                 <div className="text-[10px] text-yellow-200 mt-1 border-t border-gray-500/50 pt-1 truncate">

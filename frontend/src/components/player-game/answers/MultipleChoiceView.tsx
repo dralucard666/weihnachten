@@ -3,6 +3,7 @@ import type { Player, Answer } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import { useHoverSound } from "../../../hooks/useHoverSound";
 import { useI18n } from "../../../i18n/useI18n";
+import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface MultipleChoiceViewProps {
   player: Player;
@@ -19,10 +20,14 @@ export default function MultipleChoiceView({
   hasSubmitted,
   onSubmitAnswer,
 }: MultipleChoiceViewProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [localSelectedAnswer, setLocalSelectedAnswer] = useState<string | null>(
     null
   );
+  
+  const getText = (text: string | { de: string; en: string }) => {
+    return typeof text === 'string' ? text : text[language];
+  };
 
   // Reset local selection when answers change (new question)
   useEffect(() => {
@@ -61,7 +66,7 @@ export default function MultipleChoiceView({
           >
             {String.fromCharCode(65 + idx)}
           </div>
-          <span className="flex-1 text-left">{answer.text}</span>
+          <span className="flex-1 text-left">{getText(answer.text)}</span>
         </div>
       </button>
     );
@@ -76,10 +81,10 @@ export default function MultipleChoiceView({
           <div className="text-center mb-6">
             <span className="text-4xl mb-2 block">🤔</span>
             <h3 className="text-2xl font-extrabold text-gray-800 mb-2">
-              SELECT YOUR ANSWER
+              {t.playerAnswers.selectYourAnswer}
             </h3>
             <p className="text-gray-600">
-              Look at the screen and pick the correct answer
+              {t.playerAnswers.lookAtScreenAndPick}
             </p>
           </div>
 
@@ -111,6 +116,7 @@ export default function MultipleChoiceView({
           )}
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

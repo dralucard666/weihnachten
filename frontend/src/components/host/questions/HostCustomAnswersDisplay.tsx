@@ -1,5 +1,6 @@
 import type { CustomAnswer, Player } from "../../../../../shared/types";
 import type { Question } from "./types";
+import { useI18n } from "../../../i18n/useI18n";
 
 interface HostCustomAnswersDisplayProps {
   question: Question;
@@ -18,6 +19,13 @@ export default function HostCustomAnswersDisplay({
   allPlayersAnswered,
   players,
 }: HostCustomAnswersDisplayProps) {
+  const { language } = useI18n();
+  const { t } = useI18n();
+  
+  // Helper to get text in current language
+  const getText = (text: string | { de: string; en: string }) => {
+    return typeof text === 'string' ? text : text[language];
+  };
   // Collection phase
   if (!isVotingPhase) {
     return (
@@ -26,15 +34,15 @@ export default function HostCustomAnswersDisplay({
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
-          <p>Players are writing their answers...</p>
+          <p>{t.host.playersWritingAnswers}</p>
           <p className="text-sm mt-2 text-yellow-300">
-            📝 Custom Answer Mode: Players submit their own answers
+            {t.host.customAnswerModeNote}
           </p>
         </div>
         {allPlayersAnswered && customAnswers.length > 0 && (
           <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-blue-400/30">
             <h3 className="text-xl font-bold text-white mb-4 text-center">
-              ✨ Submitted Answers:
+              {t.host.submittedAnswers}
             </h3>
             <div className="grid grid-cols-1 auto-rows-fr gap-3">
               {customAnswers.map((answer, idx) => (
@@ -47,14 +55,14 @@ export default function HostCustomAnswersDisplay({
                       {idx + 1}
                     </div>
                     <div className="text-white font-medium text-lg">
-                      {answer.text}
+                      {getText(answer.text)}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             <div className="mt-4 text-center text-yellow-300 text-sm">
-              ⚠️ One of these answers is correct. The order is randomized.
+              {t.host.oneAnswerCorrect}
             </div>
           </div>
         )}
@@ -70,14 +78,14 @@ export default function HostCustomAnswersDisplay({
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
-          <p>Players are voting for the correct answer...</p>
+          <p>{t.host.playersVoting}</p>
           <p className="text-sm mt-2 text-orange-300">
-            🗳️ Voting Phase: Players pick which answer they think is correct
+            {t.host.votingPhaseNote}
           </p>
         </div>
         <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-purple-400/30">
           <h3 className="text-xl font-bold text-white mb-4 text-center">
-            All Answers:
+            {t.host.allAnswers}
           </h3>
           <div className="grid grid-cols-1 auto-rows-fr gap-3">
             {customAnswers.map((answer, idx) => (
@@ -89,8 +97,8 @@ export default function HostCustomAnswersDisplay({
                   <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-purple-900">
                     {idx + 1}
                   </div>
-                  <div className="text-white font-medium text-lg">
-                    {answer.text}
+                  <div className="text-white font-medium text-lg flex-1">
+                    {getText(answer.text)}
                   </div>
                 </div>
               </div>
@@ -108,11 +116,11 @@ export default function HostCustomAnswersDisplay({
         {question.text}
       </h2>
       <div className="text-center text-green-300 text-lg mb-4">
-        <p className="text-3xl font-bold drop-shadow-md">🎉 Results!</p>
+        <p className="text-3xl font-bold drop-shadow-md">{t.host.results}</p>
       </div>
       <div className="mt-6 bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-green-400/30">
         <h3 className="text-xl font-bold text-white mb-4 text-center">
-          All Answers with Results:
+          {t.host.allAnswersWithResults}
         </h3>
         <div className="grid grid-cols-1 auto-rows-fr gap-3">
           {customAnswers.map((answer, idx) => (
@@ -136,19 +144,19 @@ export default function HostCustomAnswersDisplay({
                 </div>
                 <div className="flex-1">
                   <div className="text-white font-medium text-lg">
-                    {answer.text}
+                    {getText(answer.text)}
                   </div>
                   {!answer.playerId && (
                     <div className="text-base text-green-200 mt-1 font-bold flex items-center gap-2">
                       <span>✓</span>
-                      <span>CORRECT ANSWER</span>
+                      <span>{t.host.correctAnswerLabel}</span>
                     </div>
                   )}
                   {answer.playerId && (
                     <div className="text-xs text-blue-200 mt-1">
-                      Player:{" "}
+                      {t.host.playerLabel}:{" "}
                       {players.find((p) => p.id === answer.playerId)?.name ||
-                        "Unknown"}
+                        t.host.unknown}
                     </div>
                   )}
                 </div>

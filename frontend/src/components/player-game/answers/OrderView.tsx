@@ -3,6 +3,8 @@ import type { Player, OrderItem } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
 import { useHoverSound } from '../../../hooks/useHoverSound';
+import LanguageSwitcher from '../../LanguageSwitcher';
+import { useI18n } from '../../../i18n/useI18n';
 
 interface OrderViewProps {
   player: Player;
@@ -19,6 +21,7 @@ export default function OrderView({
   submittedOrder,
   onSubmitOrder,
 }: OrderViewProps) {
+  const { t } = useI18n();
   const [orderedItems, setOrderedItems] = useState<OrderItem[]>([...orderItems]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -125,10 +128,10 @@ export default function OrderView({
           <div className="text-center mb-6">
             <span className="text-4xl mb-2 block">🔢</span>
             <h3 className="text-2xl font-extrabold text-gray-800 mb-2">
-              PUT IN ORDER
+              {t.playerAnswers.putInOrder}
             </h3>
             <p className="text-gray-600">
-              Drag items or use arrows to arrange them in the correct order
+              {t.playerAnswers.dragToArrange}
             </p>
           </div>
 
@@ -144,7 +147,7 @@ export default function OrderView({
                 className="w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600"
               >
                 <span>✓</span>
-                <span>Submit Order</span>
+                <span>{t.playerAnswers.submitOrder}</span>
               </button>
             </div>
           ) : (
@@ -156,6 +159,7 @@ export default function OrderView({
           )}
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

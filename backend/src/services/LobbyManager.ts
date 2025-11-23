@@ -2,6 +2,9 @@ import {
   Lobby,
   Player,
   GameState,
+  QuestionPhase,
+  StoredQuestion,
+  QuestionData,
   CustomAnswer,
   PlayerAnswerInfo,
 } from "../../../shared/types";
@@ -37,6 +40,7 @@ interface PlayerOrder {
 
 export class LobbyManager {
   private lobbies: Map<string, Lobby> = new Map();
+  private lobbyQuestions: Map<string, StoredQuestion[]> = new Map(); // lobbyId -> array of questions
   private playerAnswers: Map<string, Map<string, PlayerAnswer>> = new Map(); // lobbyId -> Map<playerId, answer>
   private customAnswers: Map<string, Map<string, PlayerCustomAnswer>> =
     new Map(); // lobbyId -> Map<playerId, customAnswer>
@@ -51,17 +55,19 @@ export class LobbyManager {
     this.persistenceService = new PersistenceService();
   }
 
-  createLobby(): Lobby {
+  createLobby(questions: StoredQuestion[]): Lobby {
     const lobbyId = uuidv4();
     const lobby: Lobby = {
       id: lobbyId,
       gameState: "lobby",
       players: [],
       currentQuestionIndex: 0,
+      totalQuestions: questions.length,
       createdAt: new Date().toISOString(),
     };
 
     this.lobbies.set(lobbyId, lobby);
+    this.lobbyQuestions.set(lobbyId, questions);
     this.initializeLobbyAnswerMaps(lobbyId);
 
     return lobby;
@@ -69,6 +75,44 @@ export class LobbyManager {
 
   getLobby(lobbyId: string): Lobby | undefined {
     return this.lobbies.get(lobbyId);
+  }
+
+  getCurrentQuestion(lobbyId: string): StoredQuestion | undefined {
+    const lobby = this.lobbies.get(lobbyId);
+    const questions = this.lobbyQuestions.get(lobbyId);
+    
+    if (!lobby || !questions) {
+      return undefined;
+    }
+    
+    return questions[lobby.currentQuestionIndex];
+  }
+
+  // Convert StoredQuestion to QuestionData (includes both languages for client-side switching)
+  getQuestionDataForLanguage(
+    question: StoredQuestion,
+    questionIndex: number,
+    totalQuestions: number,
+    language: 'de' | 'en' // Kept for backwards compatibility but not used anymore
+  ): QuestionData {
+    return {
+      questionId: question.id,
+      questionIndex,
+      totalQuestions,
+      type: question.type,
+      text: question.text, // Send both languages
+      answers: question.answers?.map(a => ({
+        id: a.id,
+        text: a.text, // Send both languages
+        sound: a.sound,
+      })),
+      orderItems: question.orderItems?.map(item => ({
+        id: item.id,
+        text: item.text, // Send both languages
+        sound: item.sound,
+      })),
+      media: question.media,
+    };
   }
 
   joinLobby(lobbyId: string): {
@@ -108,16 +152,18 @@ export class LobbyManager {
     return true;
   }
 
-  startGame(lobbyId: string, questionId: string): boolean {
+  startGame(lobbyId: string): boolean {
     const lobby = this.lobbies.get(lobbyId);
+    const questions = this.lobbyQuestions.get(lobbyId);
 
-    if (!lobby || lobby.gameState !== "lobby") {
+    if (!lobby || lobby.gameState !== "lobby" || !questions || questions.length === 0) {
       return false;
     }
 
     lobby.gameState = "playing";
     lobby.currentQuestionIndex = 0;
-    lobby.currentQuestionId = questionId;
+    lobby.currentQuestionId = questions[0].id;
+    lobby.currentPhase = "answering";
     this.clearAllAnswers(lobbyId);
 
     return true;
@@ -126,11 +172,26 @@ export class LobbyManager {
   setAnswer(
     lobbyId: string,
     playerId: string,
-    questionId: string,
     answerId: string
   ): boolean {
-    if (!this.validateQuestionContext(lobbyId, questionId)) {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+    
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
       return false;
+    }
+    
+    // Validate that we're in answering phase
+    if (lobby.currentPhase !== "answering") {
+      return false;
+    }
+    
+    // Validate answer exists for multiple-choice
+    if (currentQuestion.type === "multiple-choice") {
+      const validAnswer = currentQuestion.answers?.some(a => a.id === answerId);
+      if (!validAnswer) {
+        return false;
+      }
     }
 
     const player = this.findPlayer(lobbyId, playerId);
@@ -153,38 +214,34 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.playerAnswers);
   }
 
-  processQuestionResult(
-    lobbyId: string,
-    questionId: string,
-    correctAnswerId: string
-  ): Player[] {
+  processQuestionResult(lobbyId: string): Player[] {
     const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
 
-    if (!lobby || lobby.currentQuestionId !== questionId) {
+    if (!lobby || !currentQuestion) {
       return [];
     }
 
     const answers = this.playerAnswers.get(lobbyId);
-    if (!answers) {
+    if (!answers || !currentQuestion.correctAnswerId) {
       return [];
     }
 
     for (const player of lobby.players) {
       const answer = answers.get(player.id);
-      if (answer && answer.answerId === correctAnswerId) {
+      if (answer && answer.answerId === currentQuestion.correctAnswerId) {
         player.score += 1;
       }
     }
 
+    lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
     return lobby.players;
   }
 
-  getPlayerAnswers(
-    lobbyId: string,
-    answersList?: Array<{ id: string; text: string }>
-  ): PlayerAnswerInfo[] {
+  getPlayerAnswers(lobbyId: string): PlayerAnswerInfo[] {
     const answers = this.playerAnswers.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
 
     if (!answers) {
       return [];
@@ -193,9 +250,11 @@ export class LobbyManager {
     const playerAnswers: PlayerAnswerInfo[] = [];
 
     for (const [playerId, answer] of answers.entries()) {
-      const answerText = answersList?.find(
+      const answerObj = currentQuestion?.answers?.find(
         (a) => a.id === answer.answerId
-      )?.text;
+      );
+      // Extract EN text from potentially bilingual answer
+      const answerText = answerObj ? (typeof answerObj.text === 'string' ? answerObj.text : answerObj.text.en) : undefined;
       playerAnswers.push({
         playerId,
         answerId: answer.answerId,
@@ -206,15 +265,23 @@ export class LobbyManager {
     return playerAnswers;
   }
 
-  nextQuestion(lobbyId: string, questionId: string): boolean {
+  nextQuestion(lobbyId: string): boolean {
     const lobby = this.lobbies.get(lobbyId);
+    const questions = this.lobbyQuestions.get(lobbyId);
 
-    if (!lobby || lobby.gameState !== "playing") {
+    if (!lobby || lobby.gameState !== "playing" || !questions) {
       return false;
     }
 
-    lobby.currentQuestionIndex += 1;
-    lobby.currentQuestionId = questionId;
+    const nextIndex = lobby.currentQuestionIndex + 1;
+    
+    if (nextIndex >= questions.length) {
+      return false; // No more questions
+    }
+
+    lobby.currentQuestionIndex = nextIndex;
+    lobby.currentQuestionId = questions[nextIndex].id;
+    lobby.currentPhase = "answering";
 
     this.clearAllAnswers(lobbyId);
     this.resetPlayerAnswerFlags(lobby);
@@ -227,10 +294,17 @@ export class LobbyManager {
   submitCustomAnswer(
     lobbyId: string,
     playerId: string,
-    questionId: string,
     answerText: string
   ): boolean {
-    if (!this.validateQuestionContext(lobbyId, questionId)) {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+    
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
+      return false;
+    }
+    
+    // Validate phase and question type
+    if (lobby.currentPhase !== "answering" || currentQuestion.type !== "custom-answers") {
       return false;
     }
 
@@ -255,27 +329,34 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.customAnswers);
   }
 
-  getAllCustomAnswers(
-    lobbyId: string,
-    correctAnswerId: string,
-    correctAnswerText: string
-  ): CustomAnswer[] {
+  prepareCustomAnswerVoting(lobbyId: string): CustomAnswer[] {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
     const answers = this.customAnswers.get(lobbyId);
-    if (!answers) {
+    
+    if (!lobby || !currentQuestion || !answers || !currentQuestion.correctAnswer) {
       return [];
     }
 
+    const correctAnswerId = uuidv4();
     const customAnswers: CustomAnswer[] = [
       ...Array.from(answers.entries()).map(([playerId, answer]) => ({
         id: answer.answerId,
         text: answer.answerText,
         playerId,
       })),
-      { id: correctAnswerId, text: correctAnswerText },
+      { 
+        id: correctAnswerId, 
+        text: currentQuestion.correctAnswer, // Send both languages
+      },
     ];
 
     this.shuffleArray(customAnswers);
     this.shuffledAnswers.set(lobbyId, customAnswers);
+    
+    // Transition to voting phase
+    lobby.currentPhase = "voting";
+    this.resetPlayerAnswerFlags(lobby);
 
     // Return answers without playerId to hide attribution
     return customAnswers.map(({ id, text }) => ({ id, text }));
@@ -293,10 +374,17 @@ export class LobbyManager {
   voteForAnswer(
     lobbyId: string,
     playerId: string,
-    questionId: string,
     answerId: string
   ): boolean {
-    if (!this.validateQuestionContext(lobbyId, questionId)) {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+    
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
+      return false;
+    }
+    
+    // Validate phase
+    if (lobby.currentPhase !== "voting") {
       return false;
     }
 
@@ -325,21 +413,25 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.playerVotes);
   }
 
-  processCustomAnswerResult(
-    lobbyId: string,
-    questionId: string,
-    correctAnswerId: string
-  ): Player[] {
+  processCustomAnswerResult(lobbyId: string): Player[] {
     const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
 
-    if (!lobby || lobby.currentQuestionId !== questionId) {
+    if (!lobby || !currentQuestion) {
       return [];
     }
 
     const votes = this.playerVotes.get(lobbyId);
     const customAnswers = this.customAnswers.get(lobbyId);
+    const shuffledAnswers = this.shuffledAnswers.get(lobbyId);
 
-    if (!votes || !customAnswers) {
+    if (!votes || !customAnswers || !shuffledAnswers) {
+      return [];
+    }
+
+    // Find correct answer ID from shuffled answers
+    const correctAnswerId = shuffledAnswers.find(a => !a.playerId)?.id;
+    if (!correctAnswerId) {
       return [];
     }
 
@@ -360,6 +452,7 @@ export class LobbyManager {
       }
     }
 
+    lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
     return lobby.players;
   }
@@ -375,9 +468,11 @@ export class LobbyManager {
     const playerVotes: PlayerAnswerInfo[] = [];
 
     for (const [playerId, vote] of votes.entries()) {
-      const answerText = allAnswers?.find(
+      const answerObj = allAnswers?.find(
         (a) => a.id === vote.votedAnswerId
-      )?.text;
+      );
+      // Extract string text from potentially bilingual answer
+      const answerText = answerObj ? (typeof answerObj.text === 'string' ? answerObj.text : answerObj.text.en) : undefined;
       playerVotes.push({
         playerId,
         answerId: vote.votedAnswerId,
@@ -392,10 +487,17 @@ export class LobbyManager {
   submitTextInput(
     lobbyId: string,
     playerId: string,
-    questionId: string,
     answerText: string
   ): boolean {
-    if (!this.validateQuestionContext(lobbyId, questionId)) {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+    
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
+      return false;
+    }
+    
+    // Validate phase and question type
+    if (lobby.currentPhase !== "answering" || currentQuestion.type !== "text-input") {
       return false;
     }
 
@@ -419,13 +521,10 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.textInputAnswers);
   }
 
-  getTextInputPlayerAnswers(
-    lobbyId: string,
-    questionId: string
-  ): PlayerAnswerInfo[] {
+  getTextInputPlayerAnswers(lobbyId: string): PlayerAnswerInfo[] {
     const lobby = this.lobbies.get(lobbyId);
 
-    if (!lobby || lobby.currentQuestionId !== questionId) {
+    if (!lobby) {
       return [];
     }
 
@@ -452,18 +551,15 @@ export class LobbyManager {
     return playerAnswers;
   }
 
-  processTextInputResult(
-    lobbyId: string,
-    questionId: string,
-    correctAnswers: string[]
-  ): {
+  processTextInputResult(lobbyId: string): {
     players: Player[];
     correctPlayerIds: string[];
     playerAnswers: PlayerAnswerInfo[];
   } {
     const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
 
-    if (!lobby || lobby.currentQuestionId !== questionId) {
+    if (!lobby || !currentQuestion || !currentQuestion.correctAnswers) {
       return { players: [], correctPlayerIds: [], playerAnswers: [] };
     }
 
@@ -472,7 +568,7 @@ export class LobbyManager {
       return { players: [], correctPlayerIds: [], playerAnswers: [] };
     }
 
-    const normalizedCorrectAnswers = correctAnswers.map((a) =>
+    const normalizedCorrectAnswers = currentQuestion.correctAnswers.map((a) =>
       a.toLowerCase().trim()
     );
     const correctPlayerIds: string[] = [];
@@ -499,6 +595,7 @@ export class LobbyManager {
       }
     }
 
+    lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
     return { players: lobby.players, correctPlayerIds, playerAnswers };
   }
@@ -507,10 +604,17 @@ export class LobbyManager {
   submitOrder(
     lobbyId: string,
     playerId: string,
-    questionId: string,
     orderedItemIds: string[]
   ): boolean {
-    if (!this.validateQuestionContext(lobbyId, questionId)) {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+    
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
+      return false;
+    }
+    
+    // Validate phase and question type
+    if (lobby.currentPhase !== "answering" || currentQuestion.type !== "order") {
       return false;
     }
 
@@ -534,18 +638,15 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.orderAnswers);
   }
 
-  processOrderResult(
-    lobbyId: string,
-    questionId: string,
-    correctOrder: string[]
-  ): {
+  processOrderResult(lobbyId: string): {
     players: Player[];
     playerOrders: PlayerAnswerInfo[];
     playerScores: { [playerId: string]: number };
   } {
     const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
 
-    if (!lobby || lobby.currentQuestionId !== questionId) {
+    if (!lobby || !currentQuestion || !currentQuestion.correctOrder) {
       return { players: [], playerOrders: [], playerScores: {} };
     }
 
@@ -561,7 +662,7 @@ export class LobbyManager {
       const order = orders.get(player.id);
 
       if (order) {
-        const score = correctOrder.every(
+        const score = currentQuestion.correctOrder.every(
           (id, i) => id === order.orderedItemIds[i]
         )
           ? 1
@@ -572,11 +673,12 @@ export class LobbyManager {
         playerOrders.push({
           playerId: player.id,
           answerId: order.orderedItemIds.join(","),
-          answerText: `${score}/${correctOrder.length} correct`,
+          answerText: `${score}/${currentQuestion.correctOrder.length} correct`,
         });
       }
     }
 
+    lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
     return { players: lobby.players, playerOrders, playerScores };
   }
@@ -670,6 +772,7 @@ export class LobbyManager {
 
   private cleanupLobby(lobbyId: string): void {
     this.lobbies.delete(lobbyId);
+    this.lobbyQuestions.delete(lobbyId);
     this.playerAnswers.delete(lobbyId);
     this.customAnswers.delete(lobbyId);
     this.playerVotes.delete(lobbyId);
@@ -681,18 +784,6 @@ export class LobbyManager {
   private findPlayer(lobbyId: string, playerId: string): Player | undefined {
     const lobby = this.lobbies.get(lobbyId);
     return lobby?.players.find((p) => p.id === playerId);
-  }
-
-  private validateQuestionContext(
-    lobbyId: string,
-    questionId: string
-  ): boolean {
-    const lobby = this.lobbies.get(lobbyId);
-    return (
-      lobby !== undefined &&
-      lobby.gameState === "playing" &&
-      lobby.currentQuestionId === questionId
-    );
   }
 
   private resetPlayerAnswerFlags(lobby: Lobby): void {

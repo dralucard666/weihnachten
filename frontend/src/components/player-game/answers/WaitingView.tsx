@@ -1,5 +1,6 @@
 import type { Player } from '../../../../../shared/types';
 import { useI18n } from '../../../i18n/useI18n';
+import LanguageSwitcher from '../../LanguageSwitcher';
 
 interface WaitingViewProps {
   player: Player;
@@ -36,6 +37,7 @@ export default function WaitingView({
           </div>
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

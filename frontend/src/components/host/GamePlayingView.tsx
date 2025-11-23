@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import QuestionDisplay from "./QuestionDisplay";
 import MediaDisplay from "./MediaDisplay";
-import { socketService } from "../../services/socket";
 import {
   HostHeader,
   HostPlayerStatus,
@@ -34,7 +33,6 @@ interface GamePlayingViewProps {
   onShowAnswer: () => void;
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
-  onReloadQuestion: () => void;
 }
 
 export default function GamePlayingView({
@@ -55,7 +53,6 @@ export default function GamePlayingView({
   onShowAnswer,
   onShowVotingResults,
   onNextQuestion,
-  onReloadQuestion,
 }: GamePlayingViewProps) {
   const playersWithNames = lobby.players.filter((p) => p.name);
   const isCustomAnswersMode = currentQuestion.type === "custom-answers";
@@ -84,20 +81,10 @@ export default function GamePlayingView({
   }, [currentQuestion.id, currentQuestion.media]);
 
   const handleShowTextInputPlayerResults = () => {
-    const socket = socketService.getSocket();
-    if (!socket) return;
-
-    socket.emit(
-      "getTextInputPlayerAnswers",
-      {
-        lobbyId: lobby.id,
-        questionId: currentQuestion.id,
-      },
-      (response) => {
-        setTextInputPlayerAnswers(response.playerAnswers);
-        setShowTextInputPlayerResults(true);
-      }
-    );
+    // Text input answers are already available in playerAnswers prop
+    // No need to fetch from backend anymore
+    setTextInputPlayerAnswers(playerAnswers);
+    setShowTextInputPlayerResults(true);
   };
 
   // Show before-answer media when correct answer is revealed
@@ -191,12 +178,11 @@ export default function GamePlayingView({
                 players={lobby.players}
               />
             ) : (
-              currentQuestion.answers &&
-              currentQuestion.correctAnswerId && (
+              currentQuestion.answers && (
                 <QuestionDisplay
                   questionText={currentQuestion.text}
                   answers={currentQuestion.answers}
-                  correctAnswerId={currentQuestion.correctAnswerId}
+                  correctAnswerId={currentQuestion.correctAnswerId || ''}
                   showCorrect={showCorrectAnswer}
                 />
               )
@@ -227,7 +213,6 @@ export default function GamePlayingView({
           onShowAnswer={handleShowAnswerClick}
           onShowVotingResults={handleShowVotingResultsClick}
           onNextQuestion={onNextQuestion}
-          onReloadQuestion={onReloadQuestion}
           onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
         />
       </div>

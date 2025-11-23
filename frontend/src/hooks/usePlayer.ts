@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { socketService } from '../services/socket';
-import type { Lobby, Answer, QuestionType, OrderItem } from '../../../shared/types';
-
-interface CurrentQuestion {
-  questionId: string;
-  questionIndex: number;
-  questionType: QuestionType;
-  answers?: Answer[];
-  orderItems?: OrderItem[];
-}
+import type { Lobby, Answer, QuestionData } from '../../../shared/types';
 
 const STORAGE_KEYS = {
   LOBBY_ID: 'quiz_lobby_id',
@@ -24,7 +16,7 @@ export function usePlayer(lobbyId: string | undefined) {
   const [playerName, setPlayerName] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.PLAYER_NAME) || '';
   });
-  const [currentQuestion, setCurrentQuestion] = useState<CurrentQuestion | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [customAnswerText, setCustomAnswerText] = useState<string>('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -45,21 +37,15 @@ export function usePlayer(lobbyId: string | undefined) {
       setLobby(updatedLobby);
     });
 
-    socket.on('questionStarted', (data: { questionId: string; questionIndex: number; questionType: QuestionType; answers?: Answer[]; orderItems?: OrderItem[] }) => {
-      setCurrentQuestion({
-        questionId: data.questionId,
-        questionIndex: data.questionIndex,
-        questionType: data.questionType,
-        answers: data.answers,
-        orderItems: data.orderItems,
-      });
+    socket.on('questionStarted', (data: QuestionData) => {
+      setCurrentQuestion(data);
       setSelectedAnswer(null);
       setCustomAnswerText('');
       setHasSubmitted(false);
       setIsVotingPhase(false);
       setVotingAnswers([]);
       setSubmittedOrder([]);
-      console.log('Question started:', data.questionIndex + 1, 'Type:', data.questionType);
+      console.log('Question started:', data.questionIndex + 1, 'Type:', data.type);
     });
 
     socket.on('showAnswersForVoting', (data: { questionId: string; answers: Answer[] }) => {
@@ -135,7 +121,6 @@ export function usePlayer(lobbyId: string | undefined) {
       {
         lobbyId,
         playerId,
-        questionId: currentQuestion.questionId,
         answerId,
       },
       (response) => {
@@ -158,7 +143,6 @@ export function usePlayer(lobbyId: string | undefined) {
       {
         lobbyId,
         playerId,
-        questionId: currentQuestion.questionId,
         answerText: answerText.trim(),
       },
       (response) => {
@@ -185,7 +169,6 @@ export function usePlayer(lobbyId: string | undefined) {
       {
         lobbyId,
         playerId,
-        questionId: currentQuestion.questionId,
         answerId,
       },
       (response) => {
@@ -213,7 +196,6 @@ export function usePlayer(lobbyId: string | undefined) {
       {
         lobbyId,
         playerId,
-        questionId: currentQuestion.questionId,
         answerText: answerText.trim(),
       },
       (response) => {
@@ -240,7 +222,6 @@ export function usePlayer(lobbyId: string | undefined) {
       {
         lobbyId,
         playerId,
-        questionId: currentQuestion.questionId,
         orderedItemIds,
       },
       (response) => {
@@ -292,6 +273,9 @@ export function usePlayer(lobbyId: string | undefined) {
       if (response.success && response.lobby) {
         setPlayerId(reconnectPlayerId);
         setLobby(response.lobby);
+        if (response.currentQuestion) {
+          setCurrentQuestion(response.currentQuestion);
+        }
         setJoined(true);
         
         // Refresh stored session in case name changed

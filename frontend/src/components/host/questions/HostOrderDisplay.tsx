@@ -1,6 +1,7 @@
 import type { Question } from './types';
 import type { Player, PlayerAnswerInfo, OrderItem } from '../../../../../shared/types';
 import { useHoverSound } from '../../../hooks/useHoverSound';
+import { useI18n } from '../../../i18n/useI18n';
 
 interface HostOrderDisplayProps {
   question: Question;
@@ -17,6 +18,7 @@ export default function HostOrderDisplay({
   playerScores = {},
   players,
 }: HostOrderDisplayProps) {
+  const { t } = useI18n();
   const orderItems = question.orderItems || [];
   const correctOrder = question.correctOrder || [];
 
@@ -74,7 +76,7 @@ export default function HostOrderDisplay({
         <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
           {question.text}
         </h2>
-        <p className="text-xl text-blue-200">Put the items in the correct order</p>
+        <p className="text-xl text-blue-200">{t.host.putItemsInOrder}</p>
       </div>
 
       {/* Question Items Display */}
@@ -91,7 +93,7 @@ export default function HostOrderDisplay({
         <div className="space-y-6">
           <div className="max-w-3xl mx-auto">
             <h3 className="text-2xl font-bold text-white mb-4 text-center">
-              ✅ Correct Order:
+              {t.host.correctOrder}
             </h3>
             <div className="space-y-3">
               {correctOrder.map((itemId, index) => {
@@ -105,7 +107,7 @@ export default function HostOrderDisplay({
           {playerOrders.length > 0 && (
             <div className="mt-8 max-w-4xl mx-auto">
               <h3 className="text-2xl font-bold text-white mb-4 text-center">
-                📊 Player Results:
+                {t.host.playerResults}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {playerOrders.map((playerOrder) => {
@@ -121,7 +123,7 @@ export default function HostOrderDisplay({
                     >
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-bold text-gray-800">
-                          {player?.name || 'Unknown'}
+                          {player?.name || t.host.unknown}
                         </span>
                         <span className="text-lg font-bold text-orange-600">
                           {score}/{maxScore} ({percentage}%)

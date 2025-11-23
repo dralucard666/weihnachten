@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { Player } from '../../../../../shared/types';
 import PlayerHeader from './PlayerHeader';
 import SubmissionConfirmation from './SubmissionConfirmation';
+import LanguageSwitcher from '../../LanguageSwitcher';
+import { useI18n } from '../../../i18n/useI18n';
 
 interface TextInputViewProps {
   player: Player;
@@ -16,6 +18,7 @@ export default function TextInputView({
   submittedText,
   onSubmitTextInput,
 }: TextInputViewProps) {
+  const { t } = useI18n();
   const [localTextInput, setLocalTextInput] = useState('');
 
   return (
@@ -27,10 +30,10 @@ export default function TextInputView({
           <div className="text-center mb-6">
             <span className="text-4xl mb-2 block">✍️</span>
             <h3 className="text-2xl font-extrabold text-gray-800 mb-2">
-              TYPE YOUR ANSWER
+              {t.playerAnswers.typeYourAnswer}
             </h3>
             <p className="text-gray-600">
-              Look at the game master's screen for the question
+              {t.playerAnswers.lookAtScreenForQuestion}
             </p>
           </div>
 
@@ -40,12 +43,12 @@ export default function TextInputView({
                 type="text"
                 value={localTextInput}
                 onChange={(e) => setLocalTextInput(e.target.value)}
-                placeholder="Type your answer..."
+                placeholder={t.playerAnswers.typeYourAnswerPlaceholder}
                 className="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none text-lg shadow-inner"
                 maxLength={100}
               />
               <p className="text-sm text-gray-500 mt-2 text-right">
-                {localTextInput.length}/100 characters
+                {localTextInput.length}/100 {t.common.characters}
               </p>
               <button
                 onClick={() => {
@@ -57,7 +60,7 @@ export default function TextInputView({
                 className="mt-4 w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-teal-500 text-white hover:from-green-600 hover:to-teal-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
               >
                 <span>✓</span>
-                <span>Submit Answer</span>
+                <span>{t.playerAnswers.submitAnswer}</span>
               </button>
             </div>
           ) : (
@@ -69,6 +72,7 @@ export default function TextInputView({
           )}
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

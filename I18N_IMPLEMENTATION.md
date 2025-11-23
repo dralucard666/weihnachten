@@ -95,5 +95,36 @@ The `setLanguage` function from `useI18n()` is already connected to:
 
 ## Integration with Existing Features
 - The GameMasterPage already uses the `setLanguage` function you specified
-- Questions automatically load from `questions_de.json` or `questions_en.json` based on language
+- Questions are loaded once from a merged `questions.json` file containing both languages
+- Language switching happens instantly without re-fetching data from the server
 - All player-facing text respects the language selection
+
+## Questions Data Structure
+Questions are now stored in a single merged file (`questions.json`) with bilingual content:
+```json
+[
+  {
+    "type": "multiple-choice",
+    "text": {
+      "de": "German question text",
+      "en": "English question text"
+    },
+    "answers": [
+      {
+        "id": "a1",
+        "text": {
+          "de": "German answer",
+          "en": "English answer"
+        }
+      }
+    ],
+    "correctAnswerId": "a1"
+  }
+]
+```
+
+This structure:
+- Eliminates the need to re-fetch questions when language changes
+- Prevents page re-renders during language switching
+- Keeps questions synchronized across languages
+- Simplifies question management (only one file to edit)

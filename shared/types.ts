@@ -1,6 +1,13 @@
 // Game States
 export type GameState = 'lobby' | 'playing' | 'finished';
 
+// Question phase for game flow tracking
+export type QuestionPhase = 
+  | 'answering'           // Players are submitting answers
+  | 'voting'              // Players are voting (custom-answers only)
+  | 'revealing'           // Showing correct answer/results
+  | 'waiting';            // Waiting for master to continue
+
 // Player
 export interface Player {
   id: string;
@@ -10,24 +17,41 @@ export interface Player {
   hasAnswered?: boolean; // Track if player answered current question
 }
 
+// Stored question data on backend
+export interface StoredQuestion {
+  id: string;
+  type: QuestionType;
+  text: { de: string; en: string };
+  answers?: Array<{ id: string; text: { de: string; en: string }; sound?: string[] }>;
+  correctAnswerId?: string;
+  correctAnswer?: { de: string; en: string };
+  correctAnswers?: string[]; // For text-input (multiple acceptable answers)
+  orderItems?: Array<{ id: string; text: { de: string; en: string }; sound?: string[] }>;
+  correctOrder?: string[]; // For order questions
+  media?: QuestionMedia;
+}
+
 // Lobby
 export interface Lobby {
   id: string;
   gameState: GameState;
   players: Player[];
   currentQuestionIndex: number;
-  currentQuestionId?: string; // Track current question ID only
+  currentQuestionId?: string; // Current question ID
+  currentPhase?: QuestionPhase; // Current phase of the question
+  totalQuestions?: number; // Total number of questions in this game
   createdAt: string;
 }
 
 // API Request/Response Types
 export interface CreateLobbyRequest {
-  // Empty for now, could include game settings later
+  questionIds: string[]; // IDs of questions for this game session
 }
 
 export interface CreateLobbyResponse {
   lobbyId: string;
-  lobby: Lobby;
+  lobby?: Lobby;
+  error?: string;
 }
 
 export interface JoinLobbyRequest {
@@ -48,6 +72,7 @@ export interface ReconnectPlayerRequest {
 export interface ReconnectPlayerResponse {
   success: boolean;
   lobby?: Lobby;
+  currentQuestion?: QuestionData;
   error?: string;
 }
 
@@ -58,6 +83,7 @@ export interface ReconnectMasterRequest {
 export interface ReconnectMasterResponse {
   success: boolean;
   lobby?: Lobby;
+  currentQuestion?: QuestionData;
   error?: string;
 }
 
@@ -73,17 +99,29 @@ export interface SetNameResponse {
 
 export interface StartGameRequest {
   lobbyId: string;
-  questionId: string; // First question ID
-  questionType: QuestionType; // Type of first question
-  answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
-  orderItems?: OrderItem[]; // Items to order (only for order questions)
+}
+
+export interface StartGameResponse {
+  success: boolean;
+  currentQuestion?: QuestionData; // Backend sends full question data
+}
+
+// Question data sent to clients (includes both languages for client-side switching)
+export interface QuestionData {
+  questionId: string;
+  questionIndex: number;
+  totalQuestions: number;
+  type: QuestionType;
+  text: { de: string; en: string };
+  answers?: Array<{ id: string; text: { de: string; en: string }; sound?: string[] }>; // For multiple-choice
+  orderItems?: Array<{ id: string; text: { de: string; en: string }; sound?: string[] }>; // For order questions
+  media?: QuestionMedia;
 }
 
 export interface SetAnswerRequest {
   lobbyId: string;
   playerId: string;
-  questionId: string;
-  answerId: string;
+  answerId: string; // Validated against current question on backend
 }
 
 export interface SetAnswerResponse {
@@ -92,8 +130,7 @@ export interface SetAnswerResponse {
 
 export interface QuestionResultRequest {
   lobbyId: string;
-  questionId: string;
-  correctAnswerId: string;
+  // No questionId needed - backend knows current question
 }
 
 export interface PlayerAnswerInfo {
@@ -109,7 +146,7 @@ export interface QuestionResultData {
 
 export interface Answer {
   id: string;
-  text: string;
+  text: string | { de: string; en: string };
   sound?: string[]; // Optional sound files to play on hover
 }
 
@@ -138,18 +175,20 @@ export interface QuestionMedia {
 
 export interface NextQuestionRequest {
   lobbyId: string;
-  questionId: string; // Next question ID
-  questionType: QuestionType; // Type of question
-  answers?: Answer[]; // Answer possibilities for players (only for multiple-choice)
-  orderItems?: OrderItem[]; // Items to order (only for order questions)
+  // Backend manages question progression
+}
+
+export interface NextQuestionResponse {
+  success: boolean;
+  currentQuestion?: QuestionData; // Next question data
+  gameFinished?: boolean; // True if no more questions
 }
 
 // Custom Answers Game Mode
 export interface SubmitCustomAnswerRequest {
   lobbyId: string;
   playerId: string;
-  questionId: string;
-  answerText: string;
+  answerText: string; // Backend validates against current question
 }
 
 export interface SubmitCustomAnswerResponse {
@@ -165,22 +204,14 @@ export interface ShowAnswersToMasterData {
   answers: CustomAnswer[]; // All player answers + correct answer mixed
 }
 
-export interface GetCustomAnswersRequest {
-  lobbyId: string;
-  questionId: string;
-  correctAnswerId: string;
-  correctAnswerText: string;
-}
-
 export interface TriggerAnswerVotingRequest {
   lobbyId: string;
-  questionId: string;
+  // Backend knows current question and has shuffled answers ready
 }
 
 export interface VoteForAnswerRequest {
   lobbyId: string;
   playerId: string;
-  questionId: string;
   answerId: string; // ID of the answer they're voting for
 }
 
@@ -190,8 +221,7 @@ export interface VoteForAnswerResponse {
 
 export interface CustomAnswerResultRequest {
   lobbyId: string;
-  questionId: string;
-  correctAnswerId: string;
+  // Backend knows current question, correct answer, and all votes
 }
 
 export interface CustomAnswerResultData {
@@ -203,27 +233,16 @@ export interface CustomAnswerResultData {
 export interface SubmitTextInputRequest {
   lobbyId: string;
   playerId: string;
-  questionId: string;
-  answerText: string;
+  answerText: string; // Backend validates against current question
 }
 
 export interface SubmitTextInputResponse {
   success: boolean;
 }
 
-export interface GetTextInputPlayerAnswersRequest {
-  lobbyId: string;
-  questionId: string;
-}
-
-export interface GetTextInputPlayerAnswersResponse {
-  playerAnswers: PlayerAnswerInfo[];
-}
-
 export interface TextInputResultRequest {
   lobbyId: string;
-  questionId: string;
-  correctAnswers: string[]; // Array of acceptable answers
+  // Backend knows current question and correct answers
 }
 
 export interface TextInputResultData {
@@ -242,7 +261,6 @@ export interface OrderItem {
 export interface SubmitOrderRequest {
   lobbyId: string;
   playerId: string;
-  questionId: string;
   orderedItemIds: string[]; // Array of item IDs in player's chosen order
 }
 
@@ -252,8 +270,7 @@ export interface SubmitOrderResponse {
 
 export interface OrderResultRequest {
   lobbyId: string;
-  questionId: string;
-  correctOrder: string[]; // Array of item IDs in correct order
+  // Backend knows current question and correct order
 }
 
 export interface OrderResultData {
@@ -270,7 +287,7 @@ export interface ServerToClientEvents {
   playerLeft: (playerId: string) => void;
   
   // Emitted when game starts or next question
-  questionStarted: (data: { questionId: string, questionIndex: number, questionType: QuestionType, answers?: Answer[], orderItems?: OrderItem[] }) => void;
+  questionStarted: (data: QuestionData) => void;
   
   // Emitted to game master only
   playerAnswered: (playerId: string) => void;
@@ -298,26 +315,25 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  createLobby: (callback: (response: CreateLobbyResponse) => void) => void;
+  createLobby: (data: CreateLobbyRequest, callback: (response: CreateLobbyResponse) => void) => void;
   joinLobby: (data: JoinLobbyRequest, callback: (response: JoinLobbyResponse) => void) => void;
   reconnectPlayer: (data: ReconnectPlayerRequest, callback: (response: ReconnectPlayerResponse) => void) => void;
   reconnectMaster: (data: ReconnectMasterRequest, callback: (response: ReconnectMasterResponse) => void) => void;
   setName: (data: SetNameRequest, callback: (response: SetNameResponse) => void) => void;
-  startGame: (data: StartGameRequest) => void;
+  startGame: (data: StartGameRequest, callback: (response: StartGameResponse) => void) => void;
   setAnswer: (data: SetAnswerRequest, callback: (response: SetAnswerResponse) => void) => void;
   questionResult: (data: QuestionResultRequest) => void;
-  nextQuestion: (data: NextQuestionRequest) => void;
+  nextQuestion: (data: NextQuestionRequest, callback: (response: NextQuestionResponse) => void) => void;
   
   // Custom answers mode events
   submitCustomAnswer: (data: SubmitCustomAnswerRequest, callback: (response: SubmitCustomAnswerResponse) => void) => void;
-  getCustomAnswers: (data: GetCustomAnswersRequest) => void;
+  prepareCustomAnswerVoting: (data: { lobbyId: string }, callback: (response: { success: boolean }) => void) => void; // Master requests to prepare voting phase
   triggerAnswerVoting: (data: TriggerAnswerVotingRequest) => void;
   voteForAnswer: (data: VoteForAnswerRequest, callback: (response: VoteForAnswerResponse) => void) => void;
   customAnswerResult: (data: CustomAnswerResultRequest) => void;
   
   // Text input events
   submitTextInput: (data: SubmitTextInputRequest, callback: (response: SubmitTextInputResponse) => void) => void;
-  getTextInputPlayerAnswers: (data: GetTextInputPlayerAnswersRequest, callback: (response: GetTextInputPlayerAnswersResponse) => void) => void;
   textInputResult: (data: TextInputResultRequest) => void;
   
   // Order events

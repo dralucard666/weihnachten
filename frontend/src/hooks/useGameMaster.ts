@@ -4,62 +4,37 @@ import { socketService } from "../services/socket";
 import type {
   Lobby,
   Player,
-  Answer,
-  QuestionType,
   CustomAnswer,
   PlayerAnswerInfo,
-  OrderItem,
+  QuestionData,
 } from "../../../shared/types";
 
-interface Question {
-  id: string;
-  text: string;
-  type: QuestionType;
-  answers?: Answer[];
-  correctAnswerId?: string;
-  correctAnswer?: string; // For custom-answers type
-  correctAnswers?: string[]; // For text-input type
-  orderItems?: OrderItem[]; // For order type
-  correctOrder?: string[]; // For order type
-}
-
-export function useGameMaster(
-  lobbyId: string | undefined,
-  questions: Question[]
-) {
+export function useGameMaster(lobbyId: string | undefined, questionIds: string[]) {
   const navigate = useNavigate();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [allPlayersAnswered, setAllPlayersAnswered] = useState(false);
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [playersWhoAnswered, setPlayersWhoAnswered] = useState<Set<string>>(
-    new Set()
-  );
+  const [playersWhoAnswered, setPlayersWhoAnswered] = useState<Set<string>>(new Set());
   const [customAnswers, setCustomAnswers] = useState<CustomAnswer[]>([]);
   const [isVotingPhase, setIsVotingPhase] = useState(false);
   const [allVotesReceived, setAllVotesReceived] = useState(false);
   const [playerAnswers, setPlayerAnswers] = useState<PlayerAnswerInfo[]>([]);
   const [correctPlayerIds, setCorrectPlayerIds] = useState<string[]>([]);
-  const [playerScores, setPlayerScores] = useState<{
-    [playerId: string]: number;
-  }>({});
-
-  // Recalculate current question whenever questions array or index changes
-  const currentQuestion = questions[currentQuestionIndex];
-
-  // Force component update when questions array changes (e.g., language switch)
-  useEffect(() => {
-    // This effect ensures that when questions array changes (language switch),
-    // the component using this hook will re-render with the new question text
-  }, [questions]);
+  const [playerScores, setPlayerScores] = useState<{ [playerId: string]: number }>({});
+  // Store correct answer data when results are revealed
+  const [correctAnswerId, setCorrectAnswerId] = useState<string | undefined>();
+  const [correctAnswer, setCorrectAnswer] = useState<string | undefined>();
+  const [correctAnswers, setCorrectAnswers] = useState<string[] | undefined>();
+  const [correctOrder, setCorrectOrder] = useState<string[] | undefined>();
 
   useEffect(() => {
     const socket = socketService.connect();
 
     if (!lobbyId) {
-      socket.emit("createLobby", (response) => {
+      // Use questionIds from closure - only runs once on mount
+      socket.emit("createLobby", { questionIds }, (response) => {
         if (response.lobby) {
           setLobby(response.lobby);
           setLoading(false);
@@ -74,21 +49,11 @@ export function useGameMaster(
       socket.emit("reconnectMaster", { lobbyId }, (response) => {
         if (response.success && response.lobby) {
           setLobby(response.lobby);
-          // Restore question index from lobby state, but clamp it to valid range
-          const restoredIndex = Math.min(
-            response.lobby.currentQuestionIndex,
-            questions.length - 1
-          );
-          setCurrentQuestionIndex(Math.max(0, restoredIndex));
+          if (response.currentQuestion) {
+            setCurrentQuestion(response.currentQuestion);
+          }
           setLoading(false);
           console.log("Reconnected to lobby:", response.lobby);
-          console.log(
-            "Current question index:",
-            response.lobby.currentQuestionIndex,
-            "-> clamped to:",
-            restoredIndex
-          );
-          console.log("Game state:", response.lobby.gameState);
         } else {
           setError(response.error || "Failed to reconnect to lobby");
           setLoading(false);
@@ -113,6 +78,25 @@ export function useGameMaster(
       });
     });
 
+    // Question started - backend sends the question data
+    socket.on("questionStarted", (questionData: QuestionData) => {
+      console.log("Question started:", questionData);
+      setCurrentQuestion(questionData);
+      setPlayersWhoAnswered(new Set());
+      setAllPlayersAnswered(false);
+      setCustomAnswers([]);
+      setIsVotingPhase(false);
+      setAllVotesReceived(false);
+      setPlayerAnswers([]);
+      setCorrectPlayerIds([]);
+      setPlayerScores({});
+      // Reset correct answer data for new question
+      setCorrectAnswerId(undefined);
+      setCorrectAnswer(undefined);
+      setCorrectAnswers(undefined);
+      setCorrectOrder(undefined);
+    });
+
     socket.on("playerAnswered", (playerId: string) => {
       console.log("Player answered:", playerId);
       setPlayersWhoAnswered((prev) => new Set(prev).add(playerId));
@@ -128,9 +112,15 @@ export function useGameMaster(
       (data: { questionId: string; answers: CustomAnswer[] }) => {
         console.log("Custom answers ready:", data.answers.length);
         setCustomAnswers(data.answers);
-        setAllPlayersAnswered(true);
       }
     );
+
+    socket.on("showAnswersForVoting", () => {
+      console.log("Voting phase started");
+      setIsVotingPhase(true);
+      setPlayersWhoAnswered(new Set());
+      setAllPlayersAnswered(false);
+    });
 
     socket.on("allVotesReceived", () => {
       console.log("All votes received!");
@@ -139,14 +129,9 @@ export function useGameMaster(
 
     socket.on(
       "questionResultReady",
-      (data: {
-        correctAnswerId: string;
-        playerAnswers: PlayerAnswerInfo[];
-      }) => {
-        console.log(
-          "Question result ready with player answers:",
-          data.playerAnswers
-        );
+      (data: { correctAnswerId: string; playerAnswers: PlayerAnswerInfo[] }) => {
+        console.log("Question result ready:", data);
+        setCorrectAnswerId(data.correctAnswerId);
         setPlayerAnswers(data.playerAnswers);
       }
     );
@@ -154,10 +139,8 @@ export function useGameMaster(
     socket.on(
       "customAnswerResultReady",
       (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[] }) => {
-        console.log(
-          "Custom answer result ready with player votes:",
-          data.playerVotes
-        );
+        console.log("Custom answer result ready:", data);
+        setCorrectAnswerId(data.correctAnswerId);
         setPlayerAnswers(data.playerVotes);
       }
     );
@@ -174,7 +157,8 @@ export function useGameMaster(
         playerAnswers: PlayerAnswerInfo[];
         correctPlayerIds: string[];
       }) => {
-        console.log("Text input result ready:", data.playerAnswers);
+        console.log("Text input result ready:", data);
+        setCorrectAnswers(data.correctAnswers);
         setPlayerAnswers(data.playerAnswers);
         setCorrectPlayerIds(data.correctPlayerIds);
       }
@@ -187,7 +171,8 @@ export function useGameMaster(
         playerOrders: PlayerAnswerInfo[];
         playerScores: { [playerId: string]: number };
       }) => {
-        console.log("Order result ready:", data.playerOrders);
+        console.log("Order result ready:", data);
+        setCorrectOrder(data.correctOrder);
         setPlayerAnswers(data.playerOrders);
         setPlayerScores(data.playerScores);
       }
@@ -197,9 +182,11 @@ export function useGameMaster(
       socket.off("lobbyUpdated");
       socket.off("playerJoined");
       socket.off("playerLeft");
+      socket.off("questionStarted");
       socket.off("playerAnswered");
       socket.off("everybodyAnswered");
       socket.off("customAnswersReady");
+      socket.off("showAnswersForVoting");
       socket.off("allVotesReceived");
       socket.off("questionResultReady");
       socket.off("customAnswerResultReady");
@@ -207,33 +194,21 @@ export function useGameMaster(
       socket.off("textInputResultReady");
       socket.off("orderResultReady");
     };
-  }, [lobbyId, navigate, questions.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyId, navigate]);
 
   const handleStartGame = () => {
-    if (!lobby || !currentQuestion) return;
+    if (!lobby) return;
 
     const socket = socketService.getSocket();
     if (socket) {
-      // Store lobbyId in localStorage when game starts
       localStorage.setItem("gameMasterLobbyId", lobby.id);
 
-      socket.emit("startGame", {
-        lobbyId: lobby.id,
-        questionId: currentQuestion.id,
-        questionType: currentQuestion.type,
-        answers: currentQuestion.answers,
-        orderItems: currentQuestion.orderItems,
+      socket.emit("startGame", { lobbyId: lobby.id }, (response) => {
+        if (response.success && response.currentQuestion) {
+          setCurrentQuestion(response.currentQuestion);
+        }
       });
-      setCurrentQuestionIndex(0);
-      setPlayersWhoAnswered(new Set());
-      setAllPlayersAnswered(false);
-      setShowCorrectAnswer(false);
-      setCustomAnswers([]);
-      setIsVotingPhase(false);
-      setAllVotesReceived(false);
-      setPlayerAnswers([]);
-      setCorrectPlayerIds([]);
-      setPlayerScores({});
     }
   };
 
@@ -242,171 +217,80 @@ export function useGameMaster(
 
     const socket = socketService.getSocket();
     if (socket) {
-      // For custom answers mode, first get the answers, then trigger voting
+      // For custom answers mode, prepare voting phase and trigger voting
       if (currentQuestion.type === "custom-answers" && !isVotingPhase) {
-        socket.emit("getCustomAnswers", {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          correctAnswerId: currentQuestion.correctAnswerId!,
-          correctAnswerText: currentQuestion.correctAnswer || "",
+        // First prepare the voting (backend mixes answers)
+        socket.emit("prepareCustomAnswerVoting", { lobbyId: lobby.id }, (response) => {
+          if (response.success) {
+            // The backend will emit 'customAnswersReady' back to us
+            setAllPlayersAnswered(true); // Show the answers to master
+            
+            // After answers are prepared, trigger voting phase for all players
+            socket.emit("triggerAnswerVoting", { lobbyId: lobby.id });
+          }
         });
-
-        // Automatically trigger voting after a brief delay to ensure answers are received
-        setTimeout(() => {
-          socket.emit("triggerAnswerVoting", {
-            lobbyId: lobby.id,
-            questionId: currentQuestion.id,
-          });
-          setIsVotingPhase(true);
-          setPlayersWhoAnswered(new Set());
-          setAllPlayersAnswered(false);
-          setAllVotesReceived(false);
-        }, 100);
         return;
       }
 
-      // For text-input questions
-      if (
-        currentQuestion.type === "text-input" &&
-        currentQuestion.correctAnswers
-      ) {
-        socket.emit("textInputResult", {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          correctAnswers: currentQuestion.correctAnswers,
-        });
-        setShowCorrectAnswer(true);
-        return;
-      }
+      // For text-input, order, multiple-choice, or custom-answers after voting
+      const resultMap = {
+        "text-input": "textInputResult",
+        "order": "orderResult",
+        "multiple-choice": "questionResult",
+        "custom-answers": "customAnswerResult",
+      } as const;
 
-      // For order questions
-      if (currentQuestion.type === "order" && currentQuestion.correctOrder) {
-        socket.emit("orderResult", {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          correctOrder: currentQuestion.correctOrder,
-        });
-        setShowCorrectAnswer(true);
-        return;
-      }
-
-      // For multiple-choice or after voting
-      if (currentQuestion.correctAnswerId) {
-        socket.emit("questionResult", {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          correctAnswerId: currentQuestion.correctAnswerId,
-        });
-        setShowCorrectAnswer(true);
+      const eventName = resultMap[currentQuestion.type];
+      if (eventName) {
+        socket.emit(eventName, { lobbyId: lobby.id });
       }
     }
   };
 
   const handleTriggerVoting = () => {
-    if (!lobby || !currentQuestion) return;
+    if (!lobby) return;
 
     const socket = socketService.getSocket();
     if (socket) {
-      socket.emit("triggerAnswerVoting", {
-        lobbyId: lobby.id,
-        questionId: currentQuestion.id,
-      });
-      setIsVotingPhase(true);
-      setPlayersWhoAnswered(new Set());
-      setAllPlayersAnswered(false);
-      setAllVotesReceived(false);
+      socket.emit("triggerAnswerVoting", { lobbyId: lobby.id });
     }
   };
 
   const handleShowVotingResults = () => {
-    if (!lobby || !currentQuestion) return;
+    if (!lobby) return;
 
     const socket = socketService.getSocket();
     if (socket) {
-      // For custom answers voting
-      if (currentQuestion.type === "custom-answers") {
-        socket.emit("customAnswerResult", {
-          lobbyId: lobby.id,
-          questionId: currentQuestion.id,
-          correctAnswerId: currentQuestion.correctAnswerId!,
-        });
-        setShowCorrectAnswer(true);
-      }
+      socket.emit("customAnswerResult", { lobbyId: lobby.id });
     }
   };
 
   const handleNextQuestion = () => {
     if (!lobby) return;
 
-    const nextIndex = currentQuestionIndex + 1;
-
-    if (nextIndex >= questions.length) {
-      const socket = socketService.getSocket();
-      if (socket) {
-        // Remove lobbyId from localStorage when game ends
-        localStorage.removeItem("gameMasterLobbyId");
-        socket.emit("endGame", lobby.id);
-      }
-      return;
-    }
-
-    const nextQuestion = questions[nextIndex];
     const socket = socketService.getSocket();
     if (socket) {
-      console.log("Moving to next question:", nextQuestion.text);
-      socket.emit("nextQuestion", {
-        lobbyId: lobby.id,
-        questionId: nextQuestion.id,
-        questionType: nextQuestion.type,
-        answers: nextQuestion.answers,
-        orderItems: nextQuestion.orderItems,
+      socket.emit("nextQuestion", { lobbyId: lobby.id }, (response) => {
+        if (response.success) {
+          if (response.gameFinished) {
+            // Game is over
+            localStorage.removeItem("gameMasterLobbyId");
+            socket.emit("endGame", lobby.id);
+          } else if (response.currentQuestion) {
+            setCurrentQuestion(response.currentQuestion);
+          }
+        }
       });
-      setCurrentQuestionIndex(nextIndex);
-      setPlayersWhoAnswered(new Set());
-      setAllPlayersAnswered(false);
-      setShowCorrectAnswer(false);
-      setCustomAnswers([]);
-      setIsVotingPhase(false);
-      setAllVotesReceived(false);
-      setPlayerAnswers([]);
-      setCorrectPlayerIds([]);
-      setPlayerScores({});
     }
   };
 
-  const handleReloadQuestion = () => {
-    if (!lobby || !currentQuestion) return;
-
-    const socket = socketService.getSocket();
-    if (socket) {
-      console.log("Reloading current question:", currentQuestion.text);
-      socket.emit("nextQuestion", {
-        lobbyId: lobby.id,
-        questionId: currentQuestion.id,
-        questionType: currentQuestion.type,
-        answers: currentQuestion.answers,
-        orderItems: currentQuestion.orderItems,
-      });
-      setPlayersWhoAnswered(new Set());
-      setAllPlayersAnswered(false);
-      setShowCorrectAnswer(false);
-      setCustomAnswers([]);
-      setIsVotingPhase(false);
-      setAllVotesReceived(false);
-      setPlayerAnswers([]);
-      setCorrectPlayerIds([]);
-      setPlayerScores({});
-    }
-  };
 
   return {
     lobby,
     loading,
     error,
     currentQuestion,
-    currentQuestionIndex,
     allPlayersAnswered,
-    showCorrectAnswer,
     playersWhoAnswered,
     customAnswers,
     isVotingPhase,
@@ -414,11 +298,14 @@ export function useGameMaster(
     playerAnswers,
     correctPlayerIds,
     playerScores,
+    correctAnswerId,
+    correctAnswer,
+    correctAnswers,
+    correctOrder,
     handleStartGame,
     handleShowAnswer,
     handleTriggerVoting,
     handleShowVotingResults,
     handleNextQuestion,
-    handleReloadQuestion,
   };
 }

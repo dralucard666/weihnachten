@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { 
   ServerToClientEvents, 
   ClientToServerEvents,
+  CreateLobbyRequest,
   CreateLobbyResponse,
   JoinLobbyRequest,
   JoinLobbyResponse,
@@ -12,44 +13,86 @@ import {
   SetNameRequest,
   SetNameResponse,
   StartGameRequest,
+  StartGameResponse,
   SetAnswerRequest,
   SetAnswerResponse,
   QuestionResultRequest,
   NextQuestionRequest,
+  NextQuestionResponse,
   SubmitCustomAnswerRequest,
   SubmitCustomAnswerResponse,
-  GetCustomAnswersRequest,
   TriggerAnswerVotingRequest,
   VoteForAnswerRequest,
   VoteForAnswerResponse,
   CustomAnswerResultRequest,
   SubmitTextInputRequest,
   SubmitTextInputResponse,
-  GetTextInputPlayerAnswersRequest,
-  GetTextInputPlayerAnswersResponse,
   TextInputResultRequest,
   SubmitOrderRequest,
   SubmitOrderResponse,
-  OrderResultRequest
+  OrderResultRequest,
+  StoredQuestion,
 } from '../../../shared/types';
 import { LobbyManager } from './LobbyManager';
+import path from 'path';
 
 export class SocketHandler {
   private lobbyManager: LobbyManager;
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
   private playerSockets: Map<string, string> = new Map(); // playerId -> socketId
+  private allQuestions: StoredQuestion[] = [];
 
   constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
     this.lobbyManager = new LobbyManager();
+    this.loadQuestions();
+  }
+
+  private loadQuestions(): void {
+    try {
+      const questionsPath = path.join(__dirname, '../data', 'questions.json');
+      const rawQuestions = require(questionsPath);
+      
+      // Add IDs to questions if they don't have them
+      this.allQuestions = rawQuestions.map((q: StoredQuestion, index: number) => ({
+        ...q,
+        id: q.id || `q-${index}`
+      }));
+      
+      console.log(`Loaded ${this.allQuestions.length} questions`);
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      this.allQuestions = [];
+    }
   }
 
   handleConnection(socket: Socket<ClientToServerEvents, ServerToClientEvents>): void {
     console.log(`Client connected: ${socket.id}`);
 
     // Create Lobby
-    socket.on('createLobby', (callback) => {
-      const lobby = this.lobbyManager.createLobby();
+    socket.on('createLobby', (data: CreateLobbyRequest, callback) => {
+      // Use provided questionIds or use all questions
+      const questionIds = data.questionIds && data.questionIds.length > 0 
+        ? data.questionIds 
+        : this.allQuestions.map(q => q.id);
+      
+      // Get the questions by IDs
+      const questions = questionIds
+        .map(id => this.allQuestions.find(q => q.id === id))
+        .filter((q): q is StoredQuestion => q !== undefined);
+      
+      if (questions.length === 0) {
+        console.error('No valid questions found for lobby creation');
+        const response: CreateLobbyResponse = {
+          lobbyId: '',
+          lobby: undefined,
+          error: 'No valid questions found'
+        };
+        callback(response);
+        return;
+      }
+      
+      const lobby = this.lobbyManager.createLobby(questions);
       socket.join(lobby.id);
       
       const response: CreateLobbyResponse = {
@@ -58,7 +101,7 @@ export class SocketHandler {
       };
       
       callback(response);
-      console.log(`Lobby created: ${lobby.id}`);
+      console.log(`Lobby created: ${lobby.id} with ${questions.length} questions`);
     });
 
     // Join Lobby
@@ -115,9 +158,24 @@ export class SocketHandler {
       // Mark player as connected
       this.lobbyManager.setPlayerConnected(data.lobbyId, data.playerId, true);
       
+      // Include current question if game is playing
+      let currentQuestion;
+      if (lobby.gameState === 'playing' && lobby.currentQuestionIndex !== undefined) {
+        const question = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        if (question) {
+          currentQuestion = this.lobbyManager.getQuestionDataForLanguage(
+            question,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en' // Language doesn't matter since we send bilingual data
+          );
+        }
+      }
+      
       const response: ReconnectPlayerResponse = {
         success: true,
-        lobby
+        lobby,
+        currentQuestion
       };
       
       callback(response);
@@ -145,9 +203,24 @@ export class SocketHandler {
       // Join the lobby room
       socket.join(data.lobbyId);
       
+      // Include current question if game is playing
+      let currentQuestion;
+      if (lobby.gameState === 'playing' && lobby.currentQuestionIndex !== undefined) {
+        const question = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        if (question) {
+          currentQuestion = this.lobbyManager.getQuestionDataForLanguage(
+            question,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en' // Language doesn't matter since we send bilingual data
+          );
+        }
+      }
+      
       const response: ReconnectMasterResponse = {
         success: true,
-        lobby
+        lobby,
+        currentQuestion
       };
       
       callback(response);
@@ -171,22 +244,32 @@ export class SocketHandler {
     });
 
     // Start Game
-    socket.on('startGame', (data: StartGameRequest) => {
-      const success = this.lobbyManager.startGame(data.lobbyId, data.questionId);
+    socket.on('startGame', (data: StartGameRequest, callback) => {
+      const success = this.lobbyManager.startGame(data.lobbyId);
       
       if (success) {
         const lobby = this.lobbyManager.getLobby(data.lobbyId);
-        if (lobby) {
+        const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        
+        if (lobby && currentQuestion) {
+          // Get question data for language (default to 'en', can be parameterized later)
+          const questionData = this.lobbyManager.getQuestionDataForLanguage(
+            currentQuestion,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en' // TODO: Support multiple languages
+          );
+          
           this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
-          this.io.to(data.lobbyId).emit('questionStarted', {
-            questionId: data.questionId,
-            questionIndex: 0,
-            questionType: data.questionType,
-            answers: data.answers,
-            orderItems: data.orderItems,
-          });
+          this.io.to(data.lobbyId).emit('questionStarted', questionData);
+          
+          callback({ success: true, currentQuestion: questionData });
+          console.log(`Game started in lobby ${data.lobbyId}`);
+        } else {
+          callback({ success: false });
         }
-        console.log(`Game started in lobby ${data.lobbyId}`);
+      } else {
+        callback({ success: false });
       }
     });
 
@@ -195,7 +278,6 @@ export class SocketHandler {
       const success = this.lobbyManager.setAnswer(
         data.lobbyId,
         data.playerId,
-        data.questionId,
         data.answerId
       );
       
@@ -210,57 +292,66 @@ export class SocketHandler {
           this.io.to(data.lobbyId).emit('everybodyAnswered');
         }
         
-        console.log(`Player ${data.playerId} answered question ${data.questionId}`);
+        console.log(`Player ${data.playerId} answered`);
       }
     });
 
     // Question Result
     socket.on('questionResult', (data: QuestionResultRequest) => {
       const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
       
-      if (!lobby) {
+      if (!lobby || !currentQuestion) {
         return;
       }
 
       // Get player answers before processing
       const playerAnswers = this.lobbyManager.getPlayerAnswers(data.lobbyId);
       
-      const updatedPlayers = this.lobbyManager.processQuestionResult(
-        data.lobbyId,
-        data.questionId,
-        data.correctAnswerId
-      );
+      const updatedPlayers = this.lobbyManager.processQuestionResult(data.lobbyId);
       
-      if (updatedPlayers.length > 0) {
-        // Send question result data to master
+      if (updatedPlayers.length > 0 && currentQuestion.correctAnswerId) {
+        // Update lobby state (phase is now 'revealing')
+        this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+        
+        // Send question result data to everyone
         this.io.to(data.lobbyId).emit('questionResultReady', {
-          correctAnswerId: data.correctAnswerId,
+          correctAnswerId: currentQuestion.correctAnswerId,
           playerAnswers,
         });
         
         this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
-        console.log(`Question ${data.questionId} results processed for lobby ${data.lobbyId}`);
+        console.log(`Question results processed for lobby ${data.lobbyId}`);
       }
     });
 
     // Next Question
-    socket.on('nextQuestion', (data: NextQuestionRequest) => {
-      const success = this.lobbyManager.nextQuestion(data.lobbyId, data.questionId);
+    socket.on('nextQuestion', (data: NextQuestionRequest, callback) => {
+      const success = this.lobbyManager.nextQuestion(data.lobbyId);
       
-      console.log('next question triggered')
       if (success) {
         const lobby = this.lobbyManager.getLobby(data.lobbyId);
-        if (lobby) {
+        const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        
+        if (lobby && currentQuestion) {
+          const questionData = this.lobbyManager.getQuestionDataForLanguage(
+            currentQuestion,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en' // TODO: Support multiple languages
+          );
+          
           this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
-          this.io.to(data.lobbyId).emit('questionStarted', {
-            questionId: data.questionId,
-            questionIndex: lobby.currentQuestionIndex,
-            questionType: data.questionType,
-            answers: data.answers,
-            orderItems: data.orderItems,
-          });
+          this.io.to(data.lobbyId).emit('questionStarted', questionData);
+          
+          callback({ success: true, currentQuestion: questionData });
+          console.log(`Next question in lobby ${data.lobbyId}`);
+        } else {
+          callback({ success: false });
         }
-        console.log(`Next question ${data.questionId} in lobby ${data.lobbyId}`);
+      } else {
+        // No more questions - game should end
+        callback({ success: true, gameFinished: true });
       }
     });
 
@@ -269,7 +360,6 @@ export class SocketHandler {
       const success = this.lobbyManager.submitCustomAnswer(
         data.lobbyId,
         data.playerId,
-        data.questionId,
         data.answerText
       );
       
@@ -285,32 +375,43 @@ export class SocketHandler {
           console.log(`All custom answers submitted for lobby ${data.lobbyId}`);
         }
         
-        console.log(`Player ${data.playerId} submitted custom answer for question ${data.questionId}`);
+        console.log(`Player ${data.playerId} submitted custom answer`);
       }
     });
 
-    // Get Custom Answers (called by master with correct answer details)
-    socket.on('getCustomAnswers', (data: GetCustomAnswersRequest) => {
-      const allAnswers = this.lobbyManager.getAllCustomAnswers(
-        data.lobbyId,
-        data.correctAnswerId,
-        data.correctAnswerText
-      );
+    // Prepare Custom Answer Voting (called by master to prepare voting phase)
+    socket.on('prepareCustomAnswerVoting', (data: { lobbyId: string }, callback?: (response: { success: boolean }) => void) => {
+      const allAnswers = this.lobbyManager.prepareCustomAnswerVoting(data.lobbyId);
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
       
-      // Send all mixed answers to the master only
-      socket.emit('customAnswersReady', {
-        questionId: data.questionId,
-        answers: allAnswers
-      });
-      
-      console.log(`Custom answers prepared for master in lobby ${data.lobbyId}`);
+      if (currentQuestion && allAnswers.length > 0 && lobby) {
+        // Send all mixed answers to the master only
+        socket.emit('customAnswersReady', {
+          questionId: currentQuestion.id,
+          answers: allAnswers
+        });
+        
+        // Update lobby state
+        this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+        
+        console.log(`Custom answers prepared for master in lobby ${data.lobbyId}`);
+        
+        // Acknowledge if callback provided
+        if (callback) {
+          callback({ success: true });
+        }
+      } else if (callback) {
+        callback({ success: false });
+      }
     });
 
     // Trigger Answer Voting (called by master to show answers to all players)
     socket.on('triggerAnswerVoting', (data: TriggerAnswerVotingRequest) => {
       const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
       
-      if (!lobby) {
+      if (!lobby || !currentQuestion) {
         return;
       }
 
@@ -328,18 +429,16 @@ export class SocketHandler {
         text: answer.text
       }));
       
-      // Reset hasAnswered flags for voting phase
-      for (const player of lobby.players) {
-        player.hasAnswered = false;
-      }
+      // Update lobby state
+      this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
       
       // Send to all players
       this.io.to(data.lobbyId).emit('showAnswersForVoting', {
-        questionId: data.questionId,
+        questionId: currentQuestion.id,
         answers: answersForPlayers
       });
       
-      console.log(`Answer voting triggered for lobby ${data.lobbyId}`);
+      console.log(`Answer voting triggered for lobby ${data.lobbyId}, sent ${answersForPlayers.length} answers`);
     });
 
     // Vote For Answer
@@ -347,7 +446,6 @@ export class SocketHandler {
       const success = this.lobbyManager.voteForAnswer(
         data.lobbyId,
         data.playerId,
-        data.questionId,
         data.answerId
       );
       
@@ -368,28 +466,33 @@ export class SocketHandler {
 
     // Custom Answer Result
     socket.on('customAnswerResult', (data: CustomAnswerResultRequest) => {
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
       // Get player votes before processing
       const playerVotes = this.lobbyManager.getPlayerVotes(data.lobbyId);
       
       // Get the full shuffled answers WITH playerIds for results display
       const answersWithAttribution = this.lobbyManager.getShuffledAnswersWithAttribution(data.lobbyId);
       
-      const updatedPlayers = this.lobbyManager.processCustomAnswerResult(
-        data.lobbyId,
-        data.questionId,
-        data.correctAnswerId
-      );
+      const updatedPlayers = this.lobbyManager.processCustomAnswerResult(data.lobbyId);
       
-      if (updatedPlayers.length > 0) {
+      if (updatedPlayers.length > 0 && currentQuestion && lobby) {
+        // Update lobby state (phase is now 'revealing')
+        this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+        
         // Send the full answer list with attribution to everyone
         this.io.to(data.lobbyId).emit('customAnswersReady', {
-          questionId: data.questionId,
+          questionId: currentQuestion.id,
           answers: answersWithAttribution
         });
         
-        // Send custom answer result data to master
+        // Find correct answer ID from shuffled answers
+        const correctAnswerId = answersWithAttribution.find(a => !a.playerId)?.id || '';
+        
+        // Send custom answer result data
         this.io.to(data.lobbyId).emit('customAnswerResultReady', {
-          correctAnswerId: data.correctAnswerId,
+          correctAnswerId,
           playerVotes,
         });
         
@@ -403,7 +506,6 @@ export class SocketHandler {
       const success = this.lobbyManager.submitTextInput(
         data.lobbyId,
         data.playerId,
-        data.questionId,
         data.answerText
       );
       
@@ -418,33 +520,23 @@ export class SocketHandler {
           this.io.to(data.lobbyId).emit('everybodyAnswered');
         }
         
-        console.log(`Player ${data.playerId} submitted text input for question ${data.questionId}`);
+        console.log(`Player ${data.playerId} submitted text input`);
       }
-    });
-
-    // Get Text Input Player Answers (without scoring)
-    socket.on('getTextInputPlayerAnswers', (data: GetTextInputPlayerAnswersRequest, callback: (response: GetTextInputPlayerAnswersResponse) => void) => {
-      const playerAnswers = this.lobbyManager.getTextInputPlayerAnswers(
-        data.lobbyId,
-        data.questionId
-      );
-      
-      callback({ playerAnswers });
-      console.log(`Retrieved ${playerAnswers.length} text input answers for lobby ${data.lobbyId}`);
     });
 
     // Text Input Result
     socket.on('textInputResult', (data: TextInputResultRequest) => {
-      const result = this.lobbyManager.processTextInputResult(
-        data.lobbyId,
-        data.questionId,
-        data.correctAnswers
-      );
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const result = this.lobbyManager.processTextInputResult(data.lobbyId);
       
-      if (result.players.length > 0) {
+      if (result.players.length > 0 && currentQuestion && currentQuestion.correctAnswers && lobby) {
+        // Update lobby state (phase is now 'revealing')
+        this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+        
         // Send text input result data
         this.io.to(data.lobbyId).emit('textInputResultReady', {
-          correctAnswers: data.correctAnswers,
+          correctAnswers: currentQuestion.correctAnswers,
           playerAnswers: result.playerAnswers,
           correctPlayerIds: result.correctPlayerIds
         });
@@ -459,7 +551,6 @@ export class SocketHandler {
       const success = this.lobbyManager.submitOrder(
         data.lobbyId,
         data.playerId,
-        data.questionId,
         data.orderedItemIds
       );
       
@@ -474,22 +565,23 @@ export class SocketHandler {
           this.io.to(data.lobbyId).emit('everybodyAnswered');
         }
         
-        console.log(`Player ${data.playerId} submitted order for question ${data.questionId}`);
+        console.log(`Player ${data.playerId} submitted order`);
       }
     });
 
     // Order Result
     socket.on('orderResult', (data: OrderResultRequest) => {
-      const result = this.lobbyManager.processOrderResult(
-        data.lobbyId,
-        data.questionId,
-        data.correctOrder
-      );
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const result = this.lobbyManager.processOrderResult(data.lobbyId);
       
-      if (result.players.length > 0) {
+      if (result.players.length > 0 && currentQuestion && currentQuestion.correctOrder && lobby) {
+        // Update lobby state (phase is now 'revealing')
+        this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+        
         // Send order result data
         this.io.to(data.lobbyId).emit('orderResultReady', {
-          correctOrder: data.correctOrder,
+          correctOrder: currentQuestion.correctOrder,
           playerOrders: result.playerOrders,
           playerScores: result.playerScores
         });

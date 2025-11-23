@@ -84,25 +84,18 @@ app.get("/health", (req, res) => {
 });
 
 // Serve questions by language
-app.get("/api/questions/:language", (req, res) => {
-  const { language } = req.params;
-
-  // Strict whitelist validation
-  const allowedLanguages = ["de", "en"];
-  if (!allowedLanguages.includes(language)) {
-    return res
-      .status(400)
-      .json({ error: 'Invalid language. Use "de" or "en".' });
-  }
-
+app.get("/api/questions", (req, res) => {
   try {
-    // Safe path construction - language is validated above
-    const questionsPath = path.join(
-      __dirname,
-      "data",
-      `questions_${language}.json`
-    );
-    const questions = require(questionsPath);
+    // Load the merged questions file
+    const questionsPath = path.join(__dirname, "data", "questions.json");
+    const rawQuestions = require(questionsPath);
+    
+    // Add IDs to questions if they don't have them
+    const questions = rawQuestions.map((q: any, index: number) => ({
+      ...q,
+      id: q.id || `q-${index}`
+    }));
+    
     res.json(questions);
   } catch (error) {
     console.error("Error loading questions:", error);

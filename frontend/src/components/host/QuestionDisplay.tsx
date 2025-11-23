@@ -1,6 +1,8 @@
 import type { Answer } from '../../../../shared/types';
 import { useHoverSound } from '../../hooks/useHoverSound';
 
+import { useI18n } from '../../i18n/useI18n';
+
 interface QuestionDisplayProps {
   questionText: string;
   answers: Answer[];
@@ -13,7 +15,12 @@ export default function QuestionDisplay({
   correctAnswerId,
   showCorrect,
 }: QuestionDisplayProps) {
+  const { language } = useI18n();
   const answerLabels = ['A', 'B', 'C', 'D'];
+  
+  const getText = (text: string | { de: string; en: string }) => {
+    return typeof text === 'string' ? text : text[language];
+  };
 
   const AnswerCard = ({ answer, index }: { answer: Answer; index: number }) => {
     const soundHandlers = useHoverSound(answer.sound);
@@ -51,7 +58,7 @@ export default function QuestionDisplay({
           
           <div className="flex-1">
             <p className={`text-lg md:text-xl font-semibold leading-relaxed ${shouldHighlight ? 'drop-shadow-md' : ''}`}>
-              {answer.text}
+              {getText(answer.text)}
             </p>
           </div>
         </div>

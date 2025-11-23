@@ -3,6 +3,7 @@ import type { Player } from "../../../../../shared/types";
 import PlayerHeader from "./PlayerHeader";
 import SubmissionConfirmation from "./SubmissionConfirmation";
 import { useI18n } from "../../../i18n/useI18n";
+import LanguageSwitcher from "../../LanguageSwitcher";
 
 interface CustomAnswerInputProps {
   player: Player;
@@ -44,7 +45,7 @@ export default function CustomAnswerInput({
                 maxLength={200}
               />
               <p className="text-sm text-gray-500 mt-2 text-right">
-                {localCustomAnswer.length}/200 characters
+                {localCustomAnswer.length}/200 {t.common.characters}
               </p>
               <button
                 onClick={() => {
@@ -67,6 +68,7 @@ export default function CustomAnswerInput({
           )}
         </div>
       </div>
+      <LanguageSwitcher />
     </div>
   );
 }

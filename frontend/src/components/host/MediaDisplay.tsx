@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MediaConfig } from "../../../../shared/types";
 import { loadMediaBatch } from "../../utils/mediaLoader";
+import { useI18n } from "../../i18n/useI18n";
 
 interface MediaDisplayProps {
   media: MediaConfig;
@@ -13,6 +14,7 @@ export default function MediaDisplay({
   onComplete,
   className = "",
 }: MediaDisplayProps) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -208,7 +210,7 @@ export default function MediaDisplay({
             <button
               onClick={handleReplay}
               className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
-              title="Replay"
+              title={t.media.replay}
             >
               <svg
                 className="w-5 h-5"
@@ -229,9 +231,9 @@ export default function MediaDisplay({
             <button
               onClick={onComplete}
               className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20 font-semibold flex items-center gap-1"
-              title="Continue"
+              title={t.media.continue}
             >
-              <span>Continue</span>
+              <span>{t.media.continue}</span>
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -251,7 +253,7 @@ export default function MediaDisplay({
             <button
               onClick={toggleMinimize}
               className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
-              title="Minimize"
+              title={t.media.minimize}
             >
               <svg
                 className="w-5 h-5"
@@ -272,7 +274,7 @@ export default function MediaDisplay({
             <button
               onClick={toggleMinimize}
               className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
-              title="Restore"
+              title={t.media.restore}
             >
               <svg
                 className="w-5 h-5"
@@ -293,7 +295,7 @@ export default function MediaDisplay({
             <button
               onClick={toggleMaximize}
               className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
-              title={isMaximized ? "Exit fullscreen" : "Fullscreen"}
+              title={isMaximized ? t.media.exitFullscreen : t.media.fullscreen}
             >
               {isMaximized ? (
                 <svg
