@@ -19,6 +19,8 @@ import {
   QuestionResultRequest,
   NextQuestionRequest,
   NextQuestionResponse,
+  RestartQuestionRequest,
+  RestartQuestionResponse,
   SubmitCustomAnswerRequest,
   SubmitCustomAnswerResponse,
   TriggerAnswerVotingRequest,
@@ -361,6 +363,35 @@ export class SocketHandler {
       } else {
         // No more questions - game should end
         callback({ success: true, gameFinished: true });
+      }
+    });
+
+    // Restart Current Question
+    socket.on('restartQuestion', (data: RestartQuestionRequest, callback) => {
+      const success = this.lobbyManager.restartCurrentQuestion(data.lobbyId);
+      
+      if (success) {
+        const lobby = this.lobbyManager.getLobby(data.lobbyId);
+        const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        
+        if (lobby && currentQuestion) {
+          const questionData = this.lobbyManager.getQuestionDataForLanguage(
+            currentQuestion,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en' // TODO: Support multiple languages
+          );
+          
+          this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+          this.io.to(data.lobbyId).emit('questionStarted', questionData);
+          
+          callback({ success: true, currentQuestion: questionData });
+          console.log(`Question restarted in lobby ${data.lobbyId}`);
+        } else {
+          callback({ success: false });
+        }
+      } else {
+        callback({ success: false });
       }
     });
 

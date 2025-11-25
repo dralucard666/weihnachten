@@ -15,6 +15,7 @@ interface HostControlButtonsProps {
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
   onShowTextInputPlayerResults: () => void;
+  onRestartQuestion: () => void;
 }
 
 export default function HostControlButtons({
@@ -31,6 +32,7 @@ export default function HostControlButtons({
   onShowVotingResults,
   onNextQuestion,
   onShowTextInputPlayerResults,
+  onRestartQuestion,
 }: HostControlButtonsProps) {
   const { t } = useI18n();
   const isLastQuestion = currentQuestionIndex + 1 >= totalQuestions;
@@ -43,7 +45,7 @@ export default function HostControlButtons({
         <button
           onClick={onShowAnswer}
           disabled={!allPlayersAnswered}
-          className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          className={`px-10 py-4 cursor-pointer rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
             allPlayersAnswered
               ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
               : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
@@ -65,7 +67,7 @@ export default function HostControlButtons({
         <button
           onClick={onShowVotingResults}
           disabled={!allVotesReceived}
-          className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          className={`cursor-pointerpx-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
             allVotesReceived
               ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
               : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
@@ -86,7 +88,7 @@ export default function HostControlButtons({
       return allPlayersAnswered ? (
         <button
           onClick={onShowTextInputPlayerResults}
-          className="px-10 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+          className="cursor-pointer px-10 cursor-pointer py-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>📝</span>
           <span>{t.hostControls.showPlayerResults}</span>
@@ -99,7 +101,7 @@ export default function HostControlButtons({
       return (
         <button
           onClick={onShowAnswer}
-          className="px-10 py-4 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+          className="cursor-pointer px-10 py-4 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>💡</span>
           <span>{t.hostControls.showAnswer}</span>
@@ -112,7 +114,7 @@ export default function HostControlButtons({
       return (
         <button
           onClick={onNextQuestion}
-          className="px-10 py-4 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+          className="cursor-pointer px-10 py-4 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
         >
           <span>{isLastQuestion ? "🏁" : "➡️"}</span>
           <span>
@@ -129,7 +131,7 @@ export default function HostControlButtons({
       <button
         onClick={onShowAnswer}
         disabled={!allPlayersAnswered}
-        className={`px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+        className={`cursor-pointer px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
           allPlayersAnswered
             ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
             : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
@@ -146,11 +148,20 @@ export default function HostControlButtons({
   };
 
   return (
-    <div>
-      <div className="flex justify-center items-center gap-4 flex-wrap">
-        {renderPrimaryButton()}
+      <div className="relative">
+        <div className="flex justify-between items-center gap-4 flex-wrap mx-2">
+          <button
+            onClick={onRestartQuestion}
+            className="px-2 py-1 rounded-lg bg-gradient-to-r cursor-pointer from-lime-100 to-blue-200 hover:from-lime-100 hover:to-blue-200 text-white font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 z-50"
+            title="Restart current question"
+          >
+            <span>🔄</span>
+          </button>
+          <div className="mb-5">
+          {renderPrimaryButton()}
+          </div>
+          <LanguageSwitcher absolute={false} />
+        </div>
       </div>
-      <LanguageSwitcher />
-    </div>
   );
 }

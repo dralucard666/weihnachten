@@ -185,6 +185,16 @@ export interface NextQuestionResponse {
   gameFinished?: boolean; // True if no more questions
 }
 
+export interface RestartQuestionRequest {
+  lobbyId: string;
+  // Backend restarts the current question
+}
+
+export interface RestartQuestionResponse {
+  success: boolean;
+  currentQuestion?: QuestionData; // Current question data (restarted)
+}
+
 // Custom Answers Game Mode
 export interface SubmitCustomAnswerRequest {
   lobbyId: string;
@@ -325,6 +335,7 @@ export interface ClientToServerEvents {
   setAnswer: (data: SetAnswerRequest, callback: (response: SetAnswerResponse) => void) => void;
   questionResult: (data: QuestionResultRequest) => void;
   nextQuestion: (data: NextQuestionRequest, callback: (response: NextQuestionResponse) => void) => void;
+  restartQuestion: (data: RestartQuestionRequest, callback: (response: RestartQuestionResponse) => void) => void;
   
   // Custom answers mode events
   submitCustomAnswer: (data: SubmitCustomAnswerRequest, callback: (response: SubmitCustomAnswerResponse) => void) => void;

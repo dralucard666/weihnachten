@@ -94,6 +94,7 @@ export default function GameMasterPage() {
     handleShowAnswer,
     handleShowVotingResults,
     handleNextQuestion,
+    handleRestartQuestion,
   } = useGameMaster(lobbyId, questionIds);
 
   // Adapt QuestionData to Question format for components (extract current language)
@@ -174,6 +175,7 @@ export default function GameMasterPage() {
         onShowAnswer={handleShowAnswer}
         onShowVotingResults={handleShowVotingResults}
         onNextQuestion={handleNextQuestion}
+        onRestartQuestion={handleRestartQuestion}
       />
     );
   }

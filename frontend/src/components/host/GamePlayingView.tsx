@@ -32,6 +32,7 @@ interface GamePlayingViewProps {
   onShowAnswer: () => void;
   onShowVotingResults: () => void;
   onNextQuestion: () => void;
+  onRestartQuestion: () => void;
 }
 
 export default function GamePlayingView({
@@ -51,6 +52,7 @@ export default function GamePlayingView({
   onShowAnswer,
   onShowVotingResults,
   onNextQuestion,
+  onRestartQuestion,
 }: GamePlayingViewProps) {
   const playersWithNames = lobby.players.filter((p) => p.name);
   const isCustomAnswersMode = currentQuestion.type === "custom-answers";
@@ -87,7 +89,10 @@ export default function GamePlayingView({
 
   // Show before-answer media when correct answer is revealed
   const handleShowAnswerClick = () => {
-    if (currentQuestion.media?.beforeAnswer && !(currentQuestion.type === "custom-answers" && !isVotingPhase)) {
+    if (
+      currentQuestion.media?.beforeAnswer &&
+      !(currentQuestion.type === "custom-answers" && !isVotingPhase)
+    ) {
       setShowBeforeAnswerMedia(true);
     } else {
       onShowAnswer();
@@ -117,8 +122,8 @@ export default function GamePlayingView({
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 p-6">
-      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col">
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900">
+      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col mt-6">
         {/* Header with Progress */}
         <HostHeader
           currentQuestionIndex={currentQuestionIndex}
@@ -179,7 +184,7 @@ export default function GamePlayingView({
                 <QuestionDisplay
                   questionText={currentQuestion.text}
                   answers={currentQuestion.answers}
-                  correctAnswerId={currentQuestion.correctAnswerId || ''}
+                  correctAnswerId={currentQuestion.correctAnswerId || ""}
                   showCorrect={showCorrectAnswer}
                 />
               )
@@ -195,24 +200,24 @@ export default function GamePlayingView({
           showCorrectAnswer={showCorrectAnswer}
           getPlayerAnswer={getPlayerAnswer}
         />
-
-        {/* Control Buttons */}
-        <HostControlButtons
-          isCustomAnswersMode={isCustomAnswersMode}
-          isTextInputMode={isTextInputMode}
-          isVotingPhase={isVotingPhase}
-          showCorrectAnswer={showCorrectAnswer}
-          allPlayersAnswered={allPlayersAnswered}
-          allVotesReceived={allVotesReceived}
-          currentQuestionIndex={currentQuestionIndex}
-          totalQuestions={totalQuestions}
-          showTextInputPlayerResults={showTextInputPlayerResults}
-          onShowAnswer={handleShowAnswerClick}
-          onShowVotingResults={handleShowVotingResultsClick}
-          onNextQuestion={onNextQuestion}
-          onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
-        />
       </div>
+      {/* Control Buttons */}
+      <HostControlButtons
+        isCustomAnswersMode={isCustomAnswersMode}
+        isTextInputMode={isTextInputMode}
+        isVotingPhase={isVotingPhase}
+        showCorrectAnswer={showCorrectAnswer}
+        allPlayersAnswered={allPlayersAnswered}
+        allVotesReceived={allVotesReceived}
+        currentQuestionIndex={currentQuestionIndex}
+        totalQuestions={totalQuestions}
+        showTextInputPlayerResults={showTextInputPlayerResults}
+        onShowAnswer={handleShowAnswerClick}
+        onShowVotingResults={handleShowVotingResultsClick}
+        onNextQuestion={onNextQuestion}
+        onShowTextInputPlayerResults={handleShowTextInputPlayerResults}
+        onRestartQuestion={onRestartQuestion}
+      />
     </div>
   );
 }

@@ -183,6 +183,28 @@ export class LobbyManager {
     return true;
   }
 
+  restartCurrentQuestion(lobbyId: string): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+    const currentQuestion = this.getCurrentQuestion(lobbyId);
+
+    if (!lobby || lobby.gameState !== "playing" || !currentQuestion) {
+      return false;
+    }
+
+    // Reset to answering phase
+    lobby.currentPhase = "answering";
+    
+    // Clear all answers for current question
+    this.clearAllAnswers(lobbyId);
+    
+    // Reset hasAnswered flag for all players
+    this.resetPlayerAnswerFlags(lobby);
+    
+    this.saveState();
+
+    return true;
+  }
+
   setAnswer(
     lobbyId: string,
     playerId: string,

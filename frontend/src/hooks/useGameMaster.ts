@@ -284,6 +284,32 @@ export function useGameMaster(lobbyId: string | undefined, questionIds: string[]
     }
   };
 
+  const handleRestartQuestion = () => {
+    if (!lobby) return;
+
+    const socket = socketService.getSocket();
+    if (socket) {
+      socket.emit("restartQuestion", { lobbyId: lobby.id }, (response) => {
+        if (response.success && response.currentQuestion) {
+          setCurrentQuestion(response.currentQuestion);
+          // Reset local state
+          setAllPlayersAnswered(false);
+          setPlayersWhoAnswered(new Set());
+          setCustomAnswers([]);
+          setIsVotingPhase(false);
+          setAllVotesReceived(false);
+          setPlayerAnswers([]);
+          setCorrectPlayerIds([]);
+          setPlayerScores({});
+          setCorrectAnswerId("");
+          setCorrectAnswer("");
+          setCorrectAnswers([]);
+          setCorrectOrder([]);
+        }
+      });
+    }
+  };
+
 
   return {
     lobby,
@@ -307,5 +333,6 @@ export function useGameMaster(lobbyId: string | undefined, questionIds: string[]
     handleTriggerVoting,
     handleShowVotingResults,
     handleNextQuestion,
+    handleRestartQuestion,
   };
 }
