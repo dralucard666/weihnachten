@@ -207,16 +207,11 @@ export class SocketHandler {
 
     // Reconnect Master
     socket.on('reconnectMaster', async (data: ReconnectMasterRequest, callback) => {
-      let lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
       
       if (!lobby) {
-        // Try to load from persistence
-        lobby = await this.lobbyManager.loadLobbyFromPersistence(data.lobbyId, this.allQuestions);
-        
-        if (!lobby) {
-          callback({ success: false, error: 'Lobby not found' });
-          return;
-        }
+        callback({ success: false, error: 'Lobby not found' });
+        return;
       }
 
       // Join the lobby room

@@ -37,6 +37,10 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 COPY shared/ ../shared/
 
+# Set backend URL for production build (passed from docker-compose.yml)
+ARG VITE_BACKEND_URL
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+
 # Build frontend
 RUN pnpm run build
 

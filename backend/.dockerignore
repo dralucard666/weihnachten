@@ -6,5 +6,4 @@ npm-debug.log
 .git
 .gitignore
 README.md
-game-state.json
 server.cert

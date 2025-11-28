@@ -9,7 +9,6 @@ import {
   PlayerAnswerInfo,
 } from "../../../shared/types";
 import { v4 as uuidv4 } from "uuid";
-import { PersistenceService } from "./PersistenceService";
 
 // Answer storage interfaces
 interface PlayerAnswer {
@@ -49,10 +48,8 @@ export class LobbyManager {
   private textInputAnswers: Map<string, Map<string, PlayerTextInput>> =
     new Map(); // lobbyId -> Map<playerId, textInput>
   private orderAnswers: Map<string, Map<string, PlayerOrder>> = new Map(); // lobbyId -> Map<playerId, order>
-  private persistenceService: PersistenceService;
 
   constructor() {
-    this.persistenceService = new PersistenceService();
   }
 
   createLobby(questions: StoredQuestion[]): Lobby {
@@ -75,7 +72,6 @@ export class LobbyManager {
     this.lobbies.set(lobbyId, lobby);
     this.lobbyQuestions.set(lobbyId, shuffledQuestions);
     this.initializeLobbyAnswerMaps(lobbyId);
-    this.saveState();
 
     return lobby;
   }
@@ -108,7 +104,6 @@ export class LobbyManager {
     this.lobbyQuestions.set(lobbyId, questions);
     lobby.questionIds = questions.map(q => q.id);
     lobby.totalQuestions = questions.length;
-    this.saveState();
   }
 
   // Convert StoredQuestion to QuestionData (includes both languages for client-side switching)
@@ -157,7 +152,6 @@ export class LobbyManager {
     };
 
     lobby.players.push(player);
-    this.saveState();
 
     return { success: true, playerId, lobby };
   }
@@ -173,7 +167,6 @@ export class LobbyManager {
     }
 
     player.name = playerName;
-    this.saveState();
     return true;
   }
 
@@ -190,7 +183,6 @@ export class LobbyManager {
     lobby.currentQuestionId = questions[0].id;
     lobby.currentPhase = "answering";
     this.clearAllAnswers(lobbyId);
-    this.saveState();
 
     return true;
   }
@@ -211,8 +203,6 @@ export class LobbyManager {
     
     // Reset hasAnswered flag for all players
     this.resetPlayerAnswerFlags(lobby);
-    
-    this.saveState();
 
     return true;
   }
@@ -284,7 +274,6 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
     return lobby.players;
   }
 
@@ -334,7 +323,6 @@ export class LobbyManager {
 
     this.clearAllAnswers(lobbyId);
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
 
     return true;
   }
@@ -406,7 +394,6 @@ export class LobbyManager {
     // Transition to voting phase
     lobby.currentPhase = "voting";
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
 
     // Return answers without playerId to hide attribution
     return customAnswers.map(({ id, text }) => ({ id, text }));
@@ -504,7 +491,6 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
     return lobby.players;
   }
 
@@ -648,7 +634,6 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
     return { players: lobby.players, correctPlayerIds, playerAnswers };
   }
 
@@ -732,7 +717,6 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    this.saveState();
     return { players: lobby.players, playerOrders, playerScores };
   }
 
@@ -744,9 +728,6 @@ export class LobbyManager {
     }
 
     lobby.gameState = "finished";
-
-    // Remove lobby from persistence when game ends
-    this.removeLobbyFromPersistence(lobbyId);
 
     return lobby.players.sort((a, b) => b.score - a.score);
   }
@@ -778,46 +759,6 @@ export class LobbyManager {
     if (player) {
       player.connected = connected;
     }
-  }
-
-  // Persistence methods
-  private saveState(): void {
-    this.persistenceService.saveState(this.lobbies).catch((error) => {
-      console.error("Failed to persist state:", error);
-    });
-  }
-
-  private removeLobbyFromPersistence(lobbyId: string): void {
-    this.persistenceService.removeLobby(lobbyId).catch((error) => {
-      console.error("Failed to remove lobby from persistence:", error);
-    });
-  }
-
-  async loadLobbyFromPersistence(lobbyId: string, allQuestions: StoredQuestion[]): Promise<Lobby | undefined> {
-    const lobby = await this.persistenceService.getLobby(lobbyId);
-
-    if (lobby) {
-      this.lobbies.set(lobbyId, lobby);
-      
-      // Restore questions from questionIds
-      if (lobby.questionIds && lobby.questionIds.length > 0) {
-        const questions = lobby.questionIds
-          .map(id => allQuestions.find(q => q.id === id))
-          .filter((q): q is StoredQuestion => q !== undefined);
-        
-        if (questions.length > 0) {
-          this.lobbyQuestions.set(lobbyId, questions);
-          console.log(`Restored ${questions.length} questions for lobby ${lobbyId}`);
-        } else {
-          console.error(`Could not restore questions for lobby ${lobbyId}`);
-        }
-      }
-      
-      this.initializeLobbyAnswerMaps(lobbyId);
-      console.log(`Lobby ${lobbyId} restored from persistence`);
-    }
-
-    return lobby;
   }
 
   // Private helper methods

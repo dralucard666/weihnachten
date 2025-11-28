@@ -29,7 +29,6 @@ logs/
 *.tmp
 .cache/
 
-backend/game-state.json
 backend/src/data
 frontend/src/assets
 *.cert
