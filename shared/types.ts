@@ -47,6 +47,7 @@ export interface Lobby {
 // API Request/Response Types
 export interface CreateLobbyRequest {
   questionIds: string[]; // IDs of questions for this game session
+  questionCount?: number; // Optional: limit number of questions to use
 }
 
 export interface CreateLobbyResponse {
@@ -100,6 +101,7 @@ export interface SetNameResponse {
 
 export interface StartGameRequest {
   lobbyId: string;
+  questionCount?: number; // Optional: limit questions when starting game
 }
 
 export interface StartGameResponse {

@@ -83,9 +83,17 @@ export class SocketHandler {
     // Create Lobby
     socket.on('createLobby', (data: CreateLobbyRequest, callback) => {
       // Use provided questionIds or use all questions
-      const questionIds = data.questionIds && data.questionIds.length > 0 
+      let questionIds = data.questionIds && data.questionIds.length > 0 
         ? data.questionIds 
         : this.allQuestions.map(q => q.id);
+      
+      // If questionCount is specified, shuffle and limit the questions
+      if (data.questionCount && data.questionCount > 0 && data.questionCount < questionIds.length) {
+        // Shuffle the question IDs
+        const shuffled = [...questionIds].sort(() => Math.random() - 0.5);
+        // Take only the requested number
+        questionIds = shuffled.slice(0, data.questionCount);
+      }
       
       // Get the questions by IDs
       const questions = questionIds
@@ -256,6 +264,17 @@ export class SocketHandler {
 
     // Start Game
     socket.on('startGame', (data: StartGameRequest, callback) => {
+      // If questionCount is provided, update the lobby questions
+      if (data.questionCount) {
+        const currentQuestions = this.lobbyManager.getLobbyQuestions(data.lobbyId);
+        if (currentQuestions && data.questionCount < currentQuestions.length) {
+          // Shuffle and limit questions
+          const shuffled = [...currentQuestions].sort(() => Math.random() - 0.5);
+          const limitedQuestions = shuffled.slice(0, data.questionCount);
+          this.lobbyManager.updateLobbyQuestions(data.lobbyId, limitedQuestions);
+        }
+      }
+      
       const success = this.lobbyManager.startGame(data.lobbyId);
       
       if (success) {

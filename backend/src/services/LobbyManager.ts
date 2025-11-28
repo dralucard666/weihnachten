@@ -99,6 +99,18 @@ export class LobbyManager {
     return this.lobbyQuestions.get(lobbyId);
   }
 
+  updateLobbyQuestions(lobbyId: string, questions: StoredQuestion[]): void {
+    const lobby = this.lobbies.get(lobbyId);
+    if (!lobby) {
+      return;
+    }
+    
+    this.lobbyQuestions.set(lobbyId, questions);
+    lobby.questionIds = questions.map(q => q.id);
+    lobby.totalQuestions = questions.length;
+    this.saveState();
+  }
+
   // Convert StoredQuestion to QuestionData (includes both languages for client-side switching)
   getQuestionDataForLanguage(
     question: StoredQuestion,

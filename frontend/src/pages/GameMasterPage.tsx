@@ -37,8 +37,6 @@ export default function GameMasterPage() {
   const [questionsError, setQuestionsError] = useState<string | null>(null);
 
   // Fetch questions from backend once
-  // If lobbyId exists, fetch lobby-specific shuffled questions
-  // Otherwise, fetch all questions for lobby creation
   useEffect(() => {
     const fetchQuestions = async () => {
       setQuestionsLoading(true);
@@ -154,7 +152,7 @@ export default function GameMasterPage() {
 
   // Render based on game state
   if (lobby.gameState === "lobby") {
-    return <GameLobbyView lobby={lobby} onStartGame={handleStartGame} />;
+    return <GameLobbyView lobby={lobby} onStartGame={handleStartGame} totalQuestions={questions.length} />;
   }
 
   if (lobby.gameState === "playing" && adaptedQuestion) {

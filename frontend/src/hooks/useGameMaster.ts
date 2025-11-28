@@ -9,7 +9,10 @@ import type {
   QuestionData,
 } from "../../../shared/types";
 
-export function useGameMaster(lobbyId: string | undefined, questionIds: string[]) {
+export function useGameMaster(
+  lobbyId: string | undefined, 
+  questionIds: string[]
+) {
   const navigate = useNavigate();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,7 @@ export function useGameMaster(lobbyId: string | undefined, questionIds: string[]
     const socket = socketService.connect();
 
     if (!lobbyId) {
-      // Use questionIds from closure - only runs once on mount
+      // Create lobby with all questions initially
       socket.emit("createLobby", { questionIds }, (response) => {
         if (response.lobby) {
           setLobby(response.lobby);
@@ -197,10 +200,34 @@ export function useGameMaster(lobbyId: string | undefined, questionIds: string[]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId, navigate]);
 
-  const handleStartGame = () => {
-    if (!lobby) return;
-
+  const handleStartGame = (questionCount?: number) => {
     const socket = socketService.getSocket();
+    if (!socket) return;
+
+    // If lobby doesn't exist yet, create it first with questionCount
+    if (!lobby) {
+      setLoading(true);
+      socket.emit("createLobby", { questionIds, questionCount }, (response) => {
+        if (response.lobby) {
+          setLobby(response.lobby);
+          setLoading(false);
+          navigate(`/game-master/${response.lobbyId}`, { replace: true });
+          
+          // Now start the game
+          socket.emit("startGame", { lobbyId: response.lobbyId }, (startResponse) => {
+            if (startResponse.success && startResponse.currentQuestion) {
+              setCurrentQuestion(startResponse.currentQuestion);
+            }
+          });
+        } else {
+          setError("Failed to create lobby");
+          setLoading(false);
+        }
+      });
+      return;
+    }
+
+    // Lobby already exists, just start the game
     if (socket) {
       localStorage.setItem("gameMasterLobbyId", lobby.id);
 

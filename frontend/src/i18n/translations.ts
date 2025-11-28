@@ -11,6 +11,16 @@ export const translations = {
       joinGame: 'Join a Game',
     },
 
+    // Question Selection
+    questionSelection: {
+      title: 'Select Number of Questions',
+      description: 'How many questions do you want to play in this game?',
+      questions: 'Questions',
+      maxQuestions: 'All Questions',
+      createLobby: 'Create Lobby',
+      availableQuestions: 'available questions',
+    },
+
     // Game Lobby
     lobby: {
       title: 'Game Lobby',
@@ -208,11 +218,21 @@ export const translations = {
       joinGame: 'Spiel beitreten',
     },
 
+    // Question Selection
+    questionSelection: {
+      title: 'Anzahl der Fragen auswählen',
+      description: 'Wie viele Fragen möchtest du in diesem Spiel spielen?',
+      questions: 'Fragen',
+      maxQuestions: 'Alle Fragen',
+      createLobby: 'Lobby erstellen',
+      availableQuestions: 'verfügbare Fragen',
+    },
+
     // Game Lobby
     lobby: {
       title: 'Spiel-Lobby',
       lobbyCode: 'Lobby-Code',
-      scanToJoin: 'Zum Beitreten scannen',
+      scanToJoin: 'Scannen zum Beitreten',
       scanDescription: 'Spieler können diesen QR-Code mit ihren Handys scannen, um sofort beizutreten',
       players: 'Spieler',
       waitingForPlayers: 'Warte auf Spieler...',

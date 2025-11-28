@@ -1,22 +1,36 @@
 import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 import type { Lobby } from "../../../shared/types";
 import { useI18n } from "../i18n/useI18n";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 interface GameLobbyViewProps {
   lobby: Lobby;
-  onStartGame: () => void;
+  onStartGame: (questionCount?: number) => void;
+  totalQuestions: number;
 }
 
 export default function GameLobbyView({
   lobby,
   onStartGame,
+  totalQuestions,
 }: GameLobbyViewProps) {
   const { t } = useI18n();
+  const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | "max">(10);
   const playerJoinUrl = `${
     import.meta.env.VITE_FRONTEND_URL || window.location.origin
   }/player/${lobby.id}`;
   const playersWithNames = lobby.players.filter((p) => p.name);
+
+  const questionOptions = [
+    { value: 5, label: "5" },
+    { value: 10, label: "10" },
+    { value: 15, label: "15" },
+    { value: 20, label: "20" },
+    { value: "max" as const, label: t.questionSelection.maxQuestions },
+  ].filter(option => 
+    option.value === "max" || option.value <= totalQuestions
+  );
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-purple-100 p-6">
@@ -120,10 +134,32 @@ export default function GameLobbyView({
           </div>
         </div>
 
-        {/* Start Game Button */}
-        <div className="flex justify-center">
+        {/* Question Count Selection and Start Game Button */}
+        <div className="flex justify-center items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold text-gray-700">
+              {t.questionSelection.questions}:
+            </label>
+            <select
+              value={selectedQuestionCount}
+              onChange={(e) => setSelectedQuestionCount(
+                e.target.value === "max" ? "max" : parseInt(e.target.value)
+              )}
+              className="px-3 py-2 text-base rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-white text-gray-800"
+            >
+              {questionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.value === "max" 
+                    ? `${option.label} (${totalQuestions})`
+                    : option.value
+                  }
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
-            onClick={onStartGame}
+            onClick={() => onStartGame(selectedQuestionCount === "max" ? undefined : selectedQuestionCount)}
             disabled={playersWithNames.length === 0}
             className={`px-12 py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
               playersWithNames.length === 0
