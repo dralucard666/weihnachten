@@ -102,14 +102,14 @@ export default function OrderView({
           <button
             onClick={() => moveUp(index)}
             disabled={index === 0}
-            className="px-2 py-1 rounded bg-orange-200 hover:bg-orange-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-2 py-1 cursor-pointer rounded bg-orange-200 hover:bg-orange-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             ▲
           </button>
           <button
             onClick={() => moveDown(index)}
             disabled={index === orderedItems.length - 1}
-            className="px-2 py-1 rounded bg-orange-200 hover:bg-orange-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-2 py-1 cursor-pointer rounded bg-orange-200 hover:bg-orange-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             ▼
           </button>
@@ -143,7 +143,7 @@ export default function OrderView({
               </div>
               <button
                 onClick={handleSubmit}
-                className="w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600"
+                className="cursor-pointer w-full py-4 rounded-lg text-lg font-bold shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600"
               >
                 <span>✓</span>
                 <span>{t.playerAnswers.submitOrder}</span>

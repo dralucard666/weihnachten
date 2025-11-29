@@ -162,7 +162,7 @@ export default function MediaDisplay({
               <>
                 <button
                   onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+                  className="absolute cursor-pointer left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
                 >
                   <svg
                     className="w-6 h-6"
@@ -180,7 +180,7 @@ export default function MediaDisplay({
                 </button>
                 <button
                   onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+                  className="absolute cursor-pointer right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
                 >
                   <svg
                     className="w-6 h-6"
@@ -230,7 +230,7 @@ export default function MediaDisplay({
           {media.allowReplay && onComplete && (
             <button
               onClick={onComplete}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20 font-semibold flex items-center gap-1"
+              className="bg-green-600 cursor-pointer hover:bg-green-700 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20 font-semibold flex items-center gap-1"
               title={t.media.continue}
             >
               <span>{t.media.continue}</span>
@@ -252,7 +252,7 @@ export default function MediaDisplay({
           {media.allowMinimize && !isMinimized && (
             <button
               onClick={toggleMinimize}
-              className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
+              className="bg-black/60 cursor-pointer hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
               title={t.media.minimize}
             >
               <svg
@@ -273,7 +273,7 @@ export default function MediaDisplay({
           {media.allowMinimize && isMinimized && (
             <button
               onClick={toggleMinimize}
-              className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
+              className="bg-black/60 cursor-pointer hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
               title={t.media.restore}
             >
               <svg
@@ -294,7 +294,7 @@ export default function MediaDisplay({
           {media.allowMaximize && (
             <button
               onClick={toggleMaximize}
-              className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
+              className="bg-black/60 cursor-pointer hover:bg-black/80 text-white p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border border-white/20"
               title={isMaximized ? t.media.exitFullscreen : t.media.fullscreen}
             >
               {isMaximized ? (

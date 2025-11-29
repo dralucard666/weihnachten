@@ -189,7 +189,7 @@ export default function GameLobbyView({
           <button
             onClick={() => onStartGame(selectedSetId, typeof questionCount === 'number' ? questionCount : undefined)}
             disabled={playersWithNames.length === 0 || !selectedSetId || loading}
-            className={`px-12 py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
+            className={`px-12 cursor-pointer py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
               playersWithNames.length === 0
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"

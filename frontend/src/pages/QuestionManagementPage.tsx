@@ -4,9 +4,12 @@ import type { StoredQuestion } from '../../../shared/types';
 import { Link } from 'react-router-dom';
 import AddQuestionModal from '../components/question-management/AddQuestionModal';
 import CreateQuestionModal from '../components/question-management/CreateQuestionModal';
+import ConfirmModal from '../components/question-management/ConfirmModal';
+import { useI18n } from '../i18n/useI18n';
 
 export default function QuestionManagementPage() {
   console.log('QuestionManagementPage rendered');
+  const { t } = useI18n();
   
   const [questionSets, setQuestionSets] = useState<QuestionSet[]>([]);
   const [selectedSet, setSelectedSet] = useState<QuestionSet | null>(null);
@@ -21,6 +24,7 @@ export default function QuestionManagementPage() {
   const [showNewSetModal, setShowNewSetModal] = useState(false);
   const [newSetName, setNewSetName] = useState('');
   const [newSetDescription, setNewSetDescription] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   // Load all question sets
   useEffect(() => {
@@ -63,7 +67,7 @@ export default function QuestionManagementPage() {
 
   const handleCreateSet = async () => {
     if (!newSetName.trim()) {
-      alert('Please enter a set name');
+      alert(t.questionManagement.enterSetName);
       return;
     }
 
@@ -74,57 +78,63 @@ export default function QuestionManagementPage() {
       setShowNewSetModal(false);
       await loadQuestionSets();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create question set');
+      alert(err instanceof Error ? err.message : t.questionManagement.failedToCreateSet);
     }
   };
 
   const handleDeleteSet = async (setId: string, setName: string) => {
-    if (!confirm(`Are you sure you want to delete the "${setName}" question set?`)) {
-      return;
-    }
-
-    try {
-      await questionSetsApi.delete(setId);
-      if (selectedSet?.id === setId) {
-        setSelectedSet(null);
-        setQuestionsInSet([]);
+    setConfirmModal({
+      message: t.questionManagement.confirmDeleteSet.replace('{name}', setName),
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await questionSetsApi.delete(setId);
+          if (selectedSet?.id === setId) {
+            setSelectedSet(null);
+            setQuestionsInSet([]);
+          }
+          await loadQuestionSets();
+        } catch (err) {
+          alert(err instanceof Error ? err.message : t.questionManagement.failedToDeleteSet);
+        }
       }
-      await loadQuestionSets();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete question set');
-    }
+    });
   };
 
   const handleRemoveQuestion = async (questionId: string) => {
     if (!selectedSet) return;
 
-    if (!confirm('Remove this question from the set?')) {
-      return;
-    }
-
-    try {
-      await questionSetsApi.removeQuestion(selectedSet.id, questionId);
-      await loadQuestionsInSet(selectedSet.id);
-      await loadQuestionSets(); // Refresh counts
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove question');
-    }
+    setConfirmModal({
+      message: t.questionManagement.confirmRemoveQuestion,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await questionSetsApi.removeQuestion(selectedSet.id, questionId);
+          await loadQuestionsInSet(selectedSet.id);
+          await loadQuestionSets(); // Refresh counts
+        } catch (err) {
+          alert(err instanceof Error ? err.message : t.questionManagement.failedToRemoveQuestion);
+        }
+      }
+    });
   };
 
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm('Delete this question permanently from all sets?')) {
-      return;
-    }
-
-    try {
-      await questionsApi.delete(questionId);
-      if (selectedSet) {
-        await loadQuestionsInSet(selectedSet.id);
+    setConfirmModal({
+      message: t.questionManagement.confirmDeleteQuestion,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await questionsApi.delete(questionId);
+          if (selectedSet) {
+            await loadQuestionsInSet(selectedSet.id);
+          }
+          await loadQuestionSets(); // Refresh counts
+        } catch (err) {
+          alert(err instanceof Error ? err.message : t.questionManagement.failedToDeleteQuestion);
+        }
       }
-      await loadQuestionSets(); // Refresh counts
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete question');
-    }
+    });
   };
 
   const handleAddExistingQuestion = async (questionIds: string[]) => {
@@ -141,7 +151,7 @@ export default function QuestionManagementPage() {
       await loadQuestionSets(); // Refresh counts
       setShowAddQuestionModal(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to add questions');
+      alert(err instanceof Error ? err.message : t.questionManagement.failedToAddQuestions);
     }
   };
 
@@ -157,7 +167,7 @@ export default function QuestionManagementPage() {
       await loadQuestionSets(); // Refresh counts
       setShowCreateQuestionModal(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create question');
+      alert(err instanceof Error ? err.message : t.questionManagement.failedToCreateQuestion);
       throw err;
     } finally {
       setIsCreating(false);
@@ -167,7 +177,7 @@ export default function QuestionManagementPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-200 to-purple-100 flex items-center justify-center">
-        <div className="text-xl text-gray-700">Loading...</div>
+        <div className="text-xl text-gray-700">{t.common.loading}</div>
       </div>
     );
   }
@@ -177,12 +187,12 @@ export default function QuestionManagementPage() {
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">Question Management</h1>
+          <h1 className="text-3xl font-bold text-gray-800">{t.questionManagement.title}</h1>
           <Link
             to="/"
             className="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow text-gray-700"
           >
-            ← Back to Home
+            {t.questionManagement.backToHome}
           </Link>
         </div>
       </div>
@@ -195,18 +205,18 @@ export default function QuestionManagementPage() {
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel: Question Sets */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Question Sets</h2>
+        <div className="bg-white rounded-xl shadow-lg p-6 max-h-[calc(100vh-180px)] flex flex-col">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+            <h2 className="text-xl font-bold text-gray-800">{t.questionManagement.questionSets}</h2>
             <button
               onClick={() => setShowNewSetModal(true)}
-              className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+              className="cursor-pointer px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
             >
-              + New Set
+              {t.questionManagement.newSet}
             </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto flex-1">
             {questionSets.map((set) => (
               <div
                 key={set.id}
@@ -224,7 +234,7 @@ export default function QuestionManagementPage() {
                       <p className="text-sm text-gray-600">{set.description}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      {set.questionCount || 0} questions
+                      {set.questionCount || 0} {t.questionManagement.questions}
                     </p>
                   </div>
                   {set.name !== 'all' && (
@@ -233,8 +243,8 @@ export default function QuestionManagementPage() {
                         e.stopPropagation();
                         handleDeleteSet(set.id, set.name);
                       }}
-                      className="ml-2 text-red-500 hover:text-red-700 transition-colors"
-                      title="Delete set"
+                      className="cursor-pointer ml-2 text-red-500 hover:text-red-700 transition-colors"
+                      title={t.questionManagement.deleteSet}
                     >
                       🗑️
                     </button>
@@ -246,36 +256,36 @@ export default function QuestionManagementPage() {
         </div>
 
         {/* Right Panel: Questions in Selected Set */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6 max-h-[calc(100vh-180px)] flex flex-col">
           {selectedSet ? (
             <>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">
                     {selectedSet.name}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    {questionsInSet.length} questions
+                    {questionsInSet.length} {t.questionManagement.questions}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowAddQuestionModal(true)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                   >
-                    + Add Question
+                    {t.questionManagement.addQuestion}
                   </button>
                   <button
                     onClick={() => setShowCreateQuestionModal(true)}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+                    className="cursor-pointer px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
                   >
-                    + Create Question
+                    {t.questionManagement.createQuestion}
                   </button>
                 </div>
               </div>
 
               {/* Questions List */}
-              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+              <div className="space-y-3 overflow-y-auto flex-1">
                 {questionsInSet.map((question) => (
                   <div
                     key={question.id}
@@ -289,7 +299,7 @@ export default function QuestionManagementPage() {
                           </span>
                           {question.media && (
                             <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-                              📹 Has Media
+                              {t.questionManagement.hasMedia}
                             </span>
                           )}
                         </div>
@@ -298,12 +308,12 @@ export default function QuestionManagementPage() {
                         </p>
                         {question.answers && question.answers.length > 0 && (
                           <p className="text-sm text-gray-600 mt-1">
-                            {question.answers.length} answers
+                            {question.answers.length} {t.questionManagement.answers}
                           </p>
                         )}
                         {question.orderItems && question.orderItems.length > 0 && (
                           <p className="text-sm text-gray-600 mt-1">
-                            {question.orderItems.length} items to order
+                            {question.orderItems.length} {t.questionManagement.itemsToOrder}
                           </p>
                         )}
                       </div>
@@ -311,16 +321,16 @@ export default function QuestionManagementPage() {
                         {selectedSet.name !== 'all' && (
                           <button
                             onClick={() => handleRemoveQuestion(question.id)}
-                            className="text-orange-500 hover:text-orange-700 transition-colors"
-                            title="Remove from set"
+                            className="cursor-pointer text-orange-500 hover:text-orange-700 transition-colors"
+                            title={t.questionManagement.removeFromSet}
                           >
                             ➖
                           </button>
                         )}
                         <button
                           onClick={() => handleDeleteQuestion(question.id)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                          title="Delete permanently"
+                          className="cursor-pointer text-red-500 hover:text-red-700 transition-colors"
+                          title={t.questionManagement.deletePermanently}
                         >
                           🗑️
                         </button>
@@ -330,14 +340,14 @@ export default function QuestionManagementPage() {
                 ))}
                 {questionsInSet.length === 0 && (
                   <div className="text-center py-12 text-gray-500">
-                    No questions in this set yet.
+                    {t.questionManagement.noQuestionsYet}
                   </div>
                 )}
               </div>
             </>
           ) : (
             <div className="flex items-center justify-center h-64 text-gray-500">
-              Select a question set to view its questions
+              {t.questionManagement.selectQuestionSet}
             </div>
           )}
         </div>
@@ -347,30 +357,30 @@ export default function QuestionManagementPage() {
       {showNewSetModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Create New Question Set</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">{t.questionManagement.createNewSet}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Set Name *
+                  {t.questionManagement.setName}
                 </label>
                 <input
                   type="text"
                   value={newSetName}
                   onChange={(e) => setNewSetName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Christmas Quiz"
+                  placeholder={t.questionManagement.setNamePlaceholder}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  {t.questionManagement.description}
                 </label>
                 <textarea
                   value={newSetDescription}
                   onChange={(e) => setNewSetDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
-                  placeholder="Optional description..."
+                  placeholder={t.questionManagement.descriptionPlaceholder}
                 />
               </div>
               <div className="flex gap-2 justify-end">
@@ -380,15 +390,15 @@ export default function QuestionManagementPage() {
                     setNewSetName('');
                     setNewSetDescription('');
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  Cancel
+                  {t.questionManagement.cancel}
                 </button>
                 <button
                   onClick={handleCreateSet}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  className="cursor-pointer px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  Create
+                  {t.questionManagement.create}
                 </button>
               </div>
             </div>
@@ -412,6 +422,15 @@ export default function QuestionManagementPage() {
         <CreateQuestionModal
           onSave={handleCreateQuestion}
           onClose={() => setShowCreateQuestionModal(false)}
+        />
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
         />
       )}
     </div>

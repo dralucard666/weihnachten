@@ -181,14 +181,14 @@ export default function EstimateForm({ onSave, onCancel, saving }: EstimateFormP
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          className="cursor-pointer px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+          className="cursor-pointer px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Question'}
         </button>

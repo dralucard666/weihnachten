@@ -4,6 +4,7 @@ import MultipleChoiceForm from './forms/MultipleChoiceForm';
 import OrderForm from './forms/OrderForm';
 import TextInputForm from './forms/TextInputForm';
 import CustomAnswersForm from './forms/CustomAnswersForm';
+import { useI18n } from '../../i18n/useI18n';
 
 interface CreateQuestionModalProps {
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
@@ -13,6 +14,7 @@ interface CreateQuestionModalProps {
 type QuestionType = 'multiple-choice' | 'order' | 'text-input' | 'custom-answers';
 
 export default function CreateQuestionModal({ onSave, onClose }: CreateQuestionModalProps) {
+  const { t } = useI18n();
   const [selectedType, setSelectedType] = useState<QuestionType | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -32,27 +34,27 @@ export default function CreateQuestionModal({ onSave, onClose }: CreateQuestionM
     [
       {
         type: 'multiple-choice',
-        label: 'Multiple Choice',
+        label: t.createQuestionModal.multipleChoice,
         icon: '✓',
-        description: 'Question with multiple answer options',
+        description: t.createQuestionModal.multipleChoiceDesc,
       },
       {
         type: 'order',
-        label: 'Order',
+        label: t.createQuestionModal.order,
         icon: '↕',
-        description: 'Items that need to be ordered correctly',
+        description: t.createQuestionModal.orderDesc,
       },
       {
         type: 'text-input',
-        label: 'Text Input',
+        label: t.createQuestionModal.textInput,
         icon: '✎',
-        description: 'Free text answer',
+        description: t.createQuestionModal.textInputDesc,
       },
       {
         type: 'custom-answers',
-        label: 'Custom Answers',
+        label: t.createQuestionModal.customAnswers,
         icon: '✏',
-        description: 'Players submit their own answers',
+        description: t.createQuestionModal.customAnswersDesc,
       },
     ];
 
@@ -63,16 +65,16 @@ export default function CreateQuestionModal({ onSave, onClose }: CreateQuestionM
         <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Create New Question</h3>
+              <h3 className="text-xl font-bold text-gray-800">{t.createQuestionModal.title}</h3>
               <p className="text-sm text-gray-600 mt-1">
                 {selectedType
-                  ? `Creating a ${questionTypes.find((t) => t.type === selectedType)?.label} question`
-                  : 'Choose a question type to get started'}
+                  ? t.createQuestionModal.subtitleCreating.replace('{type}', questionTypes.find((qt) => qt.type === selectedType)?.label || '')
+                  : t.createQuestionModal.subtitleChoose}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="cursor-pointer text-gray-500 hover:text-gray-700 transition-colors"
               disabled={saving}
             >
               ✕
@@ -89,7 +91,7 @@ export default function CreateQuestionModal({ onSave, onClose }: CreateQuestionM
                 <button
                   key={type.type}
                   onClick={() => setSelectedType(type.type)}
-                  className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                  className="cursor-pointer p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
                 >
                   <div className="text-4xl mb-3">{type.icon}</div>
                   <h4 className="font-bold text-gray-800 mb-1">{type.label}</h4>
@@ -102,10 +104,10 @@ export default function CreateQuestionModal({ onSave, onClose }: CreateQuestionM
             <div>
               <button
                 onClick={() => setSelectedType(null)}
-                className="mb-4 text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                className="cursor-pointermb-4 text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 disabled={saving}
               >
-                ← Change question type
+                {t.createQuestionModal.changeType}
               </button>
 
               {selectedType === 'multiple-choice' && (

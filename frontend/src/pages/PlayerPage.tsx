@@ -83,7 +83,7 @@ export default function PlayerPage() {
             {storedSession && (
               <button
                 onClick={() => setShowReconnectModal(true)}
-                className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                className="cursor-pointer absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
                 title={t.common.reconnectToPreviousSession}
               >
                 <svg
@@ -132,7 +132,7 @@ export default function PlayerPage() {
                 <button
                   type="submit"
                   disabled={!manualLobbyId.trim()}
-                  className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+                  className="cursor-pointer w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
                 >
                   🚀 {t.playerJoin.joinGameAction}
                 </button>

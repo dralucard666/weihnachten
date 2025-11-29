@@ -29,7 +29,7 @@ export default function ReconnectModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors"
+            className="cursor-pointer text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors"
           >
             ×
           </button>
@@ -65,14 +65,14 @@ export default function ReconnectModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-bold transition-all duration-200"
+            className="cursor-pointer flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-bold transition-all duration-200"
           >
             {t.reconnect.cancel}
           </button>
           <button
             onClick={onReconnect}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-bold transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+            className="cursor-pointer flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-bold transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
           >
             {loading ? `⏳ ${t.reconnect.reconnecting}` : `🔗 ${t.reconnect.reconnect}`}
           </button>

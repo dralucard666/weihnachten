@@ -38,7 +38,7 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors"
+            className="text-gray-400 cursor-pointer hover:text-gray-600 text-3xl leading-none transition-colors"
           >
             ×
           </button>
@@ -58,13 +58,13 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
             <div className="flex gap-3">
               <button
                 onClick={handleReconnect}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex-1 bg-gradient-to-r cursor-pointer from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🔗 {t.reconnect.reconnect}
               </button>
               <button
                 onClick={onClose}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
+                className="cursor-pointer flex-1 bg-gray-200 cursor-pointer hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
               >
                 {t.reconnect.cancel}
               </button>
@@ -77,7 +77,7 @@ export default function ReconnectMasterModal({ isOpen, onClose }: ReconnectMaste
             </p>
             <button
               onClick={onClose}
-              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
+              className="cursor-pointer w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition-all duration-200"
             >
               {t.reconnect.close}
             </button>

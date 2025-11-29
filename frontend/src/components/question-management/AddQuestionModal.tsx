@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { questionSetsApi } from '../../services/api';
 import type { StoredQuestion } from '../../../../shared/types';
+import { useI18n } from '../../i18n/useI18n';
 
 interface AddQuestionModalProps {
   currentSetId: string;
@@ -16,6 +17,7 @@ export default function AddQuestionModal({
   onAdd,
   onClose,
 }: AddQuestionModalProps) {
+  const { t } = useI18n();
   const [allQuestions, setAllQuestions] = useState<StoredQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,9 +77,9 @@ export default function AddQuestionModal({
       <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Add Existing Question</h3>
+          <h3 className="text-xl font-bold text-gray-800">{t.addQuestionModal.title}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Select a question from all available questions
+            {t.addQuestionModal.subtitle}
           </p>
         </div>
 
@@ -87,7 +89,7 @@ export default function AddQuestionModal({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search questions..."
+            placeholder={t.addQuestionModal.searchPlaceholder}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -95,12 +97,12 @@ export default function AddQuestionModal({
         {/* Questions List */}
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading questions...</div>
+            <div className="text-center py-8 text-gray-500">{t.addQuestionModal.loadingQuestions}</div>
           ) : filteredQuestions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               {availableQuestions.length === 0
-                ? 'All questions are already in this set'
-                : 'No questions match your search'}
+                ? t.addQuestionModal.allInSet
+                : t.addQuestionModal.noMatch}
             </div>
           ) : (
             <div className="space-y-2">
@@ -131,7 +133,7 @@ export default function AddQuestionModal({
                           </span>
                           {question.media && (
                             <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-                              📹 Has Media
+                              {t.addQuestionModal.hasMedia}
                             </span>
                           )}
                         </div>
@@ -156,20 +158,20 @@ export default function AddQuestionModal({
         <div className="p-4 border-t border-gray-200 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="cursor-pointer flex-1 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            Cancel
+            {t.addQuestionModal.cancel}
           </button>
           <button
             onClick={handleAddSelected}
             disabled={selectedQuestionIds.size === 0}
-            className={`flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
+            className={`cursor-pointer flex-1 px-4 py-2 rounded-lg transition-colors font-medium ${
               selectedQuestionIds.size === 0
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
           >
-            Add {selectedQuestionIds.size > 0 && `(${selectedQuestionIds.size})`}
+            {t.addQuestionModal.add} {selectedQuestionIds.size > 0 && `(${selectedQuestionIds.size})`}
           </button>
         </div>
       </div>

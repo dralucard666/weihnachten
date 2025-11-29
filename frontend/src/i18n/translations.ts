@@ -204,6 +204,142 @@ export const translations = {
       correctOrder: '✅ Correct Order:',
       playerResults: '📊 Player Results:',
     },
+
+    // Question Management
+    questionManagement: {
+      title: 'Question Management',
+      backToHome: '← Back to Home',
+      questionSets: 'Question Sets',
+      newSet: '+ New Set',
+      questions: 'questions',
+      deleteSet: 'Delete set',
+      selectQuestionSet: 'Select a question set to view its questions',
+      addQuestion: '+ Add Question',
+      createQuestion: '+ Create Question',
+      hasMedia: '📹 Has Media',
+      answers: 'answers',
+      itemsToOrder: 'items to order',
+      removeFromSet: 'Remove from set',
+      deletePermanently: 'Delete permanently',
+      noQuestionsYet: 'No questions in this set yet.',
+      
+      // New Set Modal
+      createNewSet: 'Create New Question Set',
+      setName: 'Set Name *',
+      setNamePlaceholder: 'e.g., Christmas Quiz',
+      description: 'Description',
+      descriptionPlaceholder: 'Optional description...',
+      cancel: 'Cancel',
+      create: 'Create',
+      
+      // Alerts/Confirms
+      enterSetName: 'Please enter a set name',
+      confirmDeleteSet: 'Are you sure you want to delete the "{name}" question set?',
+      failedToCreateSet: 'Failed to create question set',
+      failedToDeleteSet: 'Failed to delete question set',
+      confirmRemoveQuestion: 'Remove this question from the set?',
+      failedToRemoveQuestion: 'Failed to remove question',
+      confirmDeleteQuestion: 'Delete this question permanently from all sets?',
+      failedToDeleteQuestion: 'Failed to delete question',
+      failedToAddQuestions: 'Failed to add questions',
+      failedToCreateQuestion: 'Failed to create question',
+    },
+
+    // Add Question Modal
+    addQuestionModal: {
+      title: 'Add Existing Question',
+      subtitle: 'Select a question from all available questions',
+      searchPlaceholder: 'Search questions...',
+      loadingQuestions: 'Loading questions...',
+      allInSet: 'All questions are already in this set',
+      noMatch: 'No questions match your search',
+      hasMedia: '📹 Has Media',
+      cancel: 'Cancel',
+      add: 'Add',
+    },
+
+    // Create Question Modal
+    createQuestionModal: {
+      title: 'Create New Question',
+      subtitleChoose: 'Choose a question type to get started',
+      subtitleCreating: 'Creating a {type} question',
+      changeType: '← Change question type',
+      
+      // Question Types
+      multipleChoice: 'Multiple Choice',
+      multipleChoiceDesc: 'Question with multiple answer options',
+      order: 'Order',
+      orderDesc: 'Items that need to be ordered correctly',
+      textInput: 'Text Input',
+      textInputDesc: 'Free text answer',
+      customAnswers: 'Custom Answers',
+      customAnswersDesc: 'Players submit their own answers',
+    },
+
+    // Question Forms Common
+    questionForms: {
+      questionText: 'Question Text',
+      germanText: 'German Text *',
+      germanTextPlaceholder: 'Frage auf Deutsch...',
+      englishText: 'English Text *',
+      englishTextPlaceholder: 'Question in English...',
+      cancel: 'Cancel',
+      saving: 'Saving...',
+      saveQuestion: 'Save Question',
+      
+      // Media Section
+      mediaOptional: 'Media (Optional)',
+      beforeQuestionMedia: 'Before Question Media (shown first)',
+      beforeAnswerMedia: 'Before Answer Media (shown after answering)',
+      mediaType: 'Media Type *',
+      video: 'Video',
+      image: 'Image',
+      videoFile: 'Video File',
+      imageFile: 'Image File',
+      failedToUploadMedia: 'Failed to upload {type} media: {error}',
+      beforeQuestion: 'beforeQuestion',
+      beforeAnswer: 'beforeAnswer',
+      
+      // Multiple Choice
+      answers: 'Answers',
+      addAnswer: '+ Add Answer',
+      answer: 'Answer {number}',
+      correct: '(Correct)',
+      answerPlaceholderDe: 'Antwort auf Deutsch...',
+      answerPlaceholderEn: 'Answer in English...',
+      soundEffect: 'Sound Effect (optional MP3)',
+      
+      // Order
+      itemsInOrder: 'Items (in correct order)',
+      addItem: '+ Add Item',
+      position: 'Position {number}',
+      textPlaceholderDe: 'Text auf Deutsch...',
+      textPlaceholderEn: 'Text in English...',
+      
+      // Text Input
+      acceptedAnswers: 'Accepted Answers',
+      addAlternative: '+ Add Alternative',
+      caseInsensitiveNote: 'List all acceptable answers (case-insensitive matching)',
+      correctAnswerPlaceholder: 'Correct answer {number}...',
+      
+      // Custom Answers
+      customAnswersNote: 'Players will submit their own creative answers, then vote for their favorite.',
+      correctAnswer: 'Correct Answer',
+      correctAnswerNote: 'The answer that will be revealed after players vote.',
+      germanAnswer: 'German Answer *',
+      germanAnswerPlaceholder: 'Richtige Antwort auf Deutsch...',
+      englishAnswer: 'English Answer *',
+      englishAnswerPlaceholder: 'Correct answer in English...',
+    },
+
+    // Media Upload Field
+    mediaUpload: {
+      clickToUpload: 'Click to upload {type}',
+      dropHere: 'Drop file here',
+      videoTypes: 'MP4, WebM, etc.',
+      imageTypes: 'JPG, PNG, etc.',
+      mb: 'MB',
+    },
   },
 
   de: {
@@ -410,6 +546,142 @@ export const translations = {
       putItemsInOrder: 'Bringe die Elemente in die richtige Reihenfolge',
       correctOrder: '✅ Richtige Reihenfolge:',
       playerResults: '📊 Spieler-Ergebnisse:',
+    },
+
+    // Question Management
+    questionManagement: {
+      title: 'Fragenverwaltung',
+      backToHome: '← Zurück zur Startseite',
+      questionSets: 'Fragensets',
+      newSet: '+ Neues Set',
+      questions: 'Fragen',
+      deleteSet: 'Set löschen',
+      selectQuestionSet: 'Wähle ein Fragenset, um seine Fragen zu sehen',
+      addQuestion: '+ Frage hinzufügen',
+      createQuestion: '+ Frage erstellen',
+      hasMedia: '📹 Hat Medien',
+      answers: 'Antworten',
+      itemsToOrder: 'Elemente zum Sortieren',
+      removeFromSet: 'Aus Set entfernen',
+      deletePermanently: 'Dauerhaft löschen',
+      noQuestionsYet: 'Noch keine Fragen in diesem Set.',
+      
+      // New Set Modal
+      createNewSet: 'Neues Fragenset erstellen',
+      setName: 'Set-Name *',
+      setNamePlaceholder: 'z.B. Weihnachts-Quiz',
+      description: 'Beschreibung',
+      descriptionPlaceholder: 'Optionale Beschreibung...',
+      cancel: 'Abbrechen',
+      create: 'Erstellen',
+      
+      // Alerts/Confirms
+      enterSetName: 'Bitte gib einen Set-Namen ein',
+      confirmDeleteSet: 'Bist du sicher, dass du das Fragenset "{name}" löschen möchtest?',
+      failedToCreateSet: 'Fragenset konnte nicht erstellt werden',
+      failedToDeleteSet: 'Fragenset konnte nicht gelöscht werden',
+      confirmRemoveQuestion: 'Diese Frage aus dem Set entfernen?',
+      failedToRemoveQuestion: 'Frage konnte nicht entfernt werden',
+      confirmDeleteQuestion: 'Diese Frage dauerhaft aus allen Sets löschen?',
+      failedToDeleteQuestion: 'Frage konnte nicht gelöscht werden',
+      failedToAddQuestions: 'Fragen konnten nicht hinzugefügt werden',
+      failedToCreateQuestion: 'Frage konnte nicht erstellt werden',
+    },
+
+    // Add Question Modal
+    addQuestionModal: {
+      title: 'Vorhandene Frage hinzufügen',
+      subtitle: 'Wähle eine Frage aus allen verfügbaren Fragen',
+      searchPlaceholder: 'Fragen durchsuchen...',
+      loadingQuestions: 'Fragen werden geladen...',
+      allInSet: 'Alle Fragen sind bereits in diesem Set',
+      noMatch: 'Keine Fragen entsprechen deiner Suche',
+      hasMedia: '📹 Hat Medien',
+      cancel: 'Abbrechen',
+      add: 'Hinzufügen',
+    },
+
+    // Create Question Modal
+    createQuestionModal: {
+      title: 'Neue Frage erstellen',
+      subtitleChoose: 'Wähle einen Fragentyp, um zu beginnen',
+      subtitleCreating: 'Erstelle eine {type}-Frage',
+      changeType: '← Fragentyp ändern',
+      
+      // Question Types
+      multipleChoice: 'Multiple Choice',
+      multipleChoiceDesc: 'Frage mit mehreren Antwortmöglichkeiten',
+      order: 'Reihenfolge',
+      orderDesc: 'Elemente müssen in die richtige Reihenfolge gebracht werden',
+      textInput: 'Texteingabe',
+      textInputDesc: 'Freie Textantwort',
+      customAnswers: 'Eigene Antworten',
+      customAnswersDesc: 'Spieler geben eigene Antworten ein',
+    },
+
+    // Question Forms Common
+    questionForms: {
+      questionText: 'Fragentext',
+      germanText: 'Deutscher Text *',
+      germanTextPlaceholder: 'Frage auf Deutsch...',
+      englishText: 'Englischer Text *',
+      englishTextPlaceholder: 'Question in English...',
+      cancel: 'Abbrechen',
+      saving: 'Speichern...',
+      saveQuestion: 'Frage speichern',
+      
+      // Media Section
+      mediaOptional: 'Medien (Optional)',
+      beforeQuestionMedia: 'Medien vor der Frage (zuerst gezeigt)',
+      beforeAnswerMedia: 'Medien nach dem Antworten (nach dem Antworten gezeigt)',
+      mediaType: 'Medientyp *',
+      video: 'Video',
+      image: 'Bild',
+      videoFile: 'Videodatei',
+      imageFile: 'Bilddatei',
+      failedToUploadMedia: 'Fehler beim Hochladen von {type}-Medien: {error}',
+      beforeQuestion: 'Medien vor Frage',
+      beforeAnswer: 'Medien nach Antwort',
+      
+      // Multiple Choice
+      answers: 'Antworten',
+      addAnswer: '+ Antwort hinzufügen',
+      answer: 'Antwort {number}',
+      correct: '(Richtig)',
+      answerPlaceholderDe: 'Antwort auf Deutsch...',
+      answerPlaceholderEn: 'Answer in English...',
+      soundEffect: 'Soundeffekt (optional MP3)',
+      
+      // Order
+      itemsInOrder: 'Elemente (in richtiger Reihenfolge)',
+      addItem: '+ Element hinzufügen',
+      position: 'Position {number}',
+      textPlaceholderDe: 'Text auf Deutsch...',
+      textPlaceholderEn: 'Text in English...',
+      
+      // Text Input
+      acceptedAnswers: 'Akzeptierte Antworten',
+      addAlternative: '+ Alternative hinzufügen',
+      caseInsensitiveNote: 'Liste alle akzeptierten Antworten (Groß-/Kleinschreibung wird ignoriert)',
+      correctAnswerPlaceholder: 'Richtige Antwort {number}...',
+      
+      // Custom Answers
+      customAnswersNote: 'Spieler geben eigene kreative Antworten ein und stimmen dann für ihre Lieblingsantwort.',
+      correctAnswer: 'Richtige Antwort',
+      correctAnswerNote: 'Die Antwort, die nach der Abstimmung enthüllt wird.',
+      germanAnswer: 'Deutsche Antwort *',
+      germanAnswerPlaceholder: 'Richtige Antwort auf Deutsch...',
+      englishAnswer: 'Englische Antwort *',
+      englishAnswerPlaceholder: 'Correct answer in English...',
+    },
+
+    // Media Upload Field
+    mediaUpload: {
+      clickToUpload: 'Klicken zum Hochladen von {type}',
+      dropHere: 'Datei hier ablegen',
+      videoTypes: 'MP4, WebM, etc.',
+      imageTypes: 'JPG, PNG, etc.',
+      mb: 'MB',
     },
   },
 } as const;

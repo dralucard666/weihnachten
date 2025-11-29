@@ -50,7 +50,7 @@ export default function VotingView({
                 key={answer.id}
                 onClick={() => setLocalVoteAnswer(answer.id)}
                 disabled={hasSubmitted}
-                className={`p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
+                className={`cursor-pointer p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
                   hasSubmitted && selectedAnswer === answer.id
                     ? "bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]"
                     : localVoteAnswer === answer.id

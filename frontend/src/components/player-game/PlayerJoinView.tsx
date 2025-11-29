@@ -71,7 +71,7 @@ export default function PlayerJoinView({
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className={`w-full py-4 rounded-xl text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 ${
+              className={`w-full cursor-pointer py-4 rounded-xl text-white font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 ${
                 loading || !name.trim()
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
