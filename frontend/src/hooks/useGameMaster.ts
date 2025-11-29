@@ -9,10 +9,7 @@ import type {
   QuestionData,
 } from "../../../shared/types";
 
-export function useGameMaster(
-  lobbyId: string | undefined, 
-  questionIds: string[]
-) {
+export function useGameMaster(lobbyId: string | undefined) {
   const navigate = useNavigate();
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,18 +33,18 @@ export function useGameMaster(
     const socket = socketService.connect();
 
     if (!lobbyId) {
-      // Create lobby with all questions initially
-      socket.emit("createLobby", { questionIds }, (response) => {
+      // Create empty lobby without questions
+      socket.emit("createLobby", {}, (response) => {
         if (response.lobby) {
           setLobby(response.lobby);
           setLoading(false);
           navigate(`/game-master/${response.lobbyId}`, { replace: true });
         } else {
-          setError("Failed to create lobby");
+          setError(response.error || "Failed to create lobby");
           setLoading(false);
         }
       });
-    } else {
+    } else if (lobbyId) {
       // Try to reconnect to existing lobby
       socket.emit("reconnectMaster", { lobbyId }, (response) => {
         if (response.success && response.lobby) {
@@ -197,47 +194,26 @@ export function useGameMaster(
       socket.off("textInputResultReady");
       socket.off("orderResultReady");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyId, navigate]);
 
-  const handleStartGame = (questionCount?: number) => {
+  const handleStartGame = (questionSetId: string, questionCount?: number) => {
     const socket = socketService.getSocket();
-    if (!socket) return;
+    if (!socket || !lobby) return;
 
-    // If lobby doesn't exist yet, create it first with questionCount
-    if (!lobby) {
-      setLoading(true);
-      socket.emit("createLobby", { questionIds, questionCount }, (response) => {
-        if (response.lobby) {
-          setLobby(response.lobby);
-          setLoading(false);
-          navigate(`/game-master/${response.lobbyId}`, { replace: true });
-          
-          // Now start the game
-          socket.emit("startGame", { lobbyId: response.lobbyId }, (startResponse) => {
-            if (startResponse.success && startResponse.currentQuestion) {
-              setCurrentQuestion(startResponse.currentQuestion);
-            }
-          });
-        } else {
-          setError("Failed to create lobby");
-          setLoading(false);
-        }
-      });
-      return;
-    }
+    // Save to localStorage and start the game with question configuration
+    localStorage.setItem("gameMasterLobbyId", lobby.id);
 
-    // Lobby already exists, just start the game
-    if (socket) {
-      localStorage.setItem("gameMasterLobbyId", lobby.id);
-
-      socket.emit("startGame", { lobbyId: lobby.id }, (response) => {
-        if (response.success && response.currentQuestion) {
-          setCurrentQuestion(response.currentQuestion);
-        }
-      });
-    }
+    socket.emit("startGame", { 
+      lobbyId: lobby.id,
+      questionSetId,
+      questionCount 
+    }, (response) => {
+      if (response.success && response.currentQuestion) {
+        setCurrentQuestion(response.currentQuestion);
+      }
+    });
   };
+
 
   const handleShowAnswer = () => {
     if (!lobby || !currentQuestion) return;

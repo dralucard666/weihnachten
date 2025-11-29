@@ -24,22 +24,26 @@ import.meta.glob<{ default: string }>('../assets/**/*.{mp4,webm,mp3,jpg,jpeg,png
 
 /**
  * Load a media file from the backend server
- * @param path - Path relative to media folder (e.g., 'twilight/twilight.mp4')
+ * @param mediaId - UUID of the media file or full URL
  * @returns The media URL
  */
-export function loadMedia(path: string): string {
+export function loadMedia(mediaId: string): string {
+  // If it's already a full URL, return it as-is
+  if (mediaId.startsWith('http://') || mediaId.startsWith('https://')) {
+    return mediaId;
+  }
+  
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
-  return `${backendUrl}/media/${path}`;
+  return `${backendUrl}/media/${mediaId}`;
 }
 
 /**
  * Load multiple media files
- * @param paths - Array of paths relative to media folder
+ * @param mediaIds - Array of media UUIDs or full URLs
  * @returns Array of media URLs
  */
-export function loadMediaBatch(paths: string[]): string[] {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://192.168.178.22:3001';
-  return paths.map(path => `${backendUrl}/media/${path}`);
+export function loadMediaBatch(mediaIds: string[]): string[] {
+  return mediaIds.map(mediaId => loadMedia(mediaId));
 }
 
 /**

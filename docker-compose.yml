@@ -1,4 +1,24 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=quizuser
+      - POSTGRES_PASSWORD=quizpass
+      - POSTGRES_DB=quizdb
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - quiz-game
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quizuser -d quizdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -11,9 +31,15 @@ services:
       - NODE_ENV=production
       - FRONTEND_URL=http://192.168.178.22:3000
       - PORT=3000
+      - DATABASE_URL=postgresql://quizuser:quizpass@postgres:5432/quizdb
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - quiz-game
+volumes:
+  postgres-data:
 networks:
   quiz-game:
     driver: bridge

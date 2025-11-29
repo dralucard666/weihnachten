@@ -1,4 +1,3 @@
-import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useGameMaster } from "../hooks/useGameMaster";
 import GameLobbyView from "../components/GameLobbyView";
@@ -32,45 +31,8 @@ export interface BilingualQuestion {
 export default function GameMasterPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const { t, language } = useI18n();
-  const [questions, setQuestions] = useState<BilingualQuestion[]>([]);
-  const [questionsLoading, setQuestionsLoading] = useState(true);
-  const [questionsError, setQuestionsError] = useState<string | null>(null);
 
-  // Fetch questions from backend once
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      setQuestionsLoading(true);
-      setQuestionsError(null);
-      try {
-        const backendUrl =
-          import.meta.env.VITE_BACKEND_URL || "http://192.168.178.22:3001";
-        const url = lobbyId 
-          ? `${backendUrl}/api/questions?lobbyId=${lobbyId}`
-          : `${backendUrl}/api/questions`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch questions");
-        }
-
-        const questionsData = await response.json();
-        setQuestions(questionsData);
-      } catch (error) {
-        console.error("Error fetching questions:", error);
-        setQuestionsError("Failed to load questions from server");
-      } finally {
-        setQuestionsLoading(false);
-      }
-    };
-
-    fetchQuestions();
-  }, [lobbyId]);
-
-  // Memoize questionIds to prevent infinite re-renders
-  const questionIds = useMemo(
-    () => questions.map((q, index) => q.id || `q-${index}`),
-    [questions]
-  );
+  // No need to fetch questions - they're loaded when game starts
 
   const {
     lobby,
@@ -93,7 +55,7 @@ export default function GameMasterPage() {
     handleShowVotingResults,
     handleNextQuestion,
     handleRestartQuestion,
-  } = useGameMaster(lobbyId, questionIds);
+  } = useGameMaster(lobbyId);
 
   // Adapt QuestionData to Question format for components (extract current language)
   const adaptedQuestion = currentQuestion
@@ -123,7 +85,7 @@ export default function GameMasterPage() {
       }
     : undefined;
 
-  if (loading || questionsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-xl text-gray-600">
@@ -133,14 +95,14 @@ export default function GameMasterPage() {
     );
   }
 
-  if (error || questionsError) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">
             {t.common.error}
           </h2>
-          <p className="text-gray-700">{error || questionsError}</p>
+          <p className="text-gray-700">{error}</p>
         </div>
       </div>
     );
@@ -152,7 +114,7 @@ export default function GameMasterPage() {
 
   // Render based on game state
   if (lobby.gameState === "lobby") {
-    return <GameLobbyView lobby={lobby} onStartGame={handleStartGame} totalQuestions={questions.length} />;
+    return <GameLobbyView lobby={lobby} onStartGame={handleStartGame} />;
   }
 
   if (lobby.gameState === "playing" && adaptedQuestion) {

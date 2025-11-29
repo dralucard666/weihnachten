@@ -41,12 +41,15 @@ export interface Lobby {
   currentPhase?: QuestionPhase; // Current phase of the question
   totalQuestions?: number; // Total number of questions in this game
   questionIds: string[]; // IDs of questions for this game session (for persistence)
+  questionSetId?: string; // ID of question set to load questions from (when game starts)
+  questionCount?: number; // Number of questions to use from the set
   createdAt: string;
 }
 
 // API Request/Response Types
 export interface CreateLobbyRequest {
-  questionIds: string[]; // IDs of questions for this game session
+  questionSetId?: string; // ID of question set to use (if not provided, uses questionIds)
+  questionIds?: string[]; // IDs of questions for this game session (deprecated, use questionSetId)
   questionCount?: number; // Optional: limit number of questions to use
 }
 
@@ -101,7 +104,8 @@ export interface SetNameResponse {
 
 export interface StartGameRequest {
   lobbyId: string;
-  questionCount?: number; // Optional: limit questions when starting game
+  questionSetId?: string; // Question set to load questions from
+  questionCount?: number; // Optional: limit number of questions
 }
 
 export interface StartGameResponse {

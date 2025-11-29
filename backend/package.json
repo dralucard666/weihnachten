@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/backend/src/server.js"
+    "start": "node dist/backend/src/server.js",
+    "migrate": "ts-node-dev --transpile-only src/database/migrate.ts",
+    "migrate:media": "ts-node-dev --transpile-only src/database/migrate-media.ts",
+    "migrate:sets": "ts-node-dev --transpile-only src/database/migrate-question-sets.ts"
   },
   "keywords": [
     "quiz",
@@ -16,11 +19,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/multer": "^2.0.0",
+    "@types/pg": "^8.15.6",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
     "socket.io": "^4.6.1",
     "uuid": "^9.0.0"
   },

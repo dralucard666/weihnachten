@@ -1,36 +1,44 @@
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Lobby } from "../../../shared/types";
 import { useI18n } from "../i18n/useI18n";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { questionSetsApi, type QuestionSet } from "../services/api";
 
 interface GameLobbyViewProps {
   lobby: Lobby;
-  onStartGame: (questionCount?: number) => void;
-  totalQuestions: number;
+  onStartGame: (questionSetId: string, questionCount?: number) => void;
 }
 
 export default function GameLobbyView({
   lobby,
   onStartGame,
-  totalQuestions,
 }: GameLobbyViewProps) {
   const { t } = useI18n();
-  const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | "max">(10);
+  const [questionSets, setQuestionSets] = useState<QuestionSet[]>([]);
+  const [selectedSetId, setSelectedSetId] = useState<string>('');
+  const [questionCount, setQuestionCount] = useState<number | ''>('');
+  const [loading, setLoading] = useState(true);
+  
   const playerJoinUrl = `${
     import.meta.env.VITE_FRONTEND_URL || window.location.origin
   }/player/${lobby.id}`;
   const playersWithNames = lobby.players.filter((p) => p.name);
+  const selectedSet = questionSets.find(s => s.id === selectedSetId);
 
-  const questionOptions = [
-    { value: 5, label: "5" },
-    { value: 10, label: "10" },
-    { value: 15, label: "15" },
-    { value: 20, label: "20" },
-    { value: "max" as const, label: t.questionSelection.maxQuestions },
-  ].filter(option => 
-    option.value === "max" || option.value <= totalQuestions
-  );
+  useEffect(() => {
+    questionSetsApi.getAll()
+      .then(sets => {
+        setQuestionSets(sets);
+        // Pre-select "all" set
+        const allSet = sets.find(s => s.name.toLowerCase() === 'all');
+        if (allSet) {
+          setSelectedSetId(allSet.id);
+        }
+      })
+      .catch(err => console.error('Failed to load question sets:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-purple-100 p-6">
@@ -134,33 +142,53 @@ export default function GameLobbyView({
           </div>
         </div>
 
-        {/* Question Count Selection and Start Game Button */}
-        <div className="flex justify-center items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-semibold text-gray-700">
-              {t.questionSelection.questions}:
-            </label>
-            <select
-              value={selectedQuestionCount}
-              onChange={(e) => setSelectedQuestionCount(
-                e.target.value === "max" ? "max" : parseInt(e.target.value)
+        {/* Question Set and Count Selection */}
+        <div className="bg-white rounded-[20px] shadow-xl p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Game Configuration</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Question Set:
+              </label>
+              <select
+                value={selectedSetId}
+                onChange={(e) => setSelectedSetId(e.target.value)}
+                disabled={loading}
+                className="w-full px-4 py-2 text-base rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-white text-gray-800"
+              >
+                {questionSets.map((set) => (
+                  <option key={set.id} value={set.id}>
+                    {set.name} ({set.questionCount} questions)
+                  </option>
+                ))}
+              </select>
+              {selectedSet?.description && (
+                <p className="mt-2 text-sm text-gray-600">{selectedSet.description}</p>
               )}
-              className="px-3 py-2 text-base rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-white text-gray-800"
-            >
-              {questionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.value === "max" 
-                    ? `${option.label} (${totalQuestions})`
-                    : option.value
-                  }
-                </option>
-              ))}
-            </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Number of Questions (optional):
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={selectedSet?.questionCount || 100}
+                value={questionCount}
+                onChange={(e) => setQuestionCount(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder={`All (${selectedSet?.questionCount || 0})`}
+                className="w-full px-4 py-2 text-base rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-white text-gray-800"
+              />
+              <p className="mt-1 text-xs text-gray-500">Leave empty to use all questions</p>
+            </div>
           </div>
+        </div>
 
+        {/* Start Game Button */}
+        <div className="flex justify-center">
           <button
-            onClick={() => onStartGame(selectedQuestionCount === "max" ? undefined : selectedQuestionCount)}
-            disabled={playersWithNames.length === 0}
+            onClick={() => onStartGame(selectedSetId, typeof questionCount === 'number' ? questionCount : undefined)}
+            disabled={playersWithNames.length === 0 || !selectedSetId || loading}
             className={`px-12 py-5 rounded-lg text-white font-bold text-2xl shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-3 ${
               playersWithNames.length === 0
                 ? "bg-gray-400 cursor-not-allowed"

@@ -81,37 +81,17 @@ export class SocketHandler {
     console.log(`Client connected: ${socket.id}`);
 
     // Create Lobby
-    socket.on('createLobby', (data: CreateLobbyRequest, callback) => {
-      // Use provided questionIds or use all questions
-      let questionIds = data.questionIds && data.questionIds.length > 0 
-        ? data.questionIds 
-        : this.allQuestions.map(q => q.id);
+    socket.on('createLobby', async (data: CreateLobbyRequest, callback) => {
+      // For now, just create an empty lobby with metadata
+      // Questions will be loaded when the game starts
+      const lobby = this.lobbyManager.createLobby([]);
       
-      // If questionCount is specified, shuffle and limit the questions
-      if (data.questionCount && data.questionCount > 0 && data.questionCount < questionIds.length) {
-        // Shuffle the question IDs
-        const shuffled = [...questionIds].sort(() => Math.random() - 0.5);
-        // Take only the requested number
-        questionIds = shuffled.slice(0, data.questionCount);
+      // Store the question set configuration in the lobby for later use
+      if (data.questionSetId) {
+        lobby.questionSetId = data.questionSetId;
+        lobby.questionCount = data.questionCount;
       }
       
-      // Get the questions by IDs
-      const questions = questionIds
-        .map(id => this.allQuestions.find(q => q.id === id))
-        .filter((q): q is StoredQuestion => q !== undefined);
-      
-      if (questions.length === 0) {
-        console.error('No valid questions found for lobby creation');
-        const response: CreateLobbyResponse = {
-          lobbyId: '',
-          lobby: undefined,
-          error: 'No valid questions found'
-        };
-        callback(response);
-        return;
-      }
-      
-      const lobby = this.lobbyManager.createLobby(questions);
       socket.join(lobby.id);
       
       const response: CreateLobbyResponse = {
@@ -120,7 +100,7 @@ export class SocketHandler {
       };
       
       callback(response);
-      console.log(`Lobby created: ${lobby.id} with ${questions.length} questions`);
+      console.log(`Lobby created: ${lobby.id} with questionSetId: ${data.questionSetId}, questionCount: ${data.questionCount}`);
     });
 
     // Join Lobby
@@ -258,9 +238,43 @@ export class SocketHandler {
     });
 
     // Start Game
-    socket.on('startGame', (data: StartGameRequest, callback) => {
-      // If questionCount is provided, update the lobby questions
-      if (data.questionCount) {
+    socket.on('startGame', async (data: StartGameRequest, callback) => {
+      const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      
+      if (!lobby) {
+        callback({ success: false });
+        return;
+      }
+      
+      // Store question configuration in lobby if provided
+      if (data.questionSetId) {
+        lobby.questionSetId = data.questionSetId;
+        lobby.questionCount = data.questionCount;
+      }
+      
+      // If lobby has questionSetId, load questions from database now
+      if (lobby.questionSetId) {
+        try {
+          const { QuestionSetService } = await import('../database/QuestionSetService');
+          const questionSetService = new QuestionSetService();
+          let questions = await questionSetService.getQuestionsInSet(lobby.questionSetId);
+          
+          // If questionCount is specified, shuffle and limit
+          if (lobby.questionCount && lobby.questionCount > 0 && lobby.questionCount < questions.length) {
+            const shuffled = [...questions].sort(() => Math.random() - 0.5);
+            questions = shuffled.slice(0, lobby.questionCount);
+          }
+          
+          // Update the lobby with the loaded questions
+          this.lobbyManager.updateLobbyQuestions(data.lobbyId, questions);
+          console.log(`Loaded ${questions.length} questions for lobby ${data.lobbyId} from question set ${lobby.questionSetId}`);
+        } catch (error) {
+          console.error('Error loading questions for game start:', error);
+          callback({ success: false });
+          return;
+        }
+      } else if (data.questionCount) {
+        // Legacy: If questionCount is provided in the request, update the lobby questions
         const currentQuestions = this.lobbyManager.getLobbyQuestions(data.lobbyId);
         if (currentQuestions && data.questionCount < currentQuestions.length) {
           // Shuffle and limit questions
@@ -273,19 +287,19 @@ export class SocketHandler {
       const success = this.lobbyManager.startGame(data.lobbyId);
       
       if (success) {
-        const lobby = this.lobbyManager.getLobby(data.lobbyId);
+        const updatedLobby = this.lobbyManager.getLobby(data.lobbyId);
         const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
         
-        if (lobby && currentQuestion) {
+        if (updatedLobby && currentQuestion) {
           // Get question data for language (default to 'en', can be parameterized later)
           const questionData = this.lobbyManager.getQuestionDataForLanguage(
             currentQuestion,
-            lobby.currentQuestionIndex,
-            lobby.totalQuestions!,
+            updatedLobby.currentQuestionIndex,
+            updatedLobby.totalQuestions!,
             'en' // TODO: Support multiple languages
           );
           
-          this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+          this.io.to(data.lobbyId).emit('lobbyUpdated', updatedLobby);
           this.io.to(data.lobbyId).emit('questionStarted', questionData);
           
           callback({ success: true, currentQuestion: questionData });
