@@ -35,3 +35,4 @@ frontend/src/assets
 *.key
 
 docker-compose.yml.old
+start-docker.sh
