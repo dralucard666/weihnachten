@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    user: "568:568"
     environment:
       - POSTGRES_USER=quizuser
       - POSTGRES_PASSWORD=quizpass
@@ -25,6 +26,7 @@ services:
       dockerfile: ./backend/Dockerfile
       args:
         - VITE_BACKEND_URL=http://192.168.178.22:3000
+    user: "568:568"
     ports:
       - 3000:3000
     environment:
