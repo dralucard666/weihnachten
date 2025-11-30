@@ -33,3 +33,5 @@ backend/src/data
 frontend/src/assets
 *.cert
 *.key
+
+docker-compose.yml.old
