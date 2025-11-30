@@ -1,18 +1,52 @@
+import { Pool } from 'pg';
 import { questionService } from './QuestionService';
 import { questionSetService } from './QuestionSetService';
 import { testConnection } from './db';
 
 /**
  * Migration script to create default question sets
+ * Usage: ts-node migrate-question-sets.ts [connectionString]
  */
 async function migrateQuestionSets() {
   console.log('📦 Starting question set migration...\n');
 
-  // Test database connection
-  const connected = await testConnection();
-  if (!connected) {
-    console.error('❌ Cannot connect to database. Exiting.');
-    process.exit(1);
+  // Check for custom connection string from command line
+  const customConnectionString = process.argv[2];
+  if (customConnectionString) {
+    console.log('🔗 Using custom database connection string\n');
+    console.log('Connection:', customConnectionString.replace(/:[^:@]+@/, ':****@'), '\n');
+    
+    // Parse URL to handle cases with no password
+    const url = new URL(customConnectionString);
+    const customPool = new Pool({
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.slice(1),
+      user: url.username,
+      password: url.password || '',
+    });
+    
+    // Override the default pool in db module
+    const dbModule = await import('./db');
+    (dbModule as any).default = customPool;
+    
+    // Test custom connection
+    try {
+      const client = await customPool.connect();
+      const result = await client.query('SELECT NOW()');
+      console.log('✅ Custom database connection test successful:', result.rows[0]);
+      client.release();
+    } catch (err) {
+      console.error('❌ Custom database connection test failed:', err);
+      process.exit(1);
+    }
+  } else {
+    // Test default database connection
+    const connected = await testConnection();
+    if (!connected) {
+      console.error('❌ Cannot connect to database. Exiting.');
+      process.exit(1);
+    }
   }
 
   // Check if any sets already exist

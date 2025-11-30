@@ -3,6 +3,7 @@ import type { StoredQuestion, QuestionMedia } from '../../../../../shared/types'
 import MediaUploadField from '../MediaUploadField';
 import { mediaApi } from '../../../services/api';
 import { useI18n } from '../../../i18n/useI18n';
+import { generateUUID } from '../../../utils/uuid';
 
 interface OrderFormProps {
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
@@ -95,7 +96,7 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
 
       // Create items with IDs and upload sounds
       const createdItems = await Promise.all(items.map(async (item) => {
-        const itemId = crypto.randomUUID();
+        const itemId = generateUUID();
         let soundUrl: string[] | undefined;
         if (item.soundFile) {
           try {

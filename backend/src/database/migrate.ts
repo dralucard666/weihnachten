@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Pool } from 'pg';
 import { questionService } from './QuestionService';
 import { mediaService } from './MediaService';
 import { testConnection } from './db';
@@ -19,15 +20,50 @@ interface JsonQuestion {
 
 /**
  * Migration script to import questions from JSON files to PostgreSQL
+ * Usage: ts-node migrate.ts [connectionString]
+ * Example: ts-node migrate.ts "postgresql://user:pass@host:5432/dbname"
  */
 async function migrateQuestions() {
   console.log('🚀 Starting question migration...\n');
 
-  // Test database connection
-  const connected = await testConnection();
-  if (!connected) {
-    console.error('❌ Cannot connect to database. Exiting.');
-    process.exit(1);
+  // Check for custom connection string from command line
+  const customConnectionString = process.argv[2];
+  if (customConnectionString) {
+    console.log('🔗 Using custom database connection string\n');
+    console.log('Connection:', customConnectionString.replace(/:[^:@]+@/, ':****@'), '\n');
+    
+    // Create a custom pool for this migration
+    // Parse URL to handle cases with no password
+    const url = new URL(customConnectionString);
+    const customPool = new Pool({
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.slice(1), // Remove leading /
+      user: url.username,
+      password: url.password || '', // Empty password if not provided
+    });
+    
+    // Override the default pool in db module
+    const dbModule = await import('./db');
+    (dbModule as any).default = customPool;
+    
+    // Test custom connection
+    try {
+      const client = await customPool.connect();
+      const result = await client.query('SELECT NOW()');
+      console.log('✅ Custom database connection test successful:', result.rows[0]);
+      client.release();
+    } catch (err) {
+      console.error('❌ Custom database connection test failed:', err);
+      process.exit(1);
+    }
+  } else {
+    // Test default database connection
+    const connected = await testConnection();
+    if (!connected) {
+      console.error('❌ Cannot connect to database. Exiting.');
+      process.exit(1);
+    }
   }
 
   // Check current question count

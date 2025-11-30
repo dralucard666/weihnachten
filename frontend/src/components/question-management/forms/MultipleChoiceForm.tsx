@@ -3,6 +3,7 @@ import type { StoredQuestion, QuestionMedia } from '../../../../../shared/types'
 import MediaUploadField from '../MediaUploadField';
 import { mediaApi } from '../../../services/api';
 import { useI18n } from '../../../i18n/useI18n';
+import { generateUUID } from '../../../utils/uuid';
 
 interface MultipleChoiceFormProps {
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
@@ -103,7 +104,7 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
             }
           }
           return {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             text: { de: a.textDe, en: a.textEn },
             sound: soundUrl,
           };
