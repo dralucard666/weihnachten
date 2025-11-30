@@ -4,4 +4,4 @@
 cp docker-compose.yml.old docker-compose.yml
 
 # Rebuild and restart containers
-docker compose down && docker-compose up -d --build
+docker compose down && docker compose up -d --build
