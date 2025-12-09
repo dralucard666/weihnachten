@@ -138,10 +138,14 @@ export function useGameMaster(lobbyId: string | undefined) {
 
     socket.on(
       "customAnswerResultReady",
-      (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[] }) => {
+      (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[]; answersWithAttribution?: CustomAnswer[] }) => {
         console.log("Custom answer result ready:", data);
         setCorrectAnswerId(data.correctAnswerId);
         setPlayerAnswers(data.playerVotes);
+        // Update customAnswers with attribution for results display
+        if (data.answersWithAttribution) {
+          setCustomAnswers(data.answersWithAttribution);
+        }
       }
     );
 

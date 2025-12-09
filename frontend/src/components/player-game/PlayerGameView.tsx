@@ -92,6 +92,7 @@ export default function PlayerGameView({
             selectedAnswer={selectedAnswer}
             hasSubmitted={hasSubmitted}
             onVoteForAnswer={onVoteForAnswer}
+            customAnswerText={customAnswerText}
           />
         </div>
       </div>

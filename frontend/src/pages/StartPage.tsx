@@ -32,7 +32,7 @@ export default function StartPage() {
           <Link
             to="/questions"
             title="Manage Questions"
-            className="cursor-pointer flex items-center justify-center w-10 h-10 rounded-full 
+            className="hidden cursor-pointer flex items-center justify-center w-10 h-10 rounded-full 
                bg-white/60 backdrop-blur-md shadow-md hover:bg-white/80 hover:shadow-lg 
                text-gray-600 hover:text-gray-800 transition-all duration-300"
           >

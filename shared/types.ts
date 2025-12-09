@@ -255,6 +255,7 @@ export interface CustomAnswerResultRequest {
 export interface CustomAnswerResultData {
   correctAnswerId: string;
   playerVotes: PlayerAnswerInfo[];
+  answersWithAttribution?: CustomAnswer[]; // Include full answers with playerId for results display
 }
 
 // Text Input Question Type

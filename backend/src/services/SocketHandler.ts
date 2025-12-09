@@ -506,28 +506,43 @@ export class SocketHandler {
 
     // Prepare Custom Answer Voting (called by master to prepare voting phase)
     socket.on('prepareCustomAnswerVoting', (data: { lobbyId: string }, callback?: (response: { success: boolean }) => void) => {
-      const allAnswers = this.lobbyManager.prepareCustomAnswerVoting(data.lobbyId);
-      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
       const lobby = this.lobbyManager.getLobby(data.lobbyId);
+      const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
       
-      if (currentQuestion && allAnswers.length > 0 && lobby) {
-        // Send all mixed answers to the master only
+      // Validate we're in the right phase BEFORE preparing
+      if (!lobby || !currentQuestion || lobby.currentPhase !== 'answering' || currentQuestion.type !== 'custom-answers') {
+        console.error(`Cannot prepare custom answer voting - invalid state for lobby ${data.lobbyId}`);
+        if (callback) {
+          callback({ success: false });
+        }
+        return;
+      }
+      
+      const allAnswers = this.lobbyManager.prepareCustomAnswerVoting(data.lobbyId);
+      
+      if (allAnswers.length > 0) {
+        // Send all mixed answers WITHOUT playerId to the master
+        // The answers here should not have playerId exposed yet
         socket.emit('customAnswersReady', {
           questionId: currentQuestion.id,
-          answers: allAnswers
+          answers: allAnswers // These don't have playerId attribution
         });
         
-        // Update lobby state
+        // IMPORTANT: Broadcast updated lobby state to ALL clients immediately
+        // This updates the phase to 'voting' for everyone
         this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
         
-        console.log(`Custom answers prepared for master in lobby ${data.lobbyId}`);
+        console.log(`Custom answers prepared for master in lobby ${data.lobbyId}, phase set to voting`);
         
         // Acknowledge if callback provided
         if (callback) {
           callback({ success: true });
         }
-      } else if (callback) {
-        callback({ success: false });
+      } else {
+        console.error(`No answers found for lobby ${data.lobbyId}`);
+        if (callback) {
+          callback({ success: false });
+        }
       }
     });
 
@@ -537,6 +552,13 @@ export class SocketHandler {
       const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
       
       if (!lobby || !currentQuestion) {
+        console.error(`Cannot trigger voting - lobby or question not found for ${data.lobbyId}`);
+        return;
+      }
+      
+      // Validate we're in voting phase
+      if (lobby.currentPhase !== 'voting') {
+        console.error(`Cannot trigger voting - lobby ${data.lobbyId} is in phase ${lobby.currentPhase}, expected voting`);
         return;
       }
 
@@ -553,9 +575,6 @@ export class SocketHandler {
         id: answer.id,
         text: answer.text
       }));
-      
-      // Update lobby state
-      this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
       
       // Send to all players
       this.io.to(data.lobbyId).emit('showAnswersForVoting', {
@@ -606,19 +625,17 @@ export class SocketHandler {
         // Update lobby state (phase is now 'revealing')
         this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
         
-        // Send the full answer list with attribution to everyone
-        this.io.to(data.lobbyId).emit('customAnswersReady', {
-          questionId: currentQuestion.id,
-          answers: answersWithAttribution
-        });
+        // DON'T re-emit customAnswersReady here - answers were already sent during voting phase
+        // Just send the attribution data for results display
         
         // Find correct answer ID from shuffled answers
         const correctAnswerId = answersWithAttribution.find(a => !a.playerId)?.id || '';
         
-        // Send custom answer result data
+        // Send custom answer result data with full attribution
         this.io.to(data.lobbyId).emit('customAnswerResultReady', {
           correctAnswerId,
           playerVotes,
+          answersWithAttribution, // Include full answers with attribution for results display
         });
         
         this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);

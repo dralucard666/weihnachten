@@ -9,6 +9,7 @@ interface VotingViewProps {
   selectedAnswer: string | null;
   hasSubmitted: boolean;
   onVoteForAnswer: (answerId: string) => void;
+  customAnswerText?: string; // The player's own submitted answer text
 }
 
 export default function VotingView({
@@ -17,12 +18,20 @@ export default function VotingView({
   selectedAnswer,
   hasSubmitted,
   onVoteForAnswer,
+  customAnswerText,
 }: VotingViewProps) {
   const { t, language } = useI18n();
   const [localVoteAnswer, setLocalVoteAnswer] = useState<string | null>(null);
   
   const getText = (text: string | { de: string; en: string }) => {
     return typeof text === 'string' ? text : text[language];
+  };
+  
+  // Helper to check if an answer is the player's own answer
+  const isOwnAnswer = (answer: Answer) => {
+    if (!customAnswerText) return false;
+    const answerText = getText(answer.text);
+    return answerText.trim().toLowerCase() === customAnswerText.trim().toLowerCase();
   };
 
   // Reset local vote when voting answers change (new voting phase)
@@ -45,37 +54,47 @@ export default function VotingView({
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {votingAnswers.map((answer, idx) => (
-              <button
-                key={answer.id}
-                onClick={() => setLocalVoteAnswer(answer.id)}
-                disabled={hasSubmitted}
-                className={`cursor-pointer p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg ${
-                  hasSubmitted && selectedAnswer === answer.id
-                    ? "bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]"
-                    : localVoteAnswer === answer.id
-                    ? "bg-blue-500 text-white ring-2 ring-blue-300"
-                    : hasSubmitted
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-orange-500 text-white hover:bg-orange-600"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                      hasSubmitted && selectedAnswer === answer.id
-                        ? "bg-blue-200 text-blue-900"
-                        : localVoteAnswer === answer.id
-                        ? "bg-blue-200 text-blue-900"
-                        : "bg-white/30 text-white"
-                    }`}
-                  >
-                    {idx + 1}
+            {votingAnswers.map((answer, idx) => {
+              const isOwn = isOwnAnswer(answer);
+              return (
+                <button
+                  key={answer.id}
+                  onClick={() => !isOwn && setLocalVoteAnswer(answer.id)}
+                  disabled={hasSubmitted || isOwn}
+                  className={`cursor-pointer p-4 rounded-lg text-lg font-semibold transition-all duration-300 transform shadow-lg ${
+                    isOwn
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                      : hasSubmitted && selectedAnswer === answer.id
+                      ? "bg-blue-600 text-white ring-2 ring-blue-400 scale-[1.02]"
+                      : localVoteAnswer === answer.id
+                      ? "bg-blue-500 text-white ring-2 ring-blue-300"
+                      : hasSubmitted
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-orange-500 text-white hover:bg-orange-600 hover:scale-[1.02]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                        isOwn
+                          ? "bg-gray-400 text-gray-600"
+                          : hasSubmitted && selectedAnswer === answer.id
+                          ? "bg-blue-200 text-blue-900"
+                          : localVoteAnswer === answer.id
+                          ? "bg-blue-200 text-blue-900"
+                          : "bg-white/30 text-white"
+                      }`}
+                    >
+                      {idx + 1}
+                    </div>
+                    <span className="flex-1 text-left">{getText(answer.text)}</span>
+                    {isOwn && (
+                      <span className="text-sm opacity-75">(Your answer)</span>
+                    )}
                   </div>
-                  <span className="flex-1 text-left">{getText(answer.text)}</span>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
           {!hasSubmitted && localVoteAnswer && (
