@@ -5,27 +5,32 @@ import { mediaApi } from '../../../services/api';
 import { useI18n } from '../../../i18n/useI18n';
 
 interface TextInputFormProps {
+  question?: StoredQuestion;
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
 }
 
-export default function TextInputForm({ onSave, onCancel, saving }: TextInputFormProps) {
+export default function TextInputForm({ question, onSave, onCancel, saving }: TextInputFormProps) {
   const { t } = useI18n();
-  const [questionTextDe, setQuestionTextDe] = useState('');
-  const [questionTextEn, setQuestionTextEn] = useState('');
+  const [questionTextDe, setQuestionTextDe] = useState(question?.text.de || '');
+  const [questionTextEn, setQuestionTextEn] = useState(question?.text.en || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [correctAnswers, setCorrectAnswers] = useState(['']);
+  const [correctAnswers, setCorrectAnswers] = useState(
+    question?.correctAnswers && question.correctAnswers.length > 0
+      ? question.correctAnswers
+      : ['']
+  );
   
   // Media fields - support both beforeQuestion and beforeAnswer
-  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(false);
+  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(!!question?.media?.beforeQuestion);
   const [beforeQuestionFile, setBeforeQuestionFile] = useState<File | null>(null);
-  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>('video');
+  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>(question?.media?.beforeQuestion?.type || 'video');
   
-  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(false);
+  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(!!question?.media?.beforeAnswer);
   const [beforeAnswerFile, setBeforeAnswerFile] = useState<File | null>(null);
-  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>('video');
+  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>(question?.media?.beforeAnswer?.type || 'video');
 
   const addCorrectAnswer = () => {
     setCorrectAnswers([...correctAnswers, '']);
@@ -43,9 +48,10 @@ export default function TextInputForm({ onSave, onCancel, saving }: TextInputFor
     setIsSubmitting(true);
 
     try {
-      let mediaConfig: QuestionMedia | undefined;
+      // Upload media if provided (only for new questions, editing preserves existing media)
+      let mediaConfig: QuestionMedia | undefined = question?.media;
       
-      if (hasBeforeQuestionMedia || hasBeforeAnswerMedia) {
+      if (!question && (hasBeforeQuestionMedia || hasBeforeAnswerMedia)) {
         mediaConfig = {};
         
         if (hasBeforeQuestionMedia && beforeQuestionFile) {
@@ -77,17 +83,17 @@ export default function TextInputForm({ onSave, onCancel, saving }: TextInputFor
         }
       }
 
-      const question: Omit<StoredQuestion, 'id'> = {
+      const questionData: Omit<StoredQuestion, 'id'> = {
         type: 'text-input',
         text: {
           de: questionTextDe,
           en: questionTextEn,
         },
-        correctAnswers: correctAnswers.filter((a) => a.trim() !== ''),
+        correctAnswers: correctAnswers.filter(a => a.trim() !== ''),
         media: mediaConfig,
       };
 
-      await onSave(question);
+      await onSave(questionData);
     } finally {
       setIsSubmitting(false);
     }
@@ -166,8 +172,9 @@ export default function TextInputForm({ onSave, onCancel, saving }: TextInputFor
       </div>
 
       {/* Media Section */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
+      {!question && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
         
         {/* Before Question Media */}
         <div className="space-y-3">
@@ -203,7 +210,7 @@ export default function TextInputForm({ onSave, onCancel, saving }: TextInputFor
                 accept={beforeQuestionType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeQuestionFile}
                 onChange={setBeforeQuestionFile}
-                required
+                required={!question}
               />
             </div>
           )}
@@ -243,12 +250,13 @@ export default function TextInputForm({ onSave, onCancel, saving }: TextInputFor
                 accept={beforeAnswerType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeAnswerFile}
                 onChange={setBeforeAnswerFile}
-                required
+                required={!question}
               />
             </div>
           )}
         </div>
       </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t">

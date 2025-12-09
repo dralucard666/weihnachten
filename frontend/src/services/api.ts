@@ -185,16 +185,59 @@ export const questionsApi = {
   },
 
   // Update a question
-  async update(id: string, question: Partial<StoredQuestion>): Promise<StoredQuestion> {
+  async update(
+    id: string,
+    question: Omit<StoredQuestion, 'id'>
+  ): Promise<StoredQuestion> {
+    // Transform the question object to match backend API expectations
+    const payload: Record<string, unknown> = {
+      textDe: question.text.de,
+      textEn: question.text.en,
+    };
+
+    // Note: media is immutable and should not be included in updates
+
+    // Handle multiple-choice questions
+    if (question.type === 'multiple-choice' && question.answers) {
+      payload.answers = question.answers.map(a => ({
+        textDe: a.text.de,
+        textEn: a.text.en,
+        isCorrect: question.correctAnswer 
+          ? (a.text.de === question.correctAnswer.de || a.text.en === question.correctAnswer.en)
+          : false,
+      }));
+    }
+
+    // Handle order questions
+    if (question.type === 'order' && question.orderItems) {
+      payload.orderItems = question.orderItems.map(item => ({
+        textDe: item.text.de,
+        textEn: item.text.en,
+      }));
+    }
+
+    // Handle text-input questions
+    if (question.type === 'text-input' && question.correctAnswers) {
+      payload.correctAnswers = question.correctAnswers;
+    }
+
+    // Handle custom-answers questions
+    if (question.type === 'custom-answers' && question.correctAnswer) {
+      payload.correctAnswerDe = question.correctAnswer.de;
+      payload.correctAnswerEn = question.correctAnswer.en;
+    }
+
     const response = await fetch(`${getBackendUrl()}/api/questions/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(question),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      throw new Error('Failed to update question');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update question');
     }
-    return response.json();
+    const result = await response.json();
+    return result.question || result;
   },
 
   // Delete a question

@@ -21,6 +21,8 @@ import {
   NextQuestionResponse,
   RestartQuestionRequest,
   RestartQuestionResponse,
+  ContinueFromIntermediateScoresRequest,
+  ContinueFromIntermediateScoresResponse,
   SubmitCustomAnswerRequest,
   SubmitCustomAnswerResponse,
   TriggerAnswerVotingRequest,
@@ -166,7 +168,8 @@ export class SocketHandler {
             question,
             lobby.currentQuestionIndex,
             lobby.totalQuestions!,
-            'en' // Language doesn't matter since we send bilingual data
+            'en', // Language doesn't matter since we send bilingual data
+            data.lobbyId // Pass lobby ID for shuffled answers
           );
         }
       }
@@ -206,7 +209,8 @@ export class SocketHandler {
             question,
             lobby.currentQuestionIndex,
             lobby.totalQuestions!,
-            'en' // Language doesn't matter since we send bilingual data
+            'en', // Language doesn't matter since we send bilingual data
+            data.lobbyId // Pass lobby ID for shuffled answers
           );
         }
       }
@@ -259,15 +263,19 @@ export class SocketHandler {
           const questionSetService = new QuestionSetService();
           let questions = await questionSetService.getQuestionsInSet(lobby.questionSetId);
           
-          // If questionCount is specified, shuffle and limit
-          if (lobby.questionCount && lobby.questionCount > 0 && lobby.questionCount < questions.length) {
-            const shuffled = [...questions].sort(() => Math.random() - 0.5);
+          // Always shuffle questions
+          const shuffled = [...questions].sort(() => Math.random() - 0.5);
+          
+          // If questionCount is specified, limit to that count
+          if (lobby.questionCount && lobby.questionCount > 0 && lobby.questionCount < shuffled.length) {
             questions = shuffled.slice(0, lobby.questionCount);
+          } else {
+            questions = shuffled;
           }
           
           // Update the lobby with the loaded questions
           this.lobbyManager.updateLobbyQuestions(data.lobbyId, questions);
-          console.log(`Loaded ${questions.length} questions for lobby ${data.lobbyId} from question set ${lobby.questionSetId}`);
+          console.log(`Loaded ${questions.length} shuffled questions for lobby ${data.lobbyId} from question set ${lobby.questionSetId}`);
         } catch (error) {
           console.error('Error loading questions for game start:', error);
           callback({ success: false });
@@ -281,6 +289,10 @@ export class SocketHandler {
           const shuffled = [...currentQuestions].sort(() => Math.random() - 0.5);
           const limitedQuestions = shuffled.slice(0, data.questionCount);
           this.lobbyManager.updateLobbyQuestions(data.lobbyId, limitedQuestions);
+        } else if (currentQuestions) {
+          // Just shuffle questions without limiting
+          const shuffled = [...currentQuestions].sort(() => Math.random() - 0.5);
+          this.lobbyManager.updateLobbyQuestions(data.lobbyId, shuffled);
         }
       }
       
@@ -296,7 +308,8 @@ export class SocketHandler {
             currentQuestion,
             updatedLobby.currentQuestionIndex,
             updatedLobby.totalQuestions!,
-            'en' // TODO: Support multiple languages
+            'en', // TODO: Support multiple languages
+            data.lobbyId // Pass lobby ID for shuffled answers
           );
           
           this.io.to(data.lobbyId).emit('lobbyUpdated', updatedLobby);
@@ -373,24 +386,67 @@ export class SocketHandler {
         const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
         
         if (lobby && currentQuestion) {
-          const questionData = this.lobbyManager.getQuestionDataForLanguage(
-            currentQuestion,
-            lobby.currentQuestionIndex,
-            lobby.totalQuestions!,
-            'en' // TODO: Support multiple languages
-          );
-          
-          this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
-          this.io.to(data.lobbyId).emit('questionStarted', questionData);
-          
-          callback({ success: true, currentQuestion: questionData });
-          console.log(`Next question in lobby ${data.lobbyId}`);
+          // Check if we should show intermediate scores
+          if (lobby.currentPhase === 'intermediate-scores') {
+            // Just update the lobby state, don't emit questionStarted yet
+            this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+            callback({ success: true, showIntermediateScores: true });
+            console.log(`Showing intermediate scores in lobby ${data.lobbyId}`);
+          } else {
+            const questionData = this.lobbyManager.getQuestionDataForLanguage(
+              currentQuestion,
+              lobby.currentQuestionIndex,
+              lobby.totalQuestions!,
+              'en', // TODO: Support multiple languages
+              data.lobbyId // Pass lobby ID for shuffled answers
+            );
+            
+            this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+            this.io.to(data.lobbyId).emit('questionStarted', questionData);
+            
+            callback({ success: true, currentQuestion: questionData });
+            console.log(`Next question in lobby ${data.lobbyId}`);
+          }
         } else {
           callback({ success: false });
         }
       } else {
         // No more questions - game should end
         callback({ success: true, gameFinished: true });
+      }
+    });
+
+    // Continue from intermediate scores
+    socket.on('continueFromIntermediateScores', (data: ContinueFromIntermediateScoresRequest, callback) => {
+      const success = this.lobbyManager.continueFromIntermediateScores(data.lobbyId);
+      
+      if (success) {
+        const lobby = this.lobbyManager.getLobby(data.lobbyId);
+        const currentQuestion = this.lobbyManager.getCurrentQuestion(data.lobbyId);
+        
+        if (lobby && currentQuestion) {
+          const questionData = this.lobbyManager.getQuestionDataForLanguage(
+            currentQuestion,
+            lobby.currentQuestionIndex,
+            lobby.totalQuestions!,
+            'en', // TODO: Support multiple languages
+            data.lobbyId // Pass lobby ID for shuffled answers
+          );
+          
+          this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
+          this.io.to(data.lobbyId).emit('questionStarted', questionData);
+          
+          const response: ContinueFromIntermediateScoresResponse = { 
+            success: true, 
+            currentQuestion: questionData 
+          };
+          callback(response);
+          console.log(`Continued from intermediate scores in lobby ${data.lobbyId}`);
+        } else {
+          callback({ success: false });
+        }
+      } else {
+        callback({ success: false });
       }
     });
 
@@ -407,7 +463,8 @@ export class SocketHandler {
             currentQuestion,
             lobby.currentQuestionIndex,
             lobby.totalQuestions!,
-            'en' // TODO: Support multiple languages
+            'en', // TODO: Support multiple languages
+            data.lobbyId // Pass lobby ID for shuffled answers
           );
           
           this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);

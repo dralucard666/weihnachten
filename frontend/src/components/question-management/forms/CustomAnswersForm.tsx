@@ -5,27 +5,28 @@ import { mediaApi } from '../../../services/api';
 import { useI18n } from '../../../i18n/useI18n';
 
 interface CustomAnswersFormProps {
+  question?: StoredQuestion;
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
 }
 
-export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAnswersFormProps) {
+export default function CustomAnswersForm({ question, onSave, onCancel, saving }: CustomAnswersFormProps) {
   const { t } = useI18n();
-  const [questionTextDe, setQuestionTextDe] = useState('');
-  const [questionTextEn, setQuestionTextEn] = useState('');
+  const [questionTextDe, setQuestionTextDe] = useState(question?.text.de || '');
+  const [questionTextEn, setQuestionTextEn] = useState(question?.text.en || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [correctAnswerDe, setCorrectAnswerDe] = useState('');
-  const [correctAnswerEn, setCorrectAnswerEn] = useState('');
+  const [correctAnswerDe, setCorrectAnswerDe] = useState(question?.correctAnswer?.de || '');
+  const [correctAnswerEn, setCorrectAnswerEn] = useState(question?.correctAnswer?.en || '');
   
   // Media fields - support both beforeQuestion and beforeAnswer
-  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(false);
+  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(!!question?.media?.beforeQuestion);
   const [beforeQuestionFile, setBeforeQuestionFile] = useState<File | null>(null);
-  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>('video');
+  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>(question?.media?.beforeQuestion?.type || 'video');
   
-  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(false);
+  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(!!question?.media?.beforeAnswer);
   const [beforeAnswerFile, setBeforeAnswerFile] = useState<File | null>(null);
-  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>('video');
+  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>(question?.media?.beforeAnswer?.type || 'video');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +35,10 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
     setIsSubmitting(true);
 
     try {
-      let mediaConfig: QuestionMedia | undefined;
+      // Upload media if provided (only for new questions, editing preserves existing media)
+      let mediaConfig: QuestionMedia | undefined = question?.media;
       
-      if (hasBeforeQuestionMedia || hasBeforeAnswerMedia) {
+      if (!question && (hasBeforeQuestionMedia || hasBeforeAnswerMedia)) {
         mediaConfig = {};
         
         if (hasBeforeQuestionMedia && beforeQuestionFile) {
@@ -68,7 +70,7 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
         }
       }
 
-      const question: Omit<StoredQuestion, 'id'> = {
+      const questionData: Omit<StoredQuestion, 'id'> = {
         type: 'custom-answers',
         text: {
           de: questionTextDe,
@@ -81,7 +83,7 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
         media: mediaConfig,
       };
 
-      await onSave(question);
+      await onSave(questionData);
     } finally {
       setIsSubmitting(false);
     }
@@ -150,8 +152,9 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
       </div>
 
       {/* Media Section */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
+      {!question && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
         
         {/* Before Question Media */}
         <div className="space-y-3">
@@ -187,7 +190,7 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
                 accept={beforeQuestionType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeQuestionFile}
                 onChange={setBeforeQuestionFile}
-                required
+                required={!question}
               />
             </div>
           )}
@@ -227,12 +230,13 @@ export default function CustomAnswersForm({ onSave, onCancel, saving }: CustomAn
                 accept={beforeAnswerType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeAnswerFile}
                 onChange={setBeforeAnswerFile}
-                required
+                required={!question}
               />
             </div>
           )}
         </div>
       </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t">

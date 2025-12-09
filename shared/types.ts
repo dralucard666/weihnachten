@@ -6,7 +6,8 @@ export type QuestionPhase =
   | 'answering'           // Players are submitting answers
   | 'voting'              // Players are voting (custom-answers only)
   | 'revealing'           // Showing correct answer/results
-  | 'waiting';            // Waiting for master to continue
+  | 'waiting'             // Waiting for master to continue
+  | 'intermediate-scores'; // Showing intermediate scores
 
 // Player
 export interface Player {
@@ -189,6 +190,7 @@ export interface NextQuestionResponse {
   success: boolean;
   currentQuestion?: QuestionData; // Next question data
   gameFinished?: boolean; // True if no more questions
+  showIntermediateScores?: boolean; // True if should show intermediate scores
 }
 
 export interface RestartQuestionRequest {
@@ -199,6 +201,15 @@ export interface RestartQuestionRequest {
 export interface RestartQuestionResponse {
   success: boolean;
   currentQuestion?: QuestionData; // Current question data (restarted)
+}
+
+export interface ContinueFromIntermediateScoresRequest {
+  lobbyId: string;
+}
+
+export interface ContinueFromIntermediateScoresResponse {
+  success: boolean;
+  currentQuestion?: QuestionData; // Next question data
 }
 
 // Custom Answers Game Mode
@@ -357,6 +368,9 @@ export interface ClientToServerEvents {
   // Order events
   submitOrder: (data: SubmitOrderRequest, callback: (response: SubmitOrderResponse) => void) => void;
   orderResult: (data: OrderResultRequest) => void;
+  
+  // Intermediate scores
+  continueFromIntermediateScores: (data: ContinueFromIntermediateScoresRequest, callback: (response: ContinueFromIntermediateScoresResponse) => void) => void;
   
   endGame: (lobbyId: string) => void;
 }

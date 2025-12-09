@@ -6,31 +6,40 @@ import { useI18n } from '../../../i18n/useI18n';
 import { generateUUID } from '../../../utils/uuid';
 
 interface MultipleChoiceFormProps {
+  question?: StoredQuestion;
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
 }
 
-export default function MultipleChoiceForm({ onSave, onCancel, saving }: MultipleChoiceFormProps) {
+export default function MultipleChoiceForm({ question, onSave, onCancel, saving }: MultipleChoiceFormProps) {
   const { t } = useI18n();
-  const [questionTextDe, setQuestionTextDe] = useState('');
-  const [questionTextEn, setQuestionTextEn] = useState('');
+  const [questionTextDe, setQuestionTextDe] = useState(question?.text.de || '');
+  const [questionTextEn, setQuestionTextEn] = useState(question?.text.en || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [answers, setAnswers] = useState([
-    { textDe: '', textEn: '', soundFile: null as File | null },
-    { textDe: '', textEn: '', soundFile: null as File | null },
-  ]);
-  const [correctAnswerIndex, setCorrectAnswerIndex] = useState(0);
+  const [answers, setAnswers] = useState(
+    question?.answers && question.answers.length > 0
+      ? question.answers.map(a => ({ textDe: a.text.de, textEn: a.text.en, soundFile: null as File | null }))
+      : [
+          { textDe: '', textEn: '', soundFile: null as File | null },
+          { textDe: '', textEn: '', soundFile: null as File | null },
+        ]
+  );
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState(
+    question?.correctAnswerId && question?.answers
+      ? question.answers.findIndex(a => a.id === question.correctAnswerId)
+      : 0
+  );
   
   // Media fields - support both beforeQuestion and beforeAnswer
-  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(false);
+  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(!!question?.media?.beforeQuestion);
   const [beforeQuestionFile, setBeforeQuestionFile] = useState<File | null>(null);
-  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>('video');
+  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>(question?.media?.beforeQuestion?.type || 'video');
   
-  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(false);
+  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(!!question?.media?.beforeAnswer);
   const [beforeAnswerFile, setBeforeAnswerFile] = useState<File | null>(null);
-  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>('video');
+  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>(question?.media?.beforeAnswer?.type || 'video');
 
   const addAnswer = () => {
     setAnswers([...answers, { textDe: '', textEn: '', soundFile: null }]);
@@ -52,10 +61,10 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
     setIsSubmitting(true);
 
     try {
-      // Upload media if provided
-      let mediaConfig: QuestionMedia | undefined;
+      // Upload media if provided (only for new questions, editing preserves existing media)
+      let mediaConfig: QuestionMedia | undefined = question?.media;
       
-      if (hasBeforeQuestionMedia || hasBeforeAnswerMedia) {
+      if (!question && (hasBeforeQuestionMedia || hasBeforeAnswerMedia)) {
         mediaConfig = {};
         
         if (hasBeforeQuestionMedia && beforeQuestionFile) {
@@ -87,7 +96,7 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
         }
       }
 
-      const question: Omit<StoredQuestion, 'id'> = {
+      const questionData: Omit<StoredQuestion, 'id'> = {
         type: 'multiple-choice',
         text: {
           de: questionTextDe,
@@ -113,7 +122,7 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
         media: mediaConfig,
       };
 
-      await onSave(question);
+      await onSave(questionData);
     } finally {
       setIsSubmitting(false);
     }
@@ -214,30 +223,33 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 placeholder={t.questionForms.answerPlaceholderEn}
               />
-              <div className="pt-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  {t.questionForms.soundEffect}
-                </label>
-                <MediaUploadField
-                  label=""
-                  accept="audio/*"
-                  value={answer.soundFile}
-                  onChange={(file) => {
-                    const newAnswers = [...answers];
-                    newAnswers[index].soundFile = file;
-                    setAnswers(newAnswers);
-                  }}
-                  required={false}
-                />
-              </div>
+              {!question && (
+                <div className="pt-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {t.questionForms.soundEffect}
+                  </label>
+                  <MediaUploadField
+                    label=""
+                    accept="audio/*"
+                    value={answer.soundFile}
+                    onChange={(file) => {
+                      const newAnswers = [...answers];
+                      newAnswers[index].soundFile = file;
+                      setAnswers(newAnswers);
+                    }}
+                    required={false}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* Media Section */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
+      {!question && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
         
         {/* Before Question Media */}
         <div className="space-y-3">
@@ -273,7 +285,7 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
                 accept={beforeQuestionType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeQuestionFile}
                 onChange={setBeforeQuestionFile}
-                required
+                required={!question}
               />
             </div>
           )}
@@ -313,12 +325,13 @@ export default function MultipleChoiceForm({ onSave, onCancel, saving }: Multipl
                 accept={beforeAnswerType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeAnswerFile}
                 onChange={setBeforeAnswerFile}
-                required
+                required={!question}
               />
             </div>
           )}
         </div>
       </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t">

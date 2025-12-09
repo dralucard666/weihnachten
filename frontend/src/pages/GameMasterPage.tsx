@@ -3,8 +3,10 @@ import { useGameMaster } from "../hooks/useGameMaster";
 import GameLobbyView from "../components/GameLobbyView";
 import GamePlayingView from "../components/host/GamePlayingView";
 import GameFinishedView from "../components/host/GameFinishedView";
+import IntermediateScoresView from "../components/host/IntermediateScoresView";
 import type { QuestionType, QuestionMedia } from "../../../shared/types";
 import { useI18n } from "../i18n/useI18n";
+import { socketService } from "../services/socket";
 
 // Bilingual question structure from backend
 export interface BilingualQuestion {
@@ -56,6 +58,22 @@ export default function GameMasterPage() {
     handleNextQuestion,
     handleRestartQuestion,
   } = useGameMaster(lobbyId);
+
+  const handleContinueFromScores = () => {
+    // Emit socket event to continue from intermediate scores
+    if (lobbyId) {
+      const socket = socketService.getSocket();
+      socket?.emit(
+        'continueFromIntermediateScores',
+        { lobbyId },
+        (response: { success: boolean }) => {
+          if (!response.success) {
+            console.error('Failed to continue from intermediate scores');
+          }
+        }
+      );
+    }
+  };
 
   // Adapt QuestionData to Question format for components (extract current language)
   const adaptedQuestion = currentQuestion
@@ -118,6 +136,18 @@ export default function GameMasterPage() {
   }
 
   if (lobby.gameState === "playing" && adaptedQuestion) {
+    // Show intermediate scores if in that phase
+    if (lobby.currentPhase === 'intermediate-scores') {
+      return (
+        <IntermediateScoresView
+          lobby={lobby}
+          currentQuestionIndex={currentQuestion!.questionIndex}
+          totalQuestions={lobby.totalQuestions!}
+          onContinue={handleContinueFromScores}
+        />
+      );
+    }
+
     return (
       <GamePlayingView
         lobby={lobby}

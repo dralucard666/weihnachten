@@ -258,6 +258,98 @@ export class QuestionService {
   }
 
   /**
+   * Update a question's text (media is immutable)
+   */
+  async updateQuestion(
+    questionId: string,
+    textDe: string,
+    textEn: string,
+    options: {
+      correctAnswerDe?: string;
+      correctAnswerEn?: string;
+      correctAnswers?: string[];
+      answers?: Array<{ id?: string; textDe: string; textEn: string; isCorrect: boolean }>;
+      orderItems?: Array<{ id?: string; textDe: string; textEn: string }>;
+    } = {}
+  ): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Update the question text fields (media is immutable)
+      const updateQuestionQuery = `
+        UPDATE questions 
+        SET text_de = $1, text_en = $2, correct_answer_de = $3, correct_answer_en = $4, correct_answers = $5
+        WHERE id = $6
+      `;
+      const result = await client.query(updateQuestionQuery, [
+        textDe,
+        textEn,
+        options.correctAnswerDe || null,
+        options.correctAnswerEn || null,
+        options.correctAnswers || null,
+        questionId,
+      ]);
+
+      if (result.rowCount === null || result.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+
+      // Get the question type to determine how to handle answers/order items
+      const typeResult = await client.query(
+        'SELECT type FROM questions WHERE id = $1',
+        [questionId]
+      );
+      const questionType = typeResult.rows[0]?.type;
+
+      // Update answers if multiple-choice
+      if (questionType === 'multiple-choice' && options.answers) {
+        // Delete existing answers
+        await client.query('DELETE FROM answers WHERE question_id = $1', [questionId]);
+
+        // Insert new answers
+        for (const answer of options.answers) {
+          const answerQuery = `
+            INSERT INTO answers (question_id, text_de, text_en, is_correct)
+            VALUES ($1, $2, $3, $4)
+          `;
+          await client.query(answerQuery, [
+            questionId,
+            answer.textDe,
+            answer.textEn,
+            answer.isCorrect,
+          ]);
+        }
+      }
+
+      // Update order items if order question
+      if (questionType === 'order' && options.orderItems) {
+        // Delete existing order items
+        await client.query('DELETE FROM order_items WHERE question_id = $1', [questionId]);
+
+        // Insert new order items
+        for (let i = 0; i < options.orderItems.length; i++) {
+          const item = options.orderItems[i];
+          const orderQuery = `
+            INSERT INTO order_items (question_id, text_de, text_en, correct_position)
+            VALUES ($1, $2, $3, $4)
+          `;
+          await client.query(orderQuery, [questionId, item.textDe, item.textEn, i]);
+        }
+      }
+
+      await client.query('COMMIT');
+      return true;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Delete a question by ID and cleanup associated media files
    */
   async deleteQuestion(questionId: string): Promise<boolean> {

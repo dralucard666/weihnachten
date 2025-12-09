@@ -60,10 +60,9 @@ export default function GamePlayingView({
   const isOrderMode = currentQuestion.type === "order";
 
   // Media display states
-  const [showBeforeQuestionMedia, setShowBeforeQuestionMedia] = useState(
-    !!currentQuestion.media?.beforeQuestion
-  );
   const [showBeforeAnswerMedia, setShowBeforeAnswerMedia] = useState(false);
+  const [beforeQuestionMediaHidden, setBeforeQuestionMediaHidden] = useState(false);
+  const [beforeAnswerMediaHidden, setBeforeAnswerMediaHidden] = useState(false);
 
   // Text-input player results state
   const [showTextInputPlayerResults, setShowTextInputPlayerResults] =
@@ -74,10 +73,11 @@ export default function GamePlayingView({
 
   // Reset media states when question changes
   useEffect(() => {
-    setShowBeforeQuestionMedia(!!currentQuestion.media?.beforeQuestion);
     setShowBeforeAnswerMedia(false);
     setShowTextInputPlayerResults(false);
     setTextInputPlayerAnswers([]);
+    setBeforeQuestionMediaHidden(true);
+    setBeforeAnswerMediaHidden(false);
   }, [currentQuestion.id, currentQuestion.media]);
 
   const handleShowTextInputPlayerResults = () => {
@@ -108,7 +108,8 @@ export default function GamePlayingView({
   };
 
   const handleBeforeAnswerMediaComplete = () => {
-    setShowBeforeAnswerMedia(false);
+    // Don't set showBeforeAnswerMedia to false, just mark as hidden
+    // This way the media can be reopened
     // Call the appropriate handler based on the current mode
     if (isVotingPhase) {
       onShowVotingResults();
@@ -131,25 +132,85 @@ export default function GamePlayingView({
         />
 
         {/* Before-Question Media Display */}
-        {showBeforeQuestionMedia && currentQuestion.media?.beforeQuestion && (
-          <div className="mb-6 flex justify-center">
-            <MediaDisplay
-              media={currentQuestion.media.beforeQuestion}
-              onComplete={() => setShowBeforeQuestionMedia(false)}
-              className="w-full max-w-5xl"
-            />
-          </div>
+        {!showCorrectAnswer && currentQuestion.media?.beforeQuestion && !beforeQuestionMediaHidden && (
+          <MediaDisplay
+            key={`before-question-${currentQuestion.id}`}
+            media={currentQuestion.media.beforeQuestion}
+            onComplete={() => setBeforeQuestionMediaHidden(true)}
+          />
+        )}
+
+        {/* Reopen Before-Question Media Button */}
+        {!showCorrectAnswer && currentQuestion.media?.beforeQuestion && beforeQuestionMediaHidden && (
+          <button
+            onClick={() => setBeforeQuestionMediaHidden(false)}
+            className="fixed left-4 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-purple-400"
+            title="Show media"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
         )}
 
         {/* Before-Answer Media Display (shown when revealing answer) */}
-        {showBeforeAnswerMedia && currentQuestion.media?.beforeAnswer && (
-          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6">
+        {showBeforeAnswerMedia && currentQuestion.media?.beforeAnswer && !beforeAnswerMediaHidden && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/90" />
             <MediaDisplay
+              key={`before-answer-${currentQuestion.id}`}
               media={currentQuestion.media.beforeAnswer}
-              onComplete={handleBeforeAnswerMediaComplete}
-              className="w-full max-w-6xl"
+              onComplete={() => {
+                setBeforeAnswerMediaHidden(true);
+                handleBeforeAnswerMediaComplete();
+              }}
             />
-          </div>
+          </>
+        )}
+
+        {/* Reopen Before-Answer Media Button */}
+        {showCorrectAnswer && currentQuestion.media?.beforeAnswer && beforeAnswerMediaHidden && (
+          <button
+            onClick={() => setBeforeAnswerMediaHidden(false)}
+            className="fixed left-4 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-purple-400"
+            title="Show media"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
         )}
 
         {/* Question Display - Centered */}

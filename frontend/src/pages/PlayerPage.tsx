@@ -5,6 +5,7 @@ import PlayerJoinView from '../components/player-game/PlayerJoinView';
 import PlayerLobbyView from '../components/player-game/PlayerLobbyView';
 import PlayerGameView from '../components/player-game/PlayerGameView';
 import PlayerFinishedView from '../components/player-game/PlayerFinishedView';
+import PlayerIntermediateScoresView from '../components/player-game/PlayerIntermediateScoresView';
 import ReconnectModal from '../components/ReconnectModal';
 import { useI18n } from '../i18n/useI18n';
 
@@ -199,6 +200,18 @@ export default function PlayerPage() {
       );
 
     case 'playing':
+      // Show intermediate scores if in that phase
+      if (lobby.currentPhase === 'intermediate-scores' && currentQuestion) {
+        return (
+          <PlayerIntermediateScoresView
+            lobby={lobby}
+            playerId={playerId}
+            currentQuestionIndex={currentQuestion.questionIndex}
+            totalQuestions={lobby.totalQuestions!}
+          />
+        );
+      }
+      
       return (
         <PlayerGameView
           currentPlayer={currentPlayer}

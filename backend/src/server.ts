@@ -407,6 +407,31 @@ app.post("/api/questions", async (req, res) => {
   }
 });
 
+// Update question text (media is immutable)
+app.put("/api/questions/:questionId", async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { textDe, textEn, ...options } = req.body;
+    
+    if (!textDe || !textEn) {
+      return res.status(400).json({ error: "textDe and textEn are required" });
+    }
+
+    // Update the question
+    const updated = await questionService.updateQuestion(questionId, textDe, textEn, options);
+    
+    if (!updated) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+    
+    const question = await questionService.getQuestionById(questionId);
+    res.json({ success: true, question });
+  } catch (error) {
+    console.error("Error updating question:", error);
+    res.status(500).json({ error: "Failed to update question" });
+  }
+});
+
 // Get all questions
 app.get("/api/questions", async (req, res) => {
   try {

@@ -48,6 +48,8 @@ export class LobbyManager {
   private textInputAnswers: Map<string, Map<string, PlayerTextInput>> =
     new Map(); // lobbyId -> Map<playerId, textInput>
   private orderAnswers: Map<string, Map<string, PlayerOrder>> = new Map(); // lobbyId -> Map<playerId, order>
+  // Store shuffled answer/order mappings per lobby and question
+  private questionAnswerMappings: Map<string, Map<string, { answers?: any[]; orderItems?: any[] }>> = new Map(); // lobbyId -> Map<questionId, mappings>
 
   constructor() {
   }
@@ -111,22 +113,84 @@ export class LobbyManager {
     question: StoredQuestion,
     questionIndex: number,
     totalQuestions: number,
-    language: 'de' | 'en' // Kept for backwards compatibility but not used anymore
+    language: 'de' | 'en', // Kept for backwards compatibility but not used anymore
+    lobbyId?: string // Optional lobby ID for shuffled answer support
   ): QuestionData {
+    if (!lobbyId) {
+      // Fallback to non-shuffled if lobby not provided
+      return {
+        questionId: question.id,
+        questionIndex,
+        totalQuestions,
+        type: question.type,
+        text: question.text,
+        answers: question.answers?.map(a => ({
+          id: a.id,
+          text: a.text,
+          sound: a.sound,
+        })),
+        orderItems: question.orderItems?.map(item => ({
+          id: item.id,
+          text: item.text,
+          sound: item.sound,
+        })),
+        media: question.media,
+      };
+    }
+
+    // Get or create mappings for this lobby
+    let lobbyMappings = this.questionAnswerMappings.get(lobbyId);
+    if (!lobbyMappings) {
+      lobbyMappings = new Map();
+      this.questionAnswerMappings.set(lobbyId, lobbyMappings);
+    }
+
+    // Get or create mapping for this specific question
+    let questionMapping = lobbyMappings.get(question.id);
+    
+    if (!questionMapping) {
+      // First time seeing this question in this lobby - create shuffled mappings
+      questionMapping = {};
+      
+      // Shuffle answers for multiple-choice questions
+      if (question.type === 'multiple-choice' && question.answers) {
+        const shuffledAnswers = [...question.answers];
+        this.shuffleArray(shuffledAnswers);
+        questionMapping.answers = shuffledAnswers;
+      }
+      
+      // Shuffle order items for order questions
+      if (question.type === 'order' && question.orderItems) {
+        const shuffledItems = [...question.orderItems];
+        this.shuffleArray(shuffledItems);
+        questionMapping.orderItems = shuffledItems;
+      }
+      
+      lobbyMappings.set(question.id, questionMapping);
+    }
+
     return {
       questionId: question.id,
       questionIndex,
       totalQuestions,
       type: question.type,
       text: question.text, // Send both languages
-      answers: question.answers?.map(a => ({
+      answers: questionMapping.answers?.map(a => ({
         id: a.id,
         text: a.text, // Send both languages
         sound: a.sound,
+      })) || question.answers?.map(a => ({
+        id: a.id,
+        text: a.text,
+        sound: a.sound,
       })),
-      orderItems: question.orderItems?.map(item => ({
+      orderItems: questionMapping.orderItems?.map(item => ({
         id: item.id,
         text: item.text, // Send both languages
+        sound: item.sound,
+      })) || question.orderItems?.map(item => ({
+        id: item.id,
+        text: item.text,
         sound: item.sound,
       })),
       media: question.media,
@@ -319,11 +383,50 @@ export class LobbyManager {
 
     lobby.currentQuestionIndex = nextIndex;
     lobby.currentQuestionId = questions[nextIndex].id;
-    lobby.currentPhase = "answering";
+
+    // Check if we should show intermediate scores
+    if (this.shouldShowIntermediateScores(lobby, nextIndex)) {
+      lobby.currentPhase = "intermediate-scores";
+    } else {
+      lobby.currentPhase = "answering";
+    }
 
     this.clearAllAnswers(lobbyId);
     this.resetPlayerAnswerFlags(lobby);
 
+    return true;
+  }
+
+  // Check if intermediate scores should be shown at this point
+  private shouldShowIntermediateScores(lobby: Lobby, currentIndex: number): boolean {
+    const total = lobby.totalQuestions || 0;
+    
+    if (total < 10) {
+      // Show once at halfway point
+      return currentIndex === Math.floor(total / 2);
+    } else if (total < 15) {
+      // Show twice at 1/3 and 2/3
+      const breakpoint1 = Math.floor(total / 3);
+      const breakpoint2 = Math.floor((2 * total) / 3);
+      return currentIndex === breakpoint1 || currentIndex === breakpoint2;
+    } else {
+      // Show 3 times at 1/4, 1/2, and 3/4
+      const breakpoint1 = Math.floor(total / 4);
+      const breakpoint2 = Math.floor(total / 2);
+      const breakpoint3 = Math.floor((3 * total) / 4);
+      return currentIndex === breakpoint1 || currentIndex === breakpoint2 || currentIndex === breakpoint3;
+    }
+  }
+
+  // Continue from intermediate scores to next question
+  continueFromIntermediateScores(lobbyId: string): boolean {
+    const lobby = this.lobbies.get(lobbyId);
+
+    if (!lobby || lobby.gameState !== "playing" || lobby.currentPhase !== "intermediate-scores") {
+      return false;
+    }
+
+    lobby.currentPhase = "answering";
     return true;
   }
 
@@ -768,6 +871,7 @@ export class LobbyManager {
     this.playerVotes.set(lobbyId, new Map());
     this.textInputAnswers.set(lobbyId, new Map());
     this.orderAnswers.set(lobbyId, new Map());
+    this.questionAnswerMappings.set(lobbyId, new Map());
   }
 
   private clearAllAnswers(lobbyId: string): void {
@@ -788,6 +892,7 @@ export class LobbyManager {
     this.shuffledAnswers.delete(lobbyId);
     this.textInputAnswers.delete(lobbyId);
     this.orderAnswers.delete(lobbyId);
+    this.questionAnswerMappings.delete(lobbyId);
   }
 
   private findPlayer(lobbyId: string, playerId: string): Player | undefined {

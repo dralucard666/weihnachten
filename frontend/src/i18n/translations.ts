@@ -117,6 +117,15 @@ export const translations = {
       pts: 'pts',
     },
 
+    // Intermediate Scores
+    intermediateScores: {
+      currentStandings: 'Current Standings',
+      afterQuestion: 'After Question',
+      of: 'of',
+      allScores: 'All Scores',
+      continueGame: 'Continue Game',
+    },
+
     // Reconnect Modal
     reconnect: {
       previousSessionFound: 'Previous Session Found',
@@ -407,7 +416,7 @@ export const translations = {
 
     // Game Playing
     game: {
-      quizMaster: 'Quiz-Meister',
+      quizMaster: 'Quiz Meister',
       question: 'Frage',
       score: 'Punktzahl',
       answered: 'Geantwortet',
@@ -458,6 +467,15 @@ export const translations = {
       finalScore: 'Endpunktzahl',
       finalStandings: 'Endstand',
       pts: 'Pkte',
+    },
+
+    // Intermediate Scores
+    intermediateScores: {
+      currentStandings: 'Aktueller Stand',
+      afterQuestion: 'Nach Frage',
+      of: 'von',
+      allScores: 'Alle Punkte',
+      continueGame: 'Spiel fortsetzen',
     },
 
     // Reconnect Modal

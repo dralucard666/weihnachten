@@ -21,6 +21,7 @@ export default function QuestionManagementPage() {
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [showCreateQuestionModal, setShowCreateQuestionModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<StoredQuestion | null>(null);
   const [showNewSetModal, setShowNewSetModal] = useState(false);
   const [newSetName, setNewSetName] = useState('');
   const [newSetDescription, setNewSetDescription] = useState('');
@@ -174,6 +175,25 @@ export default function QuestionManagementPage() {
     }
   };
 
+  const handleUpdateQuestion = async (question: Omit<StoredQuestion, 'id'>) => {
+    if (isCreating || !editingQuestion) return; // Prevent duplicate submissions
+    
+    try {
+      setIsCreating(true);
+      await questionsApi.update(editingQuestion.id, question);
+      if (selectedSet) {
+        await loadQuestionsInSet(selectedSet.id);
+      }
+      await loadQuestionSets(); // Refresh counts
+      setEditingQuestion(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update question');
+      throw err;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-200 to-purple-100 flex items-center justify-center">
@@ -318,6 +338,13 @@ export default function QuestionManagementPage() {
                         )}
                       </div>
                       <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => setEditingQuestion(question)}
+                          className="cursor-pointer text-blue-500 hover:text-blue-700 transition-colors"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
                         {selectedSet.name !== 'all' && (
                           <button
                             onClick={() => handleRemoveQuestion(question.id)}
@@ -422,6 +449,15 @@ export default function QuestionManagementPage() {
         <CreateQuestionModal
           onSave={handleCreateQuestion}
           onClose={() => setShowCreateQuestionModal(false)}
+        />
+      )}
+
+      {/* Edit Question Modal */}
+      {editingQuestion && (
+        <CreateQuestionModal
+          question={editingQuestion}
+          onSave={handleUpdateQuestion}
+          onClose={() => setEditingQuestion(null)}
         />
       )}
 

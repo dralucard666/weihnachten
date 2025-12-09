@@ -6,30 +6,35 @@ import { useI18n } from '../../../i18n/useI18n';
 import { generateUUID } from '../../../utils/uuid';
 
 interface OrderFormProps {
+  question?: StoredQuestion;
   onSave: (question: Omit<StoredQuestion, 'id'>) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
 }
 
-export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) {
+export default function OrderForm({ question, onSave, onCancel, saving }: OrderFormProps) {
   const { t } = useI18n();
-  const [questionTextDe, setQuestionTextDe] = useState('');
-  const [questionTextEn, setQuestionTextEn] = useState('');
+  const [questionTextDe, setQuestionTextDe] = useState(question?.text.de || '');
+  const [questionTextEn, setQuestionTextEn] = useState(question?.text.en || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [items, setItems] = useState([
-    { textDe: '', textEn: '', soundFile: null as File | null },
-    { textDe: '', textEn: '', soundFile: null as File | null },
-  ]);
+  const [items, setItems] = useState(
+    question?.orderItems && question.orderItems.length > 0
+      ? question.orderItems.map(item => ({ textDe: item.text.de, textEn: item.text.en, soundFile: null as File | null }))
+      : [
+          { textDe: '', textEn: '', soundFile: null as File | null },
+          { textDe: '', textEn: '', soundFile: null as File | null },
+        ]
+  );
   
   // Media fields - support both beforeQuestion and beforeAnswer
-  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(false);
+  const [hasBeforeQuestionMedia, setHasBeforeQuestionMedia] = useState(!!question?.media?.beforeQuestion);
   const [beforeQuestionFile, setBeforeQuestionFile] = useState<File | null>(null);
-  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>('video');
+  const [beforeQuestionType, setBeforeQuestionType] = useState<'video' | 'images'>(question?.media?.beforeQuestion?.type || 'video');
   
-  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(false);
+  const [hasBeforeAnswerMedia, setHasBeforeAnswerMedia] = useState(!!question?.media?.beforeAnswer);
   const [beforeAnswerFile, setBeforeAnswerFile] = useState<File | null>(null);
-  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>('video');
+  const [beforeAnswerType, setBeforeAnswerType] = useState<'video' | 'images'>(question?.media?.beforeAnswer?.type || 'video');
 
   const addItem = () => {
     setItems([...items, { textDe: '', textEn: '', soundFile: null }]);
@@ -60,9 +65,10 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
     setIsSubmitting(true);
 
     try {
-      let mediaConfig: QuestionMedia | undefined;
+      // Upload media if provided (only for new questions, editing preserves existing media)
+      let mediaConfig: QuestionMedia | undefined = question?.media;
       
-      if (hasBeforeQuestionMedia || hasBeforeAnswerMedia) {
+      if (!question && (hasBeforeQuestionMedia || hasBeforeAnswerMedia)) {
         mediaConfig = {};
         
         if (hasBeforeQuestionMedia && beforeQuestionFile) {
@@ -123,7 +129,7 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
         [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
       }
 
-      const question: Omit<StoredQuestion, 'id'> = {
+      const questionData: Omit<StoredQuestion, 'id'> = {
         type: 'order',
         text: {
           de: questionTextDe,
@@ -134,7 +140,7 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
         media: mediaConfig,
       };
 
-      await onSave(question);
+      await onSave(questionData);
     } finally {
       setIsSubmitting(false);
     }
@@ -239,30 +245,33 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 placeholder={t.questionForms.textPlaceholderEn}
               />
-              <div className="pt-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  {t.questionForms.soundEffect}
-                </label>
-                <MediaUploadField
-                  label=""
-                  accept="audio/*"
-                  value={item.soundFile}
-                  onChange={(file) => {
-                    const newItems = [...items];
-                    newItems[index].soundFile = file;
-                    setItems(newItems);
-                  }}
-                  required={false}
-                />
-              </div>
+              {!question && (
+                <div className="pt-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {t.questionForms.soundEffect}
+                  </label>
+                  <MediaUploadField
+                    label=""
+                    accept="audio/*"
+                    value={item.soundFile}
+                    onChange={(file) => {
+                      const newItems = [...items];
+                      newItems[index].soundFile = file;
+                      setItems(newItems);
+                    }}
+                    required={false}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* Media Section */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
+      {!question && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-800">{t.questionForms.mediaOptional}</h4>
         
         {/* Before Question Media */}
         <div className="space-y-3">
@@ -298,7 +307,7 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
                 accept={beforeQuestionType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeQuestionFile}
                 onChange={setBeforeQuestionFile}
-                required
+                required={!question}
               />
             </div>
           )}
@@ -338,12 +347,13 @@ export default function OrderForm({ onSave, onCancel, saving }: OrderFormProps) 
                 accept={beforeAnswerType === 'video' ? 'video/*' : 'image/*'}
                 value={beforeAnswerFile}
                 onChange={setBeforeAnswerFile}
-                required
+                required={!question}
               />
             </div>
           )}
         </div>
       </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t">
