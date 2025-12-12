@@ -21,7 +21,7 @@ export default function HostTextInputDisplay({
   
   return (
     <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-blue-400/30">
-      <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
+      <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 text-center drop-shadow-lg">
         {question.text}
       </h2>
       <div className="text-center text-gray-300 text-lg mb-4">
@@ -72,7 +72,7 @@ export default function HostTextInputDisplay({
             {t.host.correctAnswerColon}
           </h3>
           <div className="p-4 rounded-lg bg-green-600 shadow-lg border border-green-400/40">
-            <div className="text-white font-medium text-lg text-center">
+            <div className="text-white font-medium text-3xl md:text-4xl text-center">
               {question.correctAnswers[0]}
             </div>
           </div>

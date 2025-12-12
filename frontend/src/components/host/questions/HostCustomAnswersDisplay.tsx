@@ -30,7 +30,7 @@ export default function HostCustomAnswersDisplay({
   if (!isVotingPhase) {
     return (
       <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-purple-400/30">
-        <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
+        <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 text-center drop-shadow-lg">
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
@@ -54,7 +54,7 @@ export default function HostCustomAnswersDisplay({
                     <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-blue-900">
                       {idx + 1}
                     </div>
-                    <div className="text-white font-medium text-lg">
+                    <div className="text-white font-medium text-3xl md:text-4xl">
                       {getText(answer.text)}
                     </div>
                   </div>
@@ -74,7 +74,7 @@ export default function HostCustomAnswersDisplay({
   if (!showCorrectAnswer) {
     return (
       <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-orange-400/30">
-        <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
+        <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 text-center drop-shadow-lg">
           {question.text}
         </h2>
         <div className="text-center text-gray-300 text-lg mb-4">
@@ -97,7 +97,7 @@ export default function HostCustomAnswersDisplay({
                   <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-purple-900">
                     {idx + 1}
                   </div>
-                  <div className="text-white font-medium text-lg flex-1">
+                  <div className="text-white font-medium text-3xl md:text-4xl flex-1">
                     {getText(answer.text)}
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export default function HostCustomAnswersDisplay({
   // Results phase
   return (
     <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-green-400/30">
-      <h2 className="text-4xl font-bold text-white mb-6 text-center drop-shadow-lg">
+      <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 text-center drop-shadow-lg">
         {question.text}
       </h2>
       <div className="text-center text-green-300 text-lg mb-4">
@@ -143,7 +143,7 @@ export default function HostCustomAnswersDisplay({
                   {idx + 1}
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-medium text-lg">
+                  <div className="text-white font-medium text-3xl md:text-4xl">
                     {getText(answer.text)}
                   </div>
                   {!answer.playerId && (

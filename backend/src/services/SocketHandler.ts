@@ -174,10 +174,25 @@ export class SocketHandler {
         }
       }
       
+      // Include voting answers if in voting phase
+      let votingAnswers;
+      if (lobby.currentPhase === 'voting' && currentQuestion?.type === 'custom-answers') {
+        const allAnswers = this.lobbyManager.getShuffledAnswers(data.lobbyId);
+        if (allAnswers.length > 0) {
+          // Remove playerId from answers before sending to player
+          votingAnswers = allAnswers.map(answer => ({
+            id: answer.id,
+            text: answer.text
+          }));
+          console.log(`Sending ${votingAnswers.length} voting answers to reconnecting player`);
+        }
+      }
+      
       const response: ReconnectPlayerResponse = {
         success: true,
         lobby,
-        currentQuestion
+        currentQuestion,
+        votingAnswers
       };
       
       callback(response);

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { Answer } from '../../../../shared/types';
 import { useHoverSound } from '../../hooks/useHoverSound';
 
@@ -17,15 +18,41 @@ export default function QuestionDisplay({
 }: QuestionDisplayProps) {
   const { language } = useI18n();
   const answerLabels = ['A', 'B', 'C', 'D'];
+  const [revealedCount, setRevealedCount] = useState(0);
   
   const getText = (text: string | { de: string; en: string }) => {
     return typeof text === 'string' ? text : text[language];
+  };
+
+  // Reset revealed count when question changes
+  useEffect(() => {
+    setRevealedCount(0);
+  }, [questionText]);
+
+  // Handle space key press
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && revealedCount < answers.length) {
+        e.preventDefault();
+        setRevealedCount(prev => Math.min(prev + 1, answers.length));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [revealedCount, answers.length]);
+
+  const handleQuestionClick = () => {
+    if (revealedCount < answers.length) {
+      setRevealedCount(prev => Math.min(prev + 1, answers.length));
+    }
   };
 
   const AnswerCard = ({ answer, index }: { answer: Answer; index: number }) => {
     const soundHandlers = useHoverSound(answer.sound);
     const isCorrect = answer.id === correctAnswerId;
     const shouldHighlight = showCorrect && isCorrect;
+    const isRevealed = index < revealedCount;
 
     const baseStyles = 'bg-gray-700/90 text-white hover:bg-gray-600/90';
     const correctStyles = 'bg-green-600 hover:bg-green-600 ring-4 ring-yellow-400 shadow-2xl';
@@ -57,7 +84,7 @@ export default function QuestionDisplay({
           </div>
           
           <div className="flex-1">
-            <p className={`text-lg md:text-xl font-semibold leading-relaxed ${shouldHighlight ? 'drop-shadow-md' : ''}`}>
+            <p className={`text-3xl md:text-4xl font-semibold leading-relaxed transition-opacity duration-300 ${shouldHighlight ? 'drop-shadow-md' : ''} ${isRevealed ? 'opacity-100' : 'opacity-0'}`}>
               {getText(answer.text)}
             </p>
           </div>
@@ -65,14 +92,16 @@ export default function QuestionDisplay({
       </div>
     );
   };
-
   return (
     // Updated max-width and background for the new style
     <div className="space-y-8 mx-auto bg-gradient-to-br from-blue-900/40 to-purple-900/40 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-white/20">
       
       {/* Question Container - Simple, rounded, with better contrast */}
-      <div className="bg-gray-900/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10">
-        <p className="text-2xl md:text-3xl font-bold text-white text-center drop-shadow-lg">
+      <div 
+        className="bg-gray-900/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/10 cursor-pointer hover:bg-gray-900/90 transition-colors"
+        onClick={handleQuestionClick}
+      >
+        <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center drop-shadow-lg">
           {questionText}
         </p>
       </div>

@@ -67,7 +67,7 @@ export default function HostControlButtons({
         <button
           onClick={onShowVotingResults}
           disabled={!allVotesReceived}
-          className={`cursor-pointerpx-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
+          className={`cursor-pointer px-10 py-4 rounded-lg font-bold text-xl shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 ${
             allVotesReceived
               ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
               : "bg-gray-600/80 text-gray-400 cursor-not-allowed"
@@ -152,7 +152,7 @@ export default function HostControlButtons({
         <div className="flex justify-between items-center gap-4 flex-wrap mx-2">
           <button
             onClick={onRestartQuestion}
-            className="px-2 py-1 rounded-lg bg-gradient-to-r cursor-pointer from-lime-100 to-blue-200 hover:from-lime-100 hover:to-blue-200 text-white font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 z-50"
+            className="px-2 py-1 rounded-lg bg-gradient-to-r cursor-pointer from-lime-100 to-blue-200 hover:from-lime-100 hover:to-blue-200 text-white font-bold shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
             title="Restart current question"
           >
             <span>🔄</span>

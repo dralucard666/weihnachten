@@ -132,9 +132,9 @@ export default function MediaDisplay({
     ${
       isMaximized
         ? "fixed inset-0 z-50 bg-black"
-        : "fixed top-20 left-1/2 -translate-x-1/2 z-40 max-w-4xl"
+        : "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-full h-full"
     }
-    bg-black rounded-xl shadow-2xl border-2 border-purple-500 overflow-visible
+    bg-black rounded-xl shadow-2xl overflow-visible
   `;
 
   return (
@@ -149,7 +149,7 @@ export default function MediaDisplay({
                 <video
                   ref={videoRef}
                   src={mediaSources[0]}
-                  className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg"
                   onEnded={handleVideoEnd}
                   playsInline
                   controls
@@ -160,7 +160,7 @@ export default function MediaDisplay({
                   <img
                     src={mediaSources[currentImageIndex]}
                     alt={`Media ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                    className="max-w-full max-h-[80vh] object-contain rounded-lg"
                   />
                   {mediaSources.length > 1 && (
                     <>

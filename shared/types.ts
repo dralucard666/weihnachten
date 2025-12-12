@@ -79,6 +79,7 @@ export interface ReconnectPlayerResponse {
   success: boolean;
   lobby?: Lobby;
   currentQuestion?: QuestionData;
+  votingAnswers?: Answer[]; // Answers for voting phase on reconnect
   error?: string;
 }
 

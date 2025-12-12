@@ -124,7 +124,7 @@ export default function GamePlayingView({
 
   return (
     <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900">
-      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col mt-6">
+      <div className="w-full md:px-10 lg:px-20 mx-auto flex-1 flex flex-col mt-6">
         {/* Header with Progress */}
         <HostHeader
           currentQuestionIndex={currentQuestionIndex}
@@ -144,7 +144,7 @@ export default function GamePlayingView({
         {!showCorrectAnswer && currentQuestion.media?.beforeQuestion && beforeQuestionMediaHidden && (
           <button
             onClick={() => setBeforeQuestionMediaHidden(false)}
-            className="fixed left-4 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-purple-400"
+            className="fixed left-4 cursor-pointer top-1/2 -translate-y-1/2 bg-black hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-black"
             title="Show media"
           >
             <svg
@@ -188,7 +188,7 @@ export default function GamePlayingView({
         {showCorrectAnswer && currentQuestion.media?.beforeAnswer && beforeAnswerMediaHidden && (
           <button
             onClick={() => setBeforeAnswerMediaHidden(false)}
-            className="fixed left-4 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-purple-400"
+            className="fixed left-4 cursor-pointer top-1/2 -translate-y-1/2 bg-black hover:bg-purple-700 text-white p-3 rounded-r-xl shadow-lg transition-all duration-200 z-40 border-l-4 border-black"
             title="Show media"
           >
             <svg
@@ -215,7 +215,7 @@ export default function GamePlayingView({
 
         {/* Question Display - Centered */}
         <div className="flex-1 flex items-center justify-center mb-6">
-          <div className="w-full max-w-5xl">
+          <div className="w-full">
             {isCustomAnswersMode ? (
               <HostCustomAnswersDisplay
                 question={currentQuestion}

@@ -284,6 +284,24 @@ export function usePlayer(lobbyId: string | undefined) {
           setPlayerName(storedName);
         }
         
+        // Restore player state based on server data
+        const currentPlayer = response.lobby.players.find(p => p.id === reconnectPlayerId);
+        if (currentPlayer && currentPlayer.hasAnswered) {
+          setHasSubmitted(true);
+          console.log('Player has already submitted an answer');
+        }
+        
+        // Check if we're in voting phase and restore voting answers
+        if (response.lobby.currentPhase === 'voting' && response.currentQuestion?.type === 'custom-answers') {
+          setIsVotingPhase(true);
+          if (response.votingAnswers && response.votingAnswers.length > 0) {
+            setVotingAnswers(response.votingAnswers);
+            console.log(`Reconnected during voting phase with ${response.votingAnswers.length} answers`);
+          } else {
+            console.log('Reconnected during voting phase');
+          }
+        }
+        
         console.log('Successfully reconnected to lobby');
       } else {
         setError(response.error || 'Failed to reconnect. The lobby may no longer exist.');

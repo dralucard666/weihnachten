@@ -125,7 +125,7 @@ export default function IntermediateScoresView({
         <div className="text-center">
           <button
             onClick={onContinue}
-            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-2xl px-12 py-4 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-200 animate-pulse"
+            className="bg-gradient-to-r cursor-pointer from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-2xl px-12 py-4 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-200 animate-pulse"
           >
             {t.intermediateScores.continueGame} →
           </button>

@@ -71,7 +71,7 @@ export default function HostOrderDisplay({
     <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/30">
       <div className="text-center mb-8">
         <span className="text-6xl mb-4 block">🔢</span>
-        <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
+        <h2 className="text-4xl lg:text-5xl font-extrabold text-white mb-4 drop-shadow-lg">
           {question.text}
         </h2>
         <p className="text-xl text-blue-200">{t.host.putItemsInOrder}</p>
