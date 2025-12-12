@@ -6,6 +6,7 @@ interface HostPlayerStatusProps {
   playersWhoAnswered: Set<string>;
   isVotingPhase: boolean;
   showCorrectAnswer: boolean;
+  correctPlayerIds: string[];
   getPlayerAnswer: (playerId: string) => string | undefined;
 }
 
@@ -14,6 +15,7 @@ export default function HostPlayerStatus({
   playersWhoAnswered,
   isVotingPhase,
   showCorrectAnswer,
+  correctPlayerIds,
   getPlayerAnswer,
 }: HostPlayerStatusProps) {
   const { t } = useI18n();
@@ -27,18 +29,25 @@ export default function HostPlayerStatus({
         {players.map((player) => {
           const hasAnswered = playersWhoAnswered.has(player.id);
           const playerAnswer = getPlayerAnswer(player.id);
+          const isCorrect = correctPlayerIds.includes(player.id);
+          
+          // Determine card color:
+          // - If answer is revealed, only correct players are green
+          // - Otherwise, any player who answered is green
+          const isGreen = showCorrectAnswer ? isCorrect : hasAnswered;
+          
           return (
             <div
               key={player.id}
               className={`p-2 rounded-lg transition-all shadow-md ${
-                hasAnswered
+                isGreen
                   ? "bg-green-600/90 border border-green-400"
                   : "bg-gray-700/80 border border-gray-600"
               }`}
             >
               <div className="flex items-center gap-1 mb-1">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                  hasAnswered ? 'bg-green-300 text-green-900' : 'bg-gray-600 text-gray-300'
+                  isGreen ? 'bg-green-300 text-green-900' : 'bg-gray-600 text-gray-300'
                 }`}>
                   {player.name?.charAt(0).toUpperCase() || '?'}
                 </div>

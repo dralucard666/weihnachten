@@ -151,6 +151,7 @@ export interface PlayerAnswerInfo {
 export interface QuestionResultData {
   correctAnswerId: string;
   playerAnswers: PlayerAnswerInfo[];
+  correctPlayerIds: string[];
 }
 
 export interface Answer {
@@ -257,6 +258,7 @@ export interface CustomAnswerResultData {
   correctAnswerId: string;
   playerVotes: PlayerAnswerInfo[];
   answersWithAttribution?: CustomAnswer[]; // Include full answers with playerId for results display
+  correctPlayerIds: string[];
 }
 
 // Text Input Question Type
@@ -307,6 +309,7 @@ export interface OrderResultData {
   correctOrder: string[];
   playerOrders: PlayerAnswerInfo[]; // answerId contains comma-separated order, answerText has score info
   playerScores: { [playerId: string]: number }; // Points earned by each player
+  correctPlayerIds: string[];
 }
 
 // Socket.IO Event Types

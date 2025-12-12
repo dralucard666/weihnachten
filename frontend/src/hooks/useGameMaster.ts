@@ -129,19 +129,21 @@ export function useGameMaster(lobbyId: string | undefined) {
 
     socket.on(
       "questionResultReady",
-      (data: { correctAnswerId: string; playerAnswers: PlayerAnswerInfo[] }) => {
+      (data: { correctAnswerId: string; playerAnswers: PlayerAnswerInfo[]; correctPlayerIds: string[] }) => {
         console.log("Question result ready:", data);
         setCorrectAnswerId(data.correctAnswerId);
         setPlayerAnswers(data.playerAnswers);
+        setCorrectPlayerIds(data.correctPlayerIds);
       }
     );
 
     socket.on(
       "customAnswerResultReady",
-      (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[]; answersWithAttribution?: CustomAnswer[] }) => {
+      (data: { correctAnswerId: string; playerVotes: PlayerAnswerInfo[]; answersWithAttribution?: CustomAnswer[]; correctPlayerIds: string[] }) => {
         console.log("Custom answer result ready:", data);
         setCorrectAnswerId(data.correctAnswerId);
         setPlayerAnswers(data.playerVotes);
+        setCorrectPlayerIds(data.correctPlayerIds);
         // Update customAnswers with attribution for results display
         if (data.answersWithAttribution) {
           setCustomAnswers(data.answersWithAttribution);
@@ -174,11 +176,13 @@ export function useGameMaster(lobbyId: string | undefined) {
         correctOrder: string[];
         playerOrders: PlayerAnswerInfo[];
         playerScores: { [playerId: string]: number };
+        correctPlayerIds: string[];
       }) => {
         console.log("Order result ready:", data);
         setCorrectOrder(data.correctOrder);
         setPlayerAnswers(data.playerOrders);
         setPlayerScores(data.playerScores);
+        setCorrectPlayerIds(data.correctPlayerIds);
       }
     );
 

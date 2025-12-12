@@ -375,9 +375,9 @@ export class SocketHandler {
       // Get player answers before processing
       const playerAnswers = this.lobbyManager.getPlayerAnswers(data.lobbyId);
       
-      const updatedPlayers = this.lobbyManager.processQuestionResult(data.lobbyId);
+      const result = this.lobbyManager.processQuestionResult(data.lobbyId);
       
-      if (updatedPlayers.length > 0 && currentQuestion.correctAnswerId) {
+      if (result.players.length > 0 && currentQuestion.correctAnswerId) {
         // Update lobby state (phase is now 'revealing')
         this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
         
@@ -385,9 +385,10 @@ export class SocketHandler {
         this.io.to(data.lobbyId).emit('questionResultReady', {
           correctAnswerId: currentQuestion.correctAnswerId,
           playerAnswers,
+          correctPlayerIds: result.correctPlayerIds,
         });
         
-        this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
+        this.io.to(data.lobbyId).emit('scoresUpdated', result.players);
         console.log(`Question results processed for lobby ${data.lobbyId}`);
       }
     });
@@ -634,9 +635,9 @@ export class SocketHandler {
       // Get the full shuffled answers WITH playerIds for results display
       const answersWithAttribution = this.lobbyManager.getShuffledAnswersWithAttribution(data.lobbyId);
       
-      const updatedPlayers = this.lobbyManager.processCustomAnswerResult(data.lobbyId);
+      const result = this.lobbyManager.processCustomAnswerResult(data.lobbyId);
       
-      if (updatedPlayers.length > 0 && currentQuestion && lobby) {
+      if (result.players.length > 0 && currentQuestion && lobby) {
         // Update lobby state (phase is now 'revealing')
         this.io.to(data.lobbyId).emit('lobbyUpdated', lobby);
         
@@ -651,9 +652,10 @@ export class SocketHandler {
           correctAnswerId,
           playerVotes,
           answersWithAttribution, // Include full answers with attribution for results display
+          correctPlayerIds: result.correctPlayerIds,
         });
         
-        this.io.to(data.lobbyId).emit('scoresUpdated', updatedPlayers);
+        this.io.to(data.lobbyId).emit('scoresUpdated', result.players);
         console.log(`Custom answer results processed for lobby ${data.lobbyId}`);
       }
     });
@@ -740,7 +742,8 @@ export class SocketHandler {
         this.io.to(data.lobbyId).emit('orderResultReady', {
           correctOrder: currentQuestion.correctOrder,
           playerOrders: result.playerOrders,
-          playerScores: result.playerScores
+          playerScores: result.playerScores,
+          correctPlayerIds: result.correctPlayerIds,
         });
         
         this.io.to(data.lobbyId).emit('scoresUpdated', result.players);

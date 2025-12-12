@@ -316,29 +316,35 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.playerAnswers);
   }
 
-  processQuestionResult(lobbyId: string): Player[] {
+  processQuestionResult(lobbyId: string): {
+    players: Player[];
+    correctPlayerIds: string[];
+  } {
     const lobby = this.lobbies.get(lobbyId);
     const currentQuestion = this.getCurrentQuestion(lobbyId);
 
     if (!lobby || !currentQuestion) {
-      return [];
+      return { players: [], correctPlayerIds: [] };
     }
 
     const answers = this.playerAnswers.get(lobbyId);
     if (!answers || !currentQuestion.correctAnswerId) {
-      return [];
+      return { players: [], correctPlayerIds: [] };
     }
+
+    const correctPlayerIds: string[] = [];
 
     for (const player of lobby.players) {
       const answer = answers.get(player.id);
       if (answer && answer.answerId === currentQuestion.correctAnswerId) {
         player.score += 1;
+        correctPlayerIds.push(player.id);
       }
     }
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    return lobby.players;
+    return { players: lobby.players, correctPlayerIds };
   }
 
   getPlayerAnswers(lobbyId: string): PlayerAnswerInfo[] {
@@ -553,12 +559,15 @@ export class LobbyManager {
     return this.hasEveryoneSubmitted(lobbyId, this.playerVotes);
   }
 
-  processCustomAnswerResult(lobbyId: string): Player[] {
+  processCustomAnswerResult(lobbyId: string): {
+    players: Player[];
+    correctPlayerIds: string[];
+  } {
     const lobby = this.lobbies.get(lobbyId);
     const currentQuestion = this.getCurrentQuestion(lobbyId);
 
     if (!lobby || !currentQuestion) {
-      return [];
+      return { players: [], correctPlayerIds: [] };
     }
 
     const votes = this.playerVotes.get(lobbyId);
@@ -566,16 +575,17 @@ export class LobbyManager {
     const shuffledAnswers = this.shuffledAnswers.get(lobbyId);
 
     if (!votes || !customAnswers || !shuffledAnswers) {
-      return [];
+      return { players: [], correctPlayerIds: [] };
     }
 
     // Find correct answer ID from shuffled answers
     const correctAnswerId = shuffledAnswers.find(a => !a.playerId)?.id;
     if (!correctAnswerId) {
-      return [];
+      return { players: [], correctPlayerIds: [] };
     }
 
     const voteCounts = this.countVotes(votes);
+    const correctPlayerIds: string[] = [];
 
     for (const player of lobby.players) {
       const vote = votes.get(player.id);
@@ -583,6 +593,7 @@ export class LobbyManager {
       // Points for correct vote
       if (vote && vote.votedAnswerId === correctAnswerId) {
         player.score += 1;
+        correctPlayerIds.push(player.id);
       }
 
       // Points for receiving votes
@@ -594,7 +605,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    return lobby.players;
+    return { players: lobby.players, correctPlayerIds };
   }
 
   getPlayerVotes(lobbyId: string): PlayerAnswerInfo[] {
@@ -780,6 +791,7 @@ export class LobbyManager {
 
   processOrderResult(lobbyId: string): {
     players: Player[];
+    correctPlayerIds: string[];
     playerOrders: PlayerAnswerInfo[];
     playerScores: { [playerId: string]: number };
   } {
@@ -787,16 +799,17 @@ export class LobbyManager {
     const currentQuestion = this.getCurrentQuestion(lobbyId);
 
     if (!lobby || !currentQuestion || !currentQuestion.correctOrder) {
-      return { players: [], playerOrders: [], playerScores: {} };
+      return { players: [], correctPlayerIds: [], playerOrders: [], playerScores: {} };
     }
 
     const orders = this.orderAnswers.get(lobbyId);
     if (!orders) {
-      return { players: [], playerOrders: [], playerScores: {} };
+      return { players: [], correctPlayerIds: [], playerOrders: [], playerScores: {} };
     }
 
     const playerOrders: PlayerAnswerInfo[] = [];
     const playerScores: { [playerId: string]: number } = {};
+    const correctPlayerIds: string[] = [];
 
     for (const player of lobby.players) {
       const order = orders.get(player.id);
@@ -810,6 +823,10 @@ export class LobbyManager {
         player.score += score;
         playerScores[player.id] = score;
 
+        if (score > 0) {
+          correctPlayerIds.push(player.id);
+        }
+
         playerOrders.push({
           playerId: player.id,
           answerId: order.orderedItemIds.join(","),
@@ -820,7 +837,7 @@ export class LobbyManager {
 
     lobby.currentPhase = "revealing";
     this.resetPlayerAnswerFlags(lobby);
-    return { players: lobby.players, playerOrders, playerScores };
+    return { players: lobby.players, correctPlayerIds, playerOrders, playerScores };
   }
 
   endGame(lobbyId: string): Player[] {

@@ -47,14 +47,12 @@ export default function GamePlayingView({
   isVotingPhase,
   allVotesReceived,
   playerAnswers,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  correctPlayerIds: _correctPlayerIds,
+  correctPlayerIds,
   onShowAnswer,
   onShowVotingResults,
   onNextQuestion,
   onRestartQuestion,
 }: GamePlayingViewProps) {
-  const playersWithNames = lobby.players.filter((p) => p.name);
   const isCustomAnswersMode = currentQuestion.type === "custom-answers";
   const isTextInputMode = currentQuestion.type === "text-input";
   const isOrderMode = currentQuestion.type === "order";
@@ -255,10 +253,11 @@ export default function GamePlayingView({
 
         {/* Players Status - Bottom */}
         <HostPlayerStatus
-          players={playersWithNames}
+          players={lobby.players}
           playersWhoAnswered={playersWhoAnswered}
           isVotingPhase={isVotingPhase}
           showCorrectAnswer={showCorrectAnswer}
+          correctPlayerIds={correctPlayerIds}
           getPlayerAnswer={getPlayerAnswer}
         />
       </div>
